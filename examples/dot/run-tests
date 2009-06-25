@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import with_statement
+import sys, os
+from subprocess import Popen, PIPE
+from tempfile import NamedTemporaryFile as TempFile
+from contextlib import nested
+
+def same(f1, f2):
+    'str, str -> bool'
+    diff = Popen(['diff', '-ubB', f1, f2], stdout=PIPE)
+    out = diff.stdout.read()
+    if diff.wait() == 0:
+        return True
+    else:
+        print >> sys.stderr, '\n', out
+        return False
+
+def run(input):
+    'str -> str'
+    def okfail(b):
+        return 'ok' if b else 'fail'
+    outname = '%s.out' % input
+    errname = '%s.err' % input
+    try:
+        files = (open(input, 'rb'), TempFile(), TempFile())
+        with nested(*files) as (inp, out, err):
+            dot = Popen(['python', 'dot.py'], stdin=inp, stdout=out, stderr=err)
+            ret = dot.wait()
+            if os.path.exists(errname):
+                ok = (same(errname, err.name) and ret != 0)
+            elif os.path.exists(outname):
+                ok = (same(outname, out.name))
+            else:
+                ok = (ret == 0)
+            if not ok:
+                err.seek(0)
+                print >> sys.stderr, '\n', err.read()
+            return 'ok' if ok else 'fail'
+    except Exception, e:
+        print >> sys.stderr, e
+        return 'excpt'
+
+def main():
+    if len(sys.argv) == 1:
+        files = sorted(x for x in os.listdir('.')
+            if x.startswith('test-') and x.endswith('dot'))
+    else:
+        files = sys.argv[1:]
+    stat = dict(ok=0, fail=0, excpt=0)
+    for f in files:
+        print >> sys.stderr, f,
+        res = run(f)
+        print >> sys.stderr, res
+        stat[res] = stat.setdefault(res, 0) + 1
+    print >> sys.stderr, '--- stats ---'
+    print ' '.join('%s %d' % (k, v) for k, v in stat.items())
+
+if __name__ == '__main__':
+    main()
+

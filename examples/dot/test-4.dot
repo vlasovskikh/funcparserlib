@@ -1,0 +1,4 @@
+graph g1 {
+    n1 [attr1, attr2 = value2];
+}
+

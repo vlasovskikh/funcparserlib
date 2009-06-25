@@ -1,0 +1,1 @@
+Graph(strict=None, type=u'graph', id=u'g1', stmts=[Node(id=u'n1', attrs=[]), Node(id=u'n2', attrs=[]), Node(id=u'n3', attrs=[])])

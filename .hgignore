@@ -1,0 +1,4 @@
+syntax:glob
+funcparserlib.egg-info
+*.pyc
+

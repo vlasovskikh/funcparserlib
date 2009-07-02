@@ -47,7 +47,12 @@ def tokenize(str):
     return [x for x in t(str) if x.type not in useless]
 
 def parse(seq):
-    'Sequence(Token) -> object'
+    '''Sequence(Token) -> object
+
+    Based on [the DOT grammar][1].
+
+      [1]: http://www.graphviz.org/doc/info/lang.html
+    '''
     unarg = lambda f: lambda args: f(*args)
     tokval = lambda x: x.value
     flatten = lambda list: sum(list, [])

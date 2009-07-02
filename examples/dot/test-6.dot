@@ -1,4 +1,4 @@
-graph g1 {
+digraph g1 {
     n1 -> n2 [w=5];
     n2 -> n3 [w=10];
     n3 -> n1 [w=7];

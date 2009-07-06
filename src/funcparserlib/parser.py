@@ -29,7 +29,7 @@ Functional Programming" и переписаны с ML на Python. См. так�
 
 Парсер `p` представляется функцией типа:
 
-    p :: Sequence(a) -> (State -> ((b, Sequence(a)), State))'
+    p :: Sequence(a), State -> (b, Sequence(a), State)
 
 принимающей последовательность токенов произвольного типа `a` и возвращающей
 функцию, принимающую состояние потока разбора и возвращаюую пару из пары
@@ -37,11 +37,6 @@ Functional Programming" и переписаны с ML на Python. См. так�
 токенов) и нового состояния разбора.
 
 Далее в библиотеке используется синоним типа этой функции `Parser(a, b)`.
-
-TBD: В дальнейшем тип, возможно, будет упрощён до:
-
-    p(tokens[, state]) -> (value, rest, newstate)
-    p :: Sequence(a), State? -> (b, Sequence(a), State)
 
 Функции парсеров заворачиваются в объект `Parser`, для которого определны
 операторы `+` для последовательного выполнения двух парсеров, `|` для выбора
@@ -101,10 +96,10 @@ class Parser(object):
         self.name = name
         return self
 
-    def __call__(self, tokens):
-        'Sequence(a) -> (State -> ((b, Sequence(a)), State))'
+    def __call__(self, tokens, s):
+        'Sequence(a), State -> (b, Sequence(a), State)'
         log.debug('trying rule "%s"' % self.name)
-        return lambda s: self.wrapped(tokens)(s)
+        return self.wrapped(tokens, s)
 
     def parse(self, tokens):
         '''Sequence(a) -> b
@@ -114,7 +109,7 @@ class Parser(object):
         потоке.
         '''
         try:
-            ((tree, _), _) = self(tokens)(State())
+            (tree, _, _) = self(tokens, State())
             return tree
         except NoParseError, e:
             max = e.state.max
@@ -130,19 +125,17 @@ class Parser(object):
         Статический тип указать нельзя.
         '''
         @Parser
-        def f(tokens):
-            def g(s):
-                (v1, r1), s2 = self(tokens)(s)
-                (v2, r2), s3 = other(r1)(s2)
-                vs = [v for v in [v1, v2] if not isinstance(v, _Ignored)]
-                if len(vs) == 1:
-                    t = vs[0]
-                elif len(vs) == 2 and isinstance(vs[0], _Tuple):
-                    t = _Tuple(v1 + (v2,))
-                else:
-                    t = _Tuple(vs)
-                return ((t, r2), s3)
-            return g
+        def f(tokens, s):
+            (v1, r1, s2) = self(tokens, s)
+            (v2, r2, s3) = other(r1, s2)
+            vs = [v for v in [v1, v2] if not isinstance(v, _Ignored)]
+            if len(vs) == 1:
+                t = vs[0]
+            elif len(vs) == 2 and isinstance(vs[0], _Tuple):
+                t = _Tuple(v1 + (v2,))
+            else:
+                t = _Tuple(vs)
+            return (t, r2, s3)
         f.name = '(%s, %s)' % (self.name, other.name)
         return f
 
@@ -151,24 +144,20 @@ class Parser(object):
         
         Вариант выбора из двух парсеров.'''
         @Parser
-        def f(tokens):
-            def g(s):
-                try:
-                    return self(tokens)(s)
-                except NoParseError, e:
-                    return other(tokens)(State(s.pos, e.state.max))
-            return g
+        def f(tokens, s):
+            try:
+                return self(tokens, s)
+            except NoParseError, e:
+                return other(tokens, State(s.pos, e.state.max))
         f.name = '(%s | %s)' % (self.name, other.name)
         return f
 
     def __rshift__(self, f):
         'Parser(a, b), (b -> c) -> Parser(a, c)'
         @Parser
-        def g(tokens):
-            def h(s):
-                (v, r), s2 = self(tokens)(s)
-                return ((f(v), r), s2)
-            return h
+        def g(tokens, s):
+            (v, r, s2) = self(tokens, s)
+            return (f(v), r, s2)
         g.name = '%s >> %s' % (self.name, f.__doc__ or '...')
         return g
 
@@ -179,17 +168,15 @@ class _Ignored(object):
         self.value = value
 
 @Parser
-def finished(tokens):
+def finished(tokens, s):
     '''Parser(a, None)
 
     Выбрасывает ошибку, если в потоке токенов хоть что-то осталось.
     '''
-    def f(s):
-        if len(tokens) == 0:
-            return ((None, tokens), s)
-        else:
-            raise NoParseError('should have reached eof', s)
-    return f
+    if len(tokens) == 0:
+        return (None, tokens, s)
+    else:
+        raise NoParseError('should have reached eof', s)
 finished.name = 'finished'
 
 def many(p):
@@ -199,15 +186,13 @@ def many(p):
     успешно разбирает токены, и возвращающий список разобранных значений.
     '''
     @Parser
-    def f(tokens):
-        def g(s):
-            try:
-                (v, next), s2 = p(tokens)(s)
-                (vs, rest), s3 = many(p)(next)(s2)
-                return (([v] + vs, rest), s3)
-            except NoParseError, e:
-                return (([], tokens), e.state)
-        return g
+    def f(tokens, s):
+        try:
+            (v, next, s2) = p(tokens, s)
+            (vs, rest, s3) = many(p)(next, s2)
+            return ([v] + vs, rest, s3)
+        except NoParseError, e:
+            return ([], tokens, e.state)
     f.name = '%s+' % p.name
     return f
 
@@ -218,21 +203,19 @@ def some(pred):
     pred.
     '''
     @Parser
-    def f(tokens):
-        def g(s):
-            if len(tokens) == 0:
-                raise NoParseError('no tokens left in the stream', s)
+    def f(tokens, s):
+        if len(tokens) == 0:
+            raise NoParseError('no tokens left in the stream', s)
+        else:
+            t, ts = tokens[0], tokens[1:]
+            if pred(t):
+                pos = s.pos + 1
+                log.debug(u'*matched* "%s", new state = %s' % (
+                    t, State(pos, max(pos, s.max))))
+                return (t, ts, State(pos, max(pos, s.max)))
             else:
-                t, ts = tokens[0], tokens[1:]
-                if pred(t):
-                    pos = s.pos + 1
-                    log.debug(u'*matched* "%s", new state = %s' % (
-                        t, State(pos, max(pos, s.max))))
-                    return ((t, ts), State(pos, max(pos, s.max)))
-                else:
-                    log.debug(u'failed "%s", state = %s' % (t, s))
-                    raise NoParseError('got unexpected token', s)
-        return g
+                log.debug(u'failed "%s", state = %s' % (t, s))
+                raise NoParseError('got unexpected token', s)
     f.name = '(some ...)'
     return f
 
@@ -257,13 +240,11 @@ def maybe(p):
     Возвращает парсер, который при ошибке возвращает None.
     '''
     @Parser
-    def f(tokens):
-        def g(s):
-            try:
-                return p(tokens)(s)
-            except NoParseError, e:
-                return ((None, tokens), e.state)
-        return g
+    def f(tokens, s):
+        try:
+            return p(tokens, s)
+        except NoParseError, e:
+            return (None, tokens, e.state)
     f.name = '(maybe %s)' % p.name
     return f
 

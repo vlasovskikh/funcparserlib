@@ -29,6 +29,7 @@ Graph = namedtuple('Graph', 'strict type id stmts')
 Node = namedtuple('Node', 'id attrs')
 Attr = namedtuple('Attr', 'name value')
 Edge = namedtuple('Edge', 'id links attrs')
+DefAtts = namedtuple('DefAttrs', 'object attrs')
 
 def tokenize(str):
     'str -> Sequence(Token)'
@@ -59,6 +60,7 @@ def parse(seq):
     n = lambda s: a(Token('Name', s)) >> tokval
     op = lambda s: a(Token('Op', s)) >> tokval
     id = some(lambda t: t.type in ['Name', 'Number', 'String']).named('id') >> tokval
+    make_graph_attr = lambda args: DefAtts(u'graph', [Attr(*args)])
 
     node_id = id # + maybe(port)
     a_list = (
@@ -69,6 +71,13 @@ def parse(seq):
     attr_list = (
         many(skip(op('[')) + many(a_list) + skip(op(']')))
         >> flatten).named('attr_list')
+    attr_stmt = (
+       (n('graph') | n('node') | n('edge')) +
+       attr_list
+       >> unarg(DefAtts)).named('attr_stmt')
+    graph_attr = (
+        id + skip(op('=')) + id
+        >> make_graph_attr).named('graph_attr')
     node_stmt = (node_id + attr_list >> unarg(Node)).named('node_stmt')
     edge_rhs = skip(op('->') | op('--')) + node_id
     edge_stmt = (
@@ -77,10 +86,10 @@ def parse(seq):
         attr_list
         >> unarg(Edge)).named('edge_stmt')
     stmt = (
-        edge_stmt
+        attr_stmt
+        | graph_attr
+        | edge_stmt
         | node_stmt
-        # | attr_stmt
-        # | (id + op('=') + id)
         # | subgraph
     )
     stmt_list = many(stmt + skip(maybe(op(';'))))

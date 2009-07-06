@@ -1,0 +1,9 @@
+digraph g1 {
+    page="3,3";
+    graph [rotate=90];
+    node [shape=box, color="#0000ff"];
+    edge [style=dashed];
+    n1 -> n2 -> n3;
+    n3 -> n1;
+}
+

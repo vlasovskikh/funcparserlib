@@ -54,7 +54,7 @@ Functional Programming" и переписаны с ML на Python. См. так�
 '''
 
 __all__ = ['Parser', 'NoParseError', 'State', 'finished', 'many', 'some', 'a',
-        'several', 'maybe', 'skip', 'oneplus']
+        'several', 'maybe', 'skip', 'oneplus', 'with_forward_decls']
 
 import logging
 
@@ -158,7 +158,7 @@ class Parser(object):
         def g(tokens, s):
             (v, r, s2) = self(tokens, s)
             return (f(v), r, s2)
-        g.name = '%s >> %s' % (self.name, f.__doc__ or '...')
+        g.name = '%s >>' % self.name
         return g
 
 class _Tuple(tuple): pass
@@ -193,7 +193,7 @@ def many(p):
             return ([v] + vs, rest, s3)
         except NoParseError, e:
             return ([], tokens, e.state)
-    f.name = '%s+' % p.name
+    f.name = '%s +' % p.name
     return f
 
 def some(pred):
@@ -262,4 +262,17 @@ def oneplus(p):
     Возвращает парсер, разбирающий одно или более вхождение токена.
     '''
     return p + many(p) >> (lambda x: [x[0]] + x[1])
+
+def with_forward_decls(suspension):
+    '''(None -> Parser(a, b)) -> Parser(a, b)
+
+    Возвращает парсер, лениво вычисляющий требуемый парсер как результат
+    suspension. Требуется для определений парсеров, содержащих опережающие
+    объявления других парсеров, которые будут определены ниже на уровне этого
+    suspension.
+    '''
+    @Parser
+    def f(tokens, s):
+        return suspension()(tokens, s)
+    return f
 

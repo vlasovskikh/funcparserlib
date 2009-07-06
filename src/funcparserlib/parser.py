@@ -193,8 +193,20 @@ def many(p):
             return ([v] + vs, rest, s3)
         except NoParseError, e:
             return ([], tokens, e.state)
-    f.name = '%s +' % p.name
-    return f
+
+    @Parser
+    def f_iter(tokens, s):
+        'Iterative implementation preventing the stack overflow.'
+        res = []
+        rest = tokens
+        try:
+            while True:
+                (v, rest, s) = p(rest, s)
+                res.append(v)
+        except NoParseError, e:
+            return (res, rest, e.state)
+    f_iter.name = '%s +' % p.name
+    return f_iter
 
 def some(pred):
     '''(a -> bool) -> Parser(a, a)

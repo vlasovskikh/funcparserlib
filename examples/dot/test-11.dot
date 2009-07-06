@@ -1,0 +1,9 @@
+digraph g1 {
+    n1 -> n2 ->
+    subgraph n3 {
+        nn1 -> nn2 -> nn3;
+        nn3 -> nn1;
+    };
+    subgraph n3 {} -> n1;
+}
+

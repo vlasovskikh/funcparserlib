@@ -5,7 +5,7 @@ from re import MULTILINE
 from pprint import pformat
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-    oneplus, NoParseError)
+    oneplus, with_forward_decls, NoParseError)
 try:
     from collections import namedtuple
 except ImportError:
@@ -26,9 +26,10 @@ except ImportError:
 ENCODING = 'utf-8'
 
 Graph = namedtuple('Graph', 'strict type id stmts')
+SubGraph = namedtuple('SubGraph', 'id stmts')
 Node = namedtuple('Node', 'id attrs')
 Attr = namedtuple('Attr', 'name value')
-Edge = namedtuple('Edge', 'id links attrs')
+Edge = namedtuple('Edge', 'node links attrs')
 DefAtts = namedtuple('DefAttrs', 'object attrs')
 
 def tokenize(str):
@@ -75,22 +76,31 @@ def parse(seq):
        (n('graph') | n('node') | n('edge')) +
        attr_list
        >> unarg(DefAtts)).named('attr_stmt')
+    subgraph = with_forward_decls(
+        lambda:
+        skip(n('subgraph')) +
+        maybe(id) +
+        skip(op('{')) +
+        stmt_list +
+        skip(op('}'))
+        >> unarg(SubGraph)).named('subgraph')
     graph_attr = (
         id + skip(op('=')) + id
         >> make_graph_attr).named('graph_attr')
     node_stmt = (node_id + attr_list >> unarg(Node)).named('node_stmt')
-    edge_rhs = skip(op('->') | op('--')) + node_id
+    edge_rhs = (
+        skip(op('->') | op('--')) + (subgraph | node_id)).named('edge_rhs')
     edge_stmt = (
-        node_id +
+        (subgraph | node_id) +
         oneplus(edge_rhs) +
         attr_list
         >> unarg(Edge)).named('edge_stmt')
     stmt = (
-        attr_stmt
-        | graph_attr
+          attr_stmt
         | edge_stmt
+        | subgraph
+        | graph_attr
         | node_stmt
-        # | subgraph
     )
     stmt_list = many(stmt + skip(maybe(op(';'))))
     graph = (

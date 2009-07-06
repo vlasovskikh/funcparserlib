@@ -1,0 +1,1 @@
+Graph(strict=None, type=u'digraph', id=u'g1', stmts=[Edge(node=u'n1', links=[u'n2', SubGraph(id=u'n3', stmts=[Edge(node=u'nn1', links=[u'nn2', u'nn3'], attrs=[]), Edge(node=u'nn3', links=[u'nn1'], attrs=[])])], attrs=[]), Edge(node=SubGraph(id=u'n3', stmts=[]), links=[u'n1'], attrs=[])])

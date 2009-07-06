@@ -1,5 +1,20 @@
 # -*- coding: utf-8 -*-
 
+r'''A DOT language parser using funcparserlib.
+
+The parser is based on [the DOT grammar][1]. It is pretty complete with a few
+not supported things:
+
+* String ecapes `\"`
+* Ports and compass points
+* XML identifiers
+
+At the moment, the parser builds only a parse tree, not an abstract syntax tree
+(AST) or an API for dealing with DOT.
+
+  [1]: http://www.graphviz.org/doc/info/lang.html
+'''
+
 import sys, os
 from re import MULTILINE
 from pprint import pformat
@@ -49,12 +64,7 @@ def tokenize(str):
     return [x for x in t(str) if x.type not in useless]
 
 def parse(seq):
-    '''Sequence(Token) -> object
-
-    Based on [the DOT grammar][1].
-
-      [1]: http://www.graphviz.org/doc/info/lang.html
-    '''
+    'Sequence(Token) -> object'
     unarg = lambda f: lambda args: f(*args)
     tokval = lambda x: x.value
     flatten = lambda list: sum(list, [])
@@ -76,6 +86,7 @@ def parse(seq):
        (n('graph') | n('node') | n('edge')) +
        attr_list
        >> unarg(DefAtts)).named('attr_stmt')
+    # We use stmt_list forward declaration here
     subgraph = with_forward_decls(
         lambda:
         skip(n('subgraph')) +

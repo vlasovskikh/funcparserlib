@@ -1,0 +1,9 @@
+#!/bin/sh
+exec python dot.py <<END
+graph g1 {
+    n1;
+    n2;
+    n3,
+}
+END
+

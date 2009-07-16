@@ -4,7 +4,7 @@ PNGS = $(patsubst %.dot,%.png,$(DOTS))
 .PHONY = test png all clean
 
 test:
-	./run-tests
+	../run-tests
 
 all: png test
 

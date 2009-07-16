@@ -24,9 +24,8 @@ def run(input):
     outname = '%s.out' % input
     errname = '%s.err' % input
     try:
-        files = (open(input, 'rb'), TempFile(), TempFile())
-        with nested(*files) as (inp, out, err):
-            dot = Popen(['python', 'dot.py'], stdin=inp, stdout=out, stderr=err)
+        with nested(TempFile(), TempFile()) as (out, err):
+            dot = Popen([input], stdout=out, stderr=err)
             ret = dot.wait()
             if os.path.exists(errname):
                 ok = (same(errname, err.name) and ret != 0)
@@ -44,13 +43,14 @@ def run(input):
 
 def main():
     if len(sys.argv) == 1:
-        files = sorted(x for x in os.listdir('.')
-            if x.startswith('test-') and x.endswith('dot'))
+        dir = '.'
+        paths = (os.path.join(dir, x) for x in os.listdir(dir))
+        files = sorted(x for x in paths if os.access(x, os.X_OK))
     else:
         files = sys.argv[1:]
     stat = dict(ok=0, fail=0, excpt=0)
     for f in files:
-        print >> sys.stderr, f,
+        print >> sys.stderr, os.path.basename(f),
         res = run(f)
         print >> sys.stderr, res
         stat[res] = stat.setdefault(res, 0) + 1

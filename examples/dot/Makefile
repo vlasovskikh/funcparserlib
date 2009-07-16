@@ -1,5 +1,4 @@
-OUTS = $(wildcard *.dot.out)
-DOTS = $(patsubst %.dot.out,%.dot,$(OUTS))
+DOTS = $(wildcard *.dot)
 PNGS = $(patsubst %.dot,%.png,$(DOTS))
 .PHONY = test png all clean
 

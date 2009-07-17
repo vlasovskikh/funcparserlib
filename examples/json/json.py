@@ -15,10 +15,10 @@ from funcparserlib.parser import (some, a, maybe, many, finished, skip,
     with_forward_decls, NoParseError)
 
 ENCODING = 'utf-8'
-RE_ESC = re.compile(r'''
+re_esc = re.compile(r'''
 \\
 (
-    (?P<standard>[\\/bfnrt])
+    (?P<standard>["\\/bfnrt])
   | (u(?P<unicode>[0-9A-Fa-f]{4}))
 )
 ''', VERBOSE)
@@ -26,7 +26,7 @@ RE_ESC = re.compile(r'''
 def tokenize(str):
     'str -> Sequence(Token)'
     specs = [
-        # FIXME: String regex is too verbose, RE_ESC duplicates its part
+        # FIXME: String regex is too verbose, re_esc duplicates its part
         ('String', (ur'''
             "
             (
@@ -75,11 +75,16 @@ def parse(seq):
         except ValueError:
             return float(n)
     def unescape(s):
-        matches = RE_ESC.finditer(s)
-        # TODO: Unescape the string
-        #print >> sys.stderr, [(m.group('standard'), m.group('unicode'))
-        #    for m in matches]
-        return s
+        std = {
+            '"': '"', '\\': '\\', '/': '/', 'b': '\b', 'f': '\f', 'n': '\n',
+            'r': '\r', 't': '\t',
+        }
+        def sub(m):
+            if m.group('standard') is not None:
+                return std[m.group('standard')]
+            else:
+                return unichr(int(m.group('unicode'), 16))
+        return re_esc.sub(sub, s)
     def make_string(n):
         return unescape(n[1:-1])
 

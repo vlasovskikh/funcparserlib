@@ -1,0 +1,6 @@
+#!/bin/sh
+exec python json.py < test-strings.json
+END
+# "\"", "\\", "\/", "\b"
+# \f \n \r \t
+

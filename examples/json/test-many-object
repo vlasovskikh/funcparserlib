@@ -1,0 +1,14 @@
+#!/bin/sh
+exec python json.py <<END
+{
+    "foo": 1,
+    "bar":
+    {
+        "baz": 2,
+        "quux": [true, false],
+        "{}": {}
+    },
+    "spam": "eggs"
+}
+END
+

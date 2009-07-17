@@ -1,0 +1,5 @@
+#!/bin/sh
+exec python json.py <<END
+[1, 2, [3, 4, 5], 6]
+END
+

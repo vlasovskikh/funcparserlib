@@ -1,0 +1,5 @@
+#!/bin/sh
+exec python json.py <<END
+[null, true, false]
+END
+

@@ -15,39 +15,29 @@ from funcparserlib.parser import (some, a, maybe, many, finished, skip,
     with_forward_decls, NoParseError)
 
 ENCODING = 'utf-8'
-re_esc = re.compile(r'''
-\\
-(
-    (?P<standard>["\\/bfnrt])
-  | (u(?P<unicode>[0-9A-Fa-f]{4}))
-)
-''', VERBOSE)
+regexps = {
+    'escaped': ur'''
+        \\                                  # Escape
+          ((?P<standard>["\\/bfnrt])        # Standard escapes
+        | (u(?P<unicode>[0-9A-Fa-f]{4})))   # uXXXX
+        ''',
+    'unescaped': ur'''
+        [\x20-\x21\x23-\x5b\x5d-\uffff]     # Unescaped: avoid ["\\]
+        ''',
+}
+re_esc = re.compile(regexps['escaped'], VERBOSE)
 
 def tokenize(str):
     'str -> Sequence(Token)'
     specs = [
-        # FIXME: String regex is too verbose, re_esc duplicates its part
-        ('String', (ur'''
-            "
-            (
-                [\x20-\x21\x23-\x5b\x5d-\uffff] # Unescaped: avoid ["\\]
-              | (
-                    \\                          # Escape
-                    (
-                        ["\\/bfnrt]             # Standard escapes
-                      | (u[0-9A-Fa-f]{4})       # uXXXX
-                    )
-                )
-            )*
-            "
-            ''', VERBOSE)),
+        ('String', (ur'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
         ('Name', (r'[A-Za-z_][A-Za-z_0-9]*',)),
         ('Number', (r'''
             -?                  # Minus
             (0|([1-9][0-9]*))   # Int
             (\.[0-9]+)?         # Frac
             ([Ee][+-][0-9]+)?   # Exp
-         ''', VERBOSE)),
+            ''', VERBOSE)),
         ('Op', (r'[{}\[\]\-,:]',)),
         ('Space', (r'[ \t\r\n]+',)),
     ]

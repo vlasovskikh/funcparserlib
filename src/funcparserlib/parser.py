@@ -61,8 +61,8 @@ Debug messages are emitted via a `logging.Logger` object named
 `"funcparserlib"`.
 '''
 
-__all__ = ['Parser', 'NoParseError', 'State', 'finished', 'many', 'some', 'a',
-    'several', 'maybe', 'skip', 'oneplus', 'with_forward_decls']
+__all__ = ['finished', 'many', 'some', 'a', 'several', 'maybe', 'skip',
+    'oneplus', 'with_forward_decls', 'NoParseError', 'Parser']
 
 import logging
 
@@ -132,8 +132,8 @@ class Parser(object):
             return tree
         except NoParseError, e:
             max = e.state.max
-            pos = tokens[max] if len(tokens) > max else '<EOF>'
-            raise NoParseError(u'%s: %s' % (e.msg, pos))
+            tok = tokens[max] if len(tokens) > max else '<EOF>'
+            raise NoParseError(u'%s: %s' % (e.msg, tok))
 
     def __add__(self, other):
         '''Parser(a, b), Parser(a, c) -> Parser(a, _Tuple(b, c))

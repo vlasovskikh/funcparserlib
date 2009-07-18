@@ -19,8 +19,6 @@ def same(f1, f2):
 
 def run(input):
     'str -> str'
-    def okfail(b):
-        return 'ok' if b else 'fail'
     outname = '%s.out' % input
     errname = '%s.err' % input
     try:

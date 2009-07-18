@@ -127,8 +127,8 @@ def parse(seq):
     return dotfile.parse(seq)
 
 def main():
-    #import logging
-    #logging.basicConfig(level=logging.DEBUG)
+    import logging
+    logging.basicConfig(level=logging.INFO)
     try:
         stdin = os.fdopen(sys.stdin.fileno(), 'rb')
         input = stdin.read().decode(ENCODING)

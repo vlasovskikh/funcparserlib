@@ -21,49 +21,59 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-'''Парсер рекурсивного спуска на основе функциональных комбинаторов.
+'''A recurisve descend parser library based on functional combinators.
 
-Основные комбинаторы парсеров взяты из книги Harrison. J. "Introduction to
-Functional Programming" и переписаны с ML на Python. См. также
-<http://code.google.com/p/funprog-ru/>.
+Basic combinators are taken from Harrison's book ["Introduction to Functional
+Programming"][1] and translated from ML into Python. See also [a Russian
+translation of the book][2].
 
-Парсер `p` представляется функцией типа:
+  [1]: TODO: Insert a link
+  [2]: http://code.google.com/p/funprog-ru/
+
+A parser `p` is represented by a function of type:
 
     p :: Sequence(a), State -> (b, Sequence(a), State)
 
-принимающей последовательность токенов произвольного типа `a` и возвращающей
-функцию, принимающую состояние потока разбора и возвращаюую пару из пары
-(разобранный токен произвольного типа `b`, последовательность неразобранных
-токенов) и нового состояния разбора.
+that takes as its input a sequence of tokens of arbitrary type `a` and a
+current parsing state and return a triple of a parsed token of arbitrary type
+`b`, the sequence of tokens left, and the new parsing state.
 
-Далее в библиотеке используется синоним типа этой функции `Parser(a, b)`.
+The parsing state includes the current position in the sequence being parsed and
+the position of the rightmost token that has been consumed while parsing.
 
-Функции парсеров заворачиваются в объект `Parser`, для которого определны
-операторы `+` для последовательного выполнения двух парсеров, `|` для выбора
-второго парсера в случае ошибки разбора в первом, `>>` для преобразования
-значения, полученного при разборе.
+Parser functions are wrapped into an object of the class `Parser`. This class
+implements custom operators `+` for sequential composition of parsers, `|` for
+choice composition, `>>` for transforming the result of parsing. The method
+`Parser.parse` provides an easier way for invoking a parser hiding details
+related to a parser state:
 
-Для упрощения задачи синтаксического анализа и для получения более читаемых
-сообщений об ошибках рекомендуется в качестве токенов использовать объекты с
-выхода токенизатора, уже включающие в себя, например, информацию о позиции в
-коде. В библиотеку входит модуль `funcparserlib.lexer`, для токенизации на
-основе регулярных выражений.
+    Parser.parse :: Parser(a, b), Sequence(a) -> b
 
-Для вывода отладочных сообщений библиотека использует логгер из logging с именем
+Altough this module is able to deal with a sequences of any kind of objects, the
+recommended way of using it is applying a parser to a `Sequence(Token)`.
+`Token` objects are produced by a regexp-based tokenizer defined in
+`funcparserlib.lexer`. By using it this way you get more readable parsing error
+messages (as `Token` objects contain their position in the source file) and good
+separation of lexical and syntactic levels of the grammar. See examples for more
+info.
+
+Debug messages are emitted via a `logging.Logger` object named
 `"funcparserlib"`.
 '''
 
 __all__ = ['Parser', 'NoParseError', 'State', 'finished', 'many', 'some', 'a',
-        'several', 'maybe', 'skip', 'oneplus', 'with_forward_decls']
+    'several', 'maybe', 'skip', 'oneplus', 'with_forward_decls']
 
 import logging
 
 log = logging.getLogger('funcparserlib')
 
 class State(object):
-    '''Состояние разбора потока токенов.
+    '''A parsing state that is maintained basically for error reporting.
 
-    Хранит текущую позицию в потоке pos и максимально просмотренную позицию max.
+    It consists of the current position pos in the sequence being parsed and
+    the position max of the rightmost token that has been consumed while
+    parsing.
     '''
     def __init__(self, pos=0, max=0):
         self.pos = pos
@@ -84,7 +94,11 @@ class NoParseError(Exception):
         return self.msg
 
 class Parser(object):
+    '''A wrapper around a parser function that defines some operators for parser
+    composition.
+    '''
     def __init__(self, p, name=None):
+        'Wraps a parser function p into an object.'
         self.wrapped = p
         if name is not None:
             self.name = name
@@ -92,21 +106,26 @@ class Parser(object):
             self.name = p.__doc__
         
     def named(self, name):
-        'Задаёт имя парсера для более читаемых сообщений.'
+        'Specifies the name of the parser for more readable parsing log.'
         self.name = name
         return self
 
     def __call__(self, tokens, s):
-        'Sequence(a), State -> (b, Sequence(a), State)'
+        '''Sequence(a), State -> (b, Sequence(a), State)
+
+        Just a wrapper of the parser function.
+        '''
         log.debug('trying rule "%s"' % self.name)
         return self.wrapped(tokens, s)
 
     def parse(self, tokens):
         '''Sequence(a) -> b
 
-        Вызывает парсер, возвращая только результат разбора. Повышает читаемость
-        ошибок разбора за счёт вывода максимальной просмотренной позиции в
-        потоке.
+        Applies the parser to a sequence of tokens producing a parsing result.
+
+        It provides a way to invoke a parser hiding details related to the
+        parser state. Also it makes error messages more readable by specifying
+        the position of the rightmost token that has been reached.
         '''
         try:
             (tree, _, _) = self(tokens, State())
@@ -117,12 +136,15 @@ class Parser(object):
             raise NoParseError(u'%s: %s' % (e.msg, pos))
 
     def __add__(self, other):
-        '''Parser(a, b), Parser(a, c) -> Parser(a, _Tuple(b, c)*)
-        
-        Последовательная композиция парсеров.
+        '''Parser(a, b), Parser(a, c) -> Parser(a, _Tuple(b, c))
 
-        NOTE: Настоящий тип разобранного результата не всегда такой.
-        Статический тип указать нельзя.
+        A sequential composition of parsers.
+
+        NOTE: The real type of the parsed value isn't always such as specified.
+        Here we use dynamic typing for ignoring the tokens that are of no
+        interest to the user. Also we merge parsing results into a single _Tuple
+        unless the user explicitely prevents it. See also skip and >>
+        combinators.
         '''
         @Parser
         def f(tokens, s):
@@ -140,9 +162,14 @@ class Parser(object):
         return f
 
     def __or__(self, other):
-        '''Parser(a, b), Parser(a, c) -> Parser(a, b | c)
-        
-        Вариант выбора из двух парсеров.'''
+        '''Parser(a, b), Parser(a, c) -> Parser(a, b or c)
+
+        A choice composition of two parsers.
+
+        NOTE: Here we are not providing the exact type of the result. In a
+        statically typed langage something like Either b c could be used. See
+        also + combinator.
+        '''
         @Parser
         def f(tokens, s):
             try:
@@ -153,7 +180,12 @@ class Parser(object):
         return f
 
     def __rshift__(self, f):
-        'Parser(a, b), (b -> c) -> Parser(a, c)'
+        '''Parser(a, b), (b -> c) -> Parser(a, c)
+
+        Given a function from b to c, transforms a parser of b into a parser of
+        c. It is useful for transorming a parser value into another value for
+        making it a part of a parse tree or an AST.
+        '''
         @Parser
         def g(tokens, s):
             (v, r, s2) = self(tokens, s)
@@ -171,7 +203,7 @@ class _Ignored(object):
 def finished(tokens, s):
     '''Parser(a, None)
 
-    Выбрасывает ошибку, если в потоке токенов хоть что-то осталось.
+    Throws an exception if any tokens are left in the input unparsed.
     '''
     if len(tokens) == 0:
         return (None, tokens, s)
@@ -182,8 +214,9 @@ finished.name = 'finished'
 def many(p):
     '''Parser(a, b) -> Parser(a, [b])
 
-    Возвращает пасрсер, многократно применяющий парсер p к потоку, пока p
-    успешно разбирает токены, и возвращающий список разобранных значений.
+    Returns a parser that infinitely applies the parser p to the input sequence
+    of tokens while it successfully parsers them. The resulting parser returns a
+    list of parsed values.
     '''
     @Parser
     def f(tokens, s):
@@ -211,8 +244,7 @@ def many(p):
 def some(pred):
     '''(a -> bool) -> Parser(a, a)
 
-    Возвращает парсер, разбирающий токен, который удовлетворяет предикату
-    pred.
+    Returns a parser that parses a token if it satisfies a predicate pred.
     '''
     @Parser
     def f(tokens, s):
@@ -233,23 +265,26 @@ def some(pred):
 
 def a(value):
     '''a -> Parser(a, a)
-    
-    Возвращает парсер, разбирающий токен, равный value.
+
+    Returns a parser that parses a token that is equal to the value value.
     '''
     return some(lambda t: t == value).named('(a "%s")' % value)
 
 def several(pred):
     '''(a -> bool) -> Parser(a, [a])
-    
-    Возвращает парсер, разбирающий последовательность токенов,
-    удовлетворяющих предикату pred.
+
+    Returns a parser that parses a list of tokens that satisfy the predicate
+    pred.
     '''
     return many(some(pred))
 
 def maybe(p):
-    '''Parser(a, b) -> Parser(a, b | None)
+    '''Parser(a, b) -> Parser(a, b or None)
 
-    Возвращает парсер, который при ошибке возвращает None.
+    Returns a parser that retuns None if parsing fails.
+
+    NOTE: In a statically typed language, the type Maybe b could be more
+    approprieate.
     '''
     @Parser
     def f(tokens, s):
@@ -263,25 +298,25 @@ def maybe(p):
 def skip(p):
     '''Parser(a, b) -> _Ignored(b)
 
-    Возвращает парсер, результаты работы которого игнорируются комбинатором
-    последовательной композиции +.
+    Returns a parser which results are ignored by the combinator +. It is useful
+    for throwing away elements of concrete syntax (e. g. ",", ";").
     '''
     return p >> (lambda x: _Ignored(x))
 
 def oneplus(p):
     '''Parser(a, b) -> Parser(a, [b])
 
-    Возвращает парсер, разбирающий одно или более вхождение токена.
+    Returns a parser that applies the parser p one or more times.
     '''
     return p + many(p) >> (lambda x: [x[0]] + x[1])
 
 def with_forward_decls(suspension):
     '''(None -> Parser(a, b)) -> Parser(a, b)
 
-    Возвращает парсер, лениво вычисляющий требуемый парсер как результат
-    suspension. Требуется для определений парсеров, содержащих опережающие
-    объявления других парсеров, которые будут определены ниже на уровне этого
-    suspension.
+    Returns a parser that computes itself lazily as a result of the suspension
+    provided. It is needed when some parsers contain forward references to
+    parsers defined later and such references are cyclic. See examples for more
+    details.
     '''
     @Parser
     def f(tokens, s):

@@ -45,7 +45,7 @@ class Token(object):
         return 'Token(%r, %r)' % (self.type, self.value)
 
     def __eq__(self, other):
-        # FIXME: Здесь предполагается чувствительность к регистру
+        # FIXME: Case sensitivity is assumed here
         return (self.type == other.type
             and self.value == other.value)
 
@@ -66,9 +66,9 @@ class Token(object):
             self.type.ljust(14), self.value)
 
 def make_tokenizer(specs):
-    # TODO: Переработать спецификацию токенов. Наприрмер, ввести класс
-    # спецификации токена, чтобы задавать опции именованными параметрами функции
     '[(str, (str, int?))] -> (str -> Iterable(Token))'
+    # TODO: Revisit the token spec, e.g. introduce a class for it in order to
+    # set options via named arguments of the constructor
     def compile_spec(spec):
         name, args = spec
         return name, re.compile(*args)
@@ -97,8 +97,11 @@ def make_tokenizer(specs):
             i = i + len(t.value)
     return f
 
-# См. также <http://ostermiller.org/findcomment.html> для обсуждения поиска
-# многострочных комментариев при помощи regexps, в т. ч. не жадных (`*?`).
+
+# This is an example of a token spec. See also [this article][1] for a
+# discussion of searching for multiline comments using regexps (including `*?`).
+#
+#   [1]: http://ostermiller.org/findcomment.html
 _example_token_specs = [
     ('COMMENT', (r'\(\*(.|[\r\n])*?\*\)', re.MULTILINE)),
     ('COMMENT', (r'\{(.|[\r\n])*?\}', re.MULTILINE)),

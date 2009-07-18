@@ -1,16 +1,18 @@
 funcparserlib
 =============
 
-Библиотека для парсинга методом рекурсивного спуска на основе функциональных
-комбинаторов.
+A recurisve descend parser library based on functional combinators.
 
 
-Документация
-------------
+Documentation
+-------------
 
-См. комментарии в коде модулей `funcparserlib.parser` и `funcparserlib.lexer`.
-В каталоге `examples/dot` см. пример части грамматики языка описания графов DOT
-и тесты к этому примеру.
+See comments inside modules `funcparserlib.parser` and `funcparserlib.lexer`.
 
-# vim:ft=markdown tw=80:
+There a couple of examples available in `./examples` directory:
+
+* GraphViz DOT parser
+* JSON paser
+
+<!-- vim: set ft=markdown tw=80: -->
 

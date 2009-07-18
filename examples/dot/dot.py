@@ -24,7 +24,7 @@ from funcparserlib.parser import (some, a, maybe, many, finished, skip,
 try:
     from collections import namedtuple
 except ImportError:
-    # Примитивная реализация namedtuple для 2.1 < Python < 2.6
+    # Basic implementation of namedtuple for 2.1 < Python < 2.6
     def namedtuple(name, fields):
         'Only space-delimited fields are supported.'
         def prop(i, name):

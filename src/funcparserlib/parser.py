@@ -27,7 +27,7 @@ Basic combinators are taken from Harrison's book ["Introduction to Functional
 Programming"][1] and translated from ML into Python. See also [a Russian
 translation of the book][2].
 
-  [1]: TODO: Insert a link
+  [1]: http://www.cl.cam.ac.uk/teaching/Lectures/funprog-jrh-1996/
   [2]: http://code.google.com/p/funprog-ru/
 
 A parser `p` is represented by a function of type:
@@ -61,8 +61,8 @@ Debug messages are emitted via a `logging.Logger` object named
 `"funcparserlib"`.
 '''
 
-__all__ = ['finished', 'many', 'some', 'a', 'several', 'maybe', 'skip',
-    'oneplus', 'with_forward_decls', 'NoParseError', 'Parser']
+__all__ = ['finished', 'many', 'some', 'a', 'maybe', 'skip', 'oneplus',
+    'with_forward_decls', 'NoParseError', 'Parser']
 
 import logging
 
@@ -92,6 +92,9 @@ class NoParseError(Exception):
     
     def __unicode__(self):
         return self.msg
+
+    def __str__(self):
+        return self.msg.encode()
 
 class Parser(object):
     '''A wrapper around a parser function that defines some operators for parser
@@ -185,6 +188,9 @@ class Parser(object):
         Given a function from b to c, transforms a parser of b into a parser of
         c. It is useful for transorming a parser value into another value for
         making it a part of a parse tree or an AST.
+
+        This combinator may be thought of as a functor from b -> c to Parser(a,
+        b) -> Parser(a, c).
         '''
         @Parser
         def g(tokens, s):
@@ -238,7 +244,7 @@ def many(p):
                 res.append(v)
         except NoParseError, e:
             return (res, rest, e.state)
-    f_iter.name = '%s +' % p.name
+    f_iter.name = '%s *' % p.name
     return f_iter
 
 def some(pred):
@@ -270,14 +276,6 @@ def a(value):
     '''
     return some(lambda t: t == value).named('(a "%s")' % value)
 
-def several(pred):
-    '''(a -> bool) -> Parser(a, [a])
-
-    Returns a parser that parses a list of tokens that satisfy the predicate
-    pred.
-    '''
-    return many(some(pred))
-
 def maybe(p):
     '''Parser(a, b) -> Parser(a, b or None)
 
@@ -296,19 +294,19 @@ def maybe(p):
     return f
 
 def skip(p):
-    '''Parser(a, b) -> _Ignored(b)
+    '''Parser(a, b) -> Parser(a, _Ignored(b))
 
     Returns a parser which results are ignored by the combinator +. It is useful
     for throwing away elements of concrete syntax (e. g. ",", ";").
     '''
-    return p >> (lambda x: _Ignored(x))
+    return p >> _Ignored
 
 def oneplus(p):
     '''Parser(a, b) -> Parser(a, [b])
 
     Returns a parser that applies the parser p one or more times.
     '''
-    return p + many(p) >> (lambda x: [x[0]] + x[1])
+    return (p + many(p) >> (lambda x: [x[0]] + x[1])).named('%s +' % p.name)
 
 def with_forward_decls(suspension):
     '''(None -> Parser(a, b)) -> Parser(a, b)
@@ -322,4 +320,8 @@ def with_forward_decls(suspension):
     def f(tokens, s):
         return suspension()(tokens, s)
     return f
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
 

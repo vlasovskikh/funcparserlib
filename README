@@ -1,7 +1,7 @@
 funcparserlib
 =============
 
-A recurisve descend parser library based on functional combinators.
+A recurisve descent parser library based on functional combinators.
 
 
 Documentation

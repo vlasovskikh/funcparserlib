@@ -4,6 +4,15 @@ funcparserlib
 A recurisve descent parser library based on functional combinators.
 
 
+Installation
+------------
+
+The `funcparserlib` library is installed as usually via `setuptools`. The
+default installation command under the superuser is:
+
+    # python setup.py install
+
+
 Documentation
 -------------
 

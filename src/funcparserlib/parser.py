@@ -276,6 +276,13 @@ def a(value):
     '''
     return some(lambda t: t == value).named('(a "%s")' % value)
 
+def pure(x):
+    @Parser
+    def f(tokens, s):
+        return (x, tokens, s)
+    f.name = '(pure %r)' % x
+    return f
+
 def maybe(p):
     '''Parser(a, b) -> Parser(a, b or None)
 
@@ -284,14 +291,7 @@ def maybe(p):
     NOTE: In a statically typed language, the type Maybe b could be more
     approprieate.
     '''
-    @Parser
-    def f(tokens, s):
-        try:
-            return p(tokens, s)
-        except NoParseError, e:
-            return (None, tokens, e.state)
-    f.name = '(maybe %s)' % p.name
-    return f
+    return (p | pure(None)).named('(maybe %s)' % p.name)
 
 def skip(p):
     '''Parser(a, b) -> Parser(a, _Ignored(b))

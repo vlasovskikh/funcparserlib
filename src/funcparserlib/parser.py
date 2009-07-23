@@ -68,34 +68,6 @@ import logging
 
 log = logging.getLogger('funcparserlib')
 
-class State(object):
-    '''A parsing state that is maintained basically for error reporting.
-
-    It consists of the current position pos in the sequence being parsed and
-    the position max of the rightmost token that has been consumed while
-    parsing.
-    '''
-    def __init__(self, pos=0, max=0):
-        self.pos = pos
-        self.max = max
-        
-    def __unicode__(self):
-        return unicode((self.pos, self.max))
-
-    def __repr__(self):
-        return 'State(%r, %r)' % (self.pos, self.max)
-
-class NoParseError(Exception):
-    def __init__(self, msg='', state=None):
-        self.msg = msg
-        self.state = state
-    
-    def __unicode__(self):
-        return self.msg
-
-    def __str__(self):
-        return self.msg.encode()
-
 class Parser(object):
     '''A wrapper around a parser function that defines some operators for parser
     composition.
@@ -199,6 +171,34 @@ class Parser(object):
         g.name = '%s >>' % self.name
         return g
 
+class State(object):
+    '''A parsing state that is maintained basically for error reporting.
+
+    It consists of the current position pos in the sequence being parsed and
+    the position max of the rightmost token that has been consumed while
+    parsing.
+    '''
+    def __init__(self, pos=0, max=0):
+        self.pos = pos
+        self.max = max
+
+    def __unicode__(self):
+        return unicode((self.pos, self.max))
+
+    def __repr__(self):
+        return 'State(%r, %r)' % (self.pos, self.max)
+
+class NoParseError(Exception):
+    def __init__(self, msg='', state=None):
+        self.msg = msg
+        self.state = state
+
+    def __unicode__(self):
+        return self.msg
+
+    def __str__(self):
+        return self.msg.encode()
+
 class _Tuple(tuple): pass
 
 class _Ignored(object):
@@ -270,7 +270,7 @@ def some(pred):
     return f
 
 def a(value):
-    '''a -> Parser(a, a)
+    '''Eq(a) -> Parser(a, a)
 
     Returns a parser that parses a token that is equal to the value value.
     '''

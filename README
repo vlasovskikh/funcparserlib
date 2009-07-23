@@ -7,12 +7,17 @@ A recurisve descent parser library based on functional combinators.
 Documentation
 -------------
 
-See comments inside modules `funcparserlib.parser` and `funcparserlib.lexer`.
+The `funcparserlib` Tutorial is available as `./doc/Tutorial.md`. The link to
+a rendered HTML version can be found on the homepage.
+
+See also comments inside the modules `funcparserlib.parser` and
+`funcparserlib.lexer` or generate the API docs from the modules using `pydoc`.
 
 There a couple of examples available in `./examples` directory:
 
 * GraphViz DOT parser
 * JSON paser
+
 
 <!-- vim:set ft=markdown tw=80: -->
 

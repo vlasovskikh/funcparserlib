@@ -121,20 +121,19 @@ class Parser(object):
         unless the user explicitely prevents it. See also skip and >>
         combinators.
         '''
-        @Parser
-        def f(tokens, s):
-            (v1, r1, s2) = self(tokens, s)
-            (v2, r2, s3) = other(r1, s2)
+        def magic(v1, v2):
             vs = [v for v in [v1, v2] if not isinstance(v, _Ignored)]
             if len(vs) == 1:
-                t = vs[0]
+                return vs[0]
             elif len(vs) == 2 and isinstance(vs[0], _Tuple):
-                t = _Tuple(v1 + (v2,))
+                return _Tuple(v1 + (v2,))
             else:
-                t = _Tuple(vs)
-            return (t, r2, s3)
-        f.name = '(%s, %s)' % (self.name, other.name)
-        return f
+                return _Tuple(vs)
+        p = self.bind(lambda x:
+            other.bind(lambda y:
+                pure(magic(x, y))))
+        p.name = '(%s + %s)' % (self.name, other.name)
+        return p
 
     def __or__(self, other):
         '''Parser(a, b), Parser(a, c) -> Parser(a, b or c)
@@ -164,11 +163,21 @@ class Parser(object):
         This combinator may be thought of as a functor from b -> c to Parser(a,
         b) -> Parser(a, c).
         '''
+        p = self.bind(lambda x: pure(f(x)))
+        p.name = '%s >>' % self.name
+        return p
+
+    def bind(self, f):
+        '''Parser(a, b), (b -> Parser(a, c)) -> Parser(a, c)
+
+        NOTE: A monadic bind function. It is used internally to implement other
+        combinators. Functions bind and pure make the Parser a Monad.
+        '''
         @Parser
         def g(tokens, s):
             (v, r, s2) = self(tokens, s)
-            return (f(v), r, s2)
-        g.name = '%s >>' % self.name
+            return f(v)(r, s2)
+        g.name = '%s >>=' % self.name
         return g
 
 class State(object):
@@ -225,15 +234,6 @@ def many(p):
     list of parsed values.
     '''
     @Parser
-    def f(tokens, s):
-        try:
-            (v, next, s2) = p(tokens, s)
-            (vs, rest, s3) = many(p)(next, s2)
-            return ([v] + vs, rest, s3)
-        except NoParseError, e:
-            return ([], tokens, e.state)
-
-    @Parser
     def f_iter(tokens, s):
         'Iterative implementation preventing the stack overflow.'
         res = []
@@ -280,7 +280,7 @@ def pure(x):
     @Parser
     def f(tokens, s):
         return (x, tokens, s)
-    f.name = '(pure %r)' % x
+    f.name = '(pure %r)' % repr(x)
     return f
 
 def maybe(p):

@@ -51,6 +51,7 @@ def parse(seq):
     tokval = lambda x: x.value
     toktype = lambda t: some(lambda x: x.type == t) >> tokval
     op = lambda s: a(Token('Op', s)) >> tokval
+    op_ = lambda s: skip(op(s))
     n = lambda s: a(Token('Name', s)) >> tokval
     def make_array(n):
         if n is None:
@@ -92,16 +93,16 @@ def parse(seq):
         | array
         | number
         | string).named('value')
-    member = (string + skip(op(':')) + value >> tuple).named('member')
+    member = (string + op_(':') + value >> tuple).named('member')
     object = (
-        skip(op('{')) +
-        maybe(member + many(skip(op(',')) + member)) +
-        skip(op('}'))
+        op_('{') +
+        maybe(member + many(op_(',') + member)) +
+        op_('}')
         >> make_object).named('object')
     array = (
-        skip(op('[')) +
-        maybe(value + many(skip(op(',')) + value)) +
-        skip(op(']'))
+        op_('[') +
+        maybe(value + many(op_(',') + value)) +
+        op_(']')
         >> make_array).named('array')
     json_text = (object | array).named('json_text')
     json_file = json_text + skip(finished)

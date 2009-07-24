@@ -62,11 +62,12 @@ Debug messages are emitted via a `logging.Logger` object named
 '''
 
 __all__ = ['finished', 'many', 'some', 'a', 'maybe', 'skip', 'oneplus',
-    'with_forward_decls', 'NoParseError', 'Parser']
+    'forward_decl', 'NoParseError', 'Parser']
 
 import logging
-
 log = logging.getLogger('funcparserlib')
+
+debug = False
 
 class Parser(object):
     '''A wrapper around a parser function that defines some operators for parser
@@ -79,18 +80,24 @@ class Parser(object):
             self.name = name
         else:
             self.name = p.__doc__
-        
+
     def named(self, name):
         'Specifies the name of the parser for more readable parsing log.'
         self.name = name
         return self
+
+    def define(self, p):
+        'Defines or redefines the parser wrapped into this one.'
+        self.wrapped = p
+        return self.named(self.name)
 
     def __call__(self, tokens, s):
         '''Sequence(a), State -> (b, Sequence(a), State)
 
         Just a wrapper of the parser function.
         '''
-        log.debug('trying rule "%s"' % self.name)
+        if debug:
+            log.debug('trying rule "%s"' % self.name)
         return self.wrapped(tokens, s)
 
     def parse(self, tokens):
@@ -129,9 +136,13 @@ class Parser(object):
                 return _Tuple(v1 + (v2,))
             else:
                 return _Tuple(vs)
-        p = self.bind(lambda x:
-            other.bind(lambda y:
-                pure(magic(x, y))))
+        @Parser
+        def p(tokens, s):
+            (v1, r1, s2) = self(tokens, s)
+            (v2, r2, s3) = other(r1, s2)
+            return (magic(v1, v2), r2, s3)
+        # or in terms of bind and pure:
+        # p = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
         p.name = '(%s + %s)' % (self.name, other.name)
         return p
 
@@ -163,7 +174,12 @@ class Parser(object):
         This combinator may be thought of as a functor from b -> c to Parser(a,
         b) -> Parser(a, c).
         '''
-        p = self.bind(lambda x: pure(f(x)))
+        @Parser
+        def p(tokens, s):
+            (v, r, s2) = self(tokens, s)
+            return (f(v), r, s2)
+        # or in terms of bind and pure:
+        # p = self.bind(lambda x: pure(f(x)))
         p.name = '%s >>' % self.name
         return p
 
@@ -257,14 +273,16 @@ def some(pred):
         if len(tokens) == 0:
             raise NoParseError('no tokens left in the stream', s)
         else:
-            t, ts = tokens[0], tokens[1:]
+            t = tokens[0]
             if pred(t):
                 pos = s.pos + 1
-                log.debug(u'*matched* "%s", new state = %s' % (
-                    t, State(pos, max(pos, s.max))))
-                return (t, ts, State(pos, max(pos, s.max)))
+                s2 = State(pos, max(pos, s.max))
+                if debug:
+                    log.debug(u'*matched* "%s", new state = %s' % (t, s2))
+                return (t, tokens[1:], s2)
             else:
-                log.debug(u'failed "%s", state = %s' % (t, s))
+                if debug:
+                    log.debug(u'failed "%s", state = %s' % (t, s))
                 raise NoParseError('got unexpected token', s)
     f.name = '(some ...)'
     return f
@@ -319,6 +337,18 @@ def with_forward_decls(suspension):
     @Parser
     def f(tokens, s):
         return suspension()(tokens, s)
+    return f
+
+def forward_decl():
+    '''None -> Parser(?, ?)
+
+    Returns an undefined parser that can be used as a forward declaration. You
+    will be able to define() it when all the parsers it depends on are
+    available.
+    '''
+    @Parser
+    def f(tokens, s):
+        raise NotImplementedError('you must define() a forward_decl somewhere')
     return f
 
 if __name__ == '__main__':

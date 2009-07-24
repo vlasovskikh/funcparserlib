@@ -20,7 +20,7 @@ from re import MULTILINE
 from pprint import pformat
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-    oneplus, with_forward_decls, NoParseError)
+    oneplus, forward_decl, NoParseError)
 try:
     from collections import namedtuple
 except ImportError:
@@ -86,19 +86,13 @@ def parse(seq):
        (n('graph') | n('node') | n('edge')) +
        attr_list
        >> unarg(DefAtts)).named('attr_stmt')
-    # We use stmt_list forward declaration here
-    subgraph = with_forward_decls(
-        lambda:
-        skip(n('subgraph')) +
-        maybe(id) +
-        skip(op('{')) +
-        stmt_list +
-        skip(op('}'))
-        >> unarg(SubGraph)).named('subgraph')
     graph_attr = (
         id + skip(op('=')) + id
         >> make_graph_attr).named('graph_attr')
     node_stmt = (node_id + attr_list >> unarg(Node)).named('node_stmt')
+    # We use a forward_decl becaue of circular definitions like (stmt_list ->
+    # stmt -> subgraph -> stmt_list)
+    subgraph = forward_decl()
     edge_rhs = (
         skip(op('->') | op('--')) + (subgraph | node_id)).named('edge_rhs')
     edge_stmt = (
@@ -114,6 +108,13 @@ def parse(seq):
         | node_stmt
     )
     stmt_list = many(stmt + skip(maybe(op(';'))))
+    subgraph.define(
+        skip(n('subgraph')) +
+        maybe(id) +
+        skip(op('{')) +
+        stmt_list +
+        skip(op('}'))
+        >> unarg(SubGraph)).named('subgraph')
     graph = (
         maybe(n('strict')) +
         maybe(n('graph') | n('digraph')) +

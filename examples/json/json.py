@@ -12,7 +12,7 @@ from re import VERBOSE
 from pprint import pformat
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-    with_forward_decls, NoParseError)
+    forward_decl, NoParseError)
 
 ENCODING = 'utf-8'
 regexps = {
@@ -84,15 +84,7 @@ def parse(seq):
     false = (n('false') >> const(False)).named('false')
     number = (toktype('Number') >> make_number).named('number')
     string = (toktype('String') >> make_string).named('string')
-    value = with_forward_decls(
-        lambda:
-          null
-        | true
-        | false
-        | object
-        | array
-        | number
-        | string).named('value')
+    value = forward_decl()
     member = (string + op_(':') + value >> tuple).named('member')
     object = (
         op_('{') +
@@ -104,6 +96,14 @@ def parse(seq):
         maybe(value + many(op_(',') + value)) +
         op_(']')
         >> make_array).named('array')
+    value.define(
+          null
+        | true
+        | false
+        | object
+        | array
+        | number
+        | string).named('value')
     json_text = (object | array).named('json_text')
     json_file = json_text + skip(finished)
 

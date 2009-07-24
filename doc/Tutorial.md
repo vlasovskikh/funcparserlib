@@ -919,6 +919,11 @@ Import it:
 
     >>> from funcparserlib.parser import with_forward_decls
 
+Another way to define mutually recursive parsers is via the `forward_decl`
+combinator. It uses some bits of mutable state, but it is more efficient and
+probably will be the recommended way to deal with recursive definitions. See the
+sources for details. But let's use `with_forward_decls` here.
+
 Finally, we can write a definition of `primary` that has a forward declaration
 of `expr`:
 

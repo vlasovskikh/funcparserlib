@@ -1,1 +1,2 @@
-Graph(strict=None, type=u'graph', id=u'g1', stmts=[])
+Graph [id=g1, strict=False, type=graph]
+`-- stmts

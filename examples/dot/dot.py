@@ -18,6 +18,7 @@ At the moment, the parser builds only a parse tree, not an abstract syntax tree
 import sys, os
 from re import MULTILINE
 from pprint import pformat
+from funcparserlib.util import pretty_tree
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
     oneplus, forward_decl, NoParseError)
@@ -44,8 +45,8 @@ Graph = namedtuple('Graph', 'strict type id stmts')
 SubGraph = namedtuple('SubGraph', 'id stmts')
 Node = namedtuple('Node', 'id attrs')
 Attr = namedtuple('Attr', 'name value')
-Edge = namedtuple('Edge', 'node links attrs')
-DefAtts = namedtuple('DefAttrs', 'object attrs')
+Edge = namedtuple('Edge', 'nodes attrs')
+DefAttrs = namedtuple('DefAttrs', 'object attrs')
 
 def tokenize(str):
     'str -> Sequence(Token)'
@@ -73,7 +74,8 @@ def parse(seq):
     op_ = lambda s: skip(op(s))
     id = some(lambda t:
         t.type in ['Name', 'Number', 'String']).named('id') >> tokval
-    make_graph_attr = lambda args: DefAtts(u'graph', [Attr(*args)])
+    make_graph_attr = lambda args: DefAttrs(u'graph', [Attr(*args)])
+    make_edge = lambda x, xs, attrs: Edge([x] + xs, attrs)
 
     node_id = id # + maybe(port)
     a_list = (
@@ -87,7 +89,7 @@ def parse(seq):
     attr_stmt = (
        (n('graph') | n('node') | n('edge')) +
        attr_list
-       >> unarg(DefAtts))
+       >> unarg(DefAttrs))
     graph_attr = id + op_('=') + id >> make_graph_attr
     node_stmt = node_id + attr_list >> unarg(Node)
     # We use a forward_decl becaue of circular definitions like (stmt_list ->
@@ -98,7 +100,7 @@ def parse(seq):
         (subgraph | node_id) +
         oneplus(edge_rhs) +
         attr_list
-        >> unarg(Edge))
+        >> unarg(make_edge))
     stmt = (
           attr_stmt
         | edge_stmt
@@ -126,6 +128,43 @@ def parse(seq):
 
     return dotfile.parse(seq)
 
+def pretty_parse_tree(x):
+    'object -> str'
+    Pair = namedtuple('Pair', 'first second')
+    p = lambda x, y: Pair(x, y)
+    def kids(x):
+        'object -> list(object)'
+        if isinstance(x, (Graph, SubGraph)):
+            return [p('stmts', x.stmts)]
+        elif isinstance(x, (Node, DefAttrs)):
+            return [p('attrs', x.attrs)]
+        elif isinstance(x, Edge):
+            return [p('nodes', x.nodes), p('attrs', x.attrs)]
+        elif isinstance (x, Pair):
+            return x.second
+        else:
+            return []
+    def show(x):
+        'object -> str'
+        if isinstance(x, Pair):
+            return x.first
+        elif isinstance(x, Graph):
+            return 'Graph [id=%s, strict=%r, type=%s]' % (
+                x.id, x.strict is not None, x.type)
+        elif isinstance(x, SubGraph):
+            return 'SubGraph [id=%s]' % x.id
+        elif isinstance(x, Edge):
+            return 'Edge'
+        elif isinstance(x, Attr):
+            return 'Attr [name=%s, value=%s]' % (x.name, x.value)
+        elif isinstance(x, DefAttrs):
+            return 'DefAttrs [object=%s]' % x.object
+        elif isinstance(x, Node):
+            return 'Node [id=%s]' % x.id
+        else:
+            return unicode(x)
+    return pretty_tree(x, kids, show)
+
 def main():
     import logging
     logging.basicConfig(level=logging.INFO)
@@ -133,7 +172,8 @@ def main():
         stdin = os.fdopen(sys.stdin.fileno(), 'rb')
         input = stdin.read().decode(ENCODING)
         tree = parse(tokenize(input))
-        print pformat(tree)
+        #print pformat(tree)
+        print pretty_parse_tree(tree)
     except (NoParseError, LexerError), e:
         msg = (u'syntax error: %s' % e).encode(ENCODING)
         print >> sys.stderr, msg

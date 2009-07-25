@@ -1,1 +1,8 @@
-Graph(strict=None, type=u'graph', id=u'g1', stmts=[Node(id=u'n1', attrs=[]), Node(id=u'n2', attrs=[]), Node(id=u'n3', attrs=[])])
+Graph [id=g1, strict=False, type=graph]
+`-- stmts
+    |-- Node [id=n1]
+    |   `-- attrs
+    |-- Node [id=n2]
+    |   `-- attrs
+    `-- Node [id=n3]
+        `-- attrs

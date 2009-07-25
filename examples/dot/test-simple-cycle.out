@@ -1,1 +1,20 @@
-Graph(strict=None, type=u'digraph', id=u'g1', stmts=[Edge(node=u'n1', links=[u'n2'], attrs=[Attr(name=u'w', value=u'5')]), Edge(node=u'n2', links=[u'n3'], attrs=[Attr(name=u'w', value=u'10')]), Edge(node=u'n3', links=[u'n1'], attrs=[Attr(name=u'w', value=u'7')])])
+Graph [id=g1, strict=False, type=digraph]
+`-- stmts
+    |-- Edge
+    |   |-- nodes
+    |   |   |-- n1
+    |   |   `-- n2
+    |   `-- attrs
+    |       `-- Attr [name=w, value=5]
+    |-- Edge
+    |   |-- nodes
+    |   |   |-- n2
+    |   |   `-- n3
+    |   `-- attrs
+    |       `-- Attr [name=w, value=10]
+    `-- Edge
+        |-- nodes
+        |   |-- n3
+        |   `-- n1
+        `-- attrs
+            `-- Attr [name=w, value=7]

@@ -32,11 +32,11 @@ translation of the book][2].
 
 A parser `p` is represented by a function of type:
 
-    p :: Sequence(a), State -> (b, Sequence(a), State)
+    p :: Sequence(a), State -> (b, State)
 
 that takes as its input a sequence of tokens of arbitrary type `a` and a
-current parsing state and return a triple of a parsed token of arbitrary type
-`b`, the sequence of tokens left, and the new parsing state.
+current parsing state and return a pair of a parsed token of arbitrary type
+`b` and the new parsing state.
 
 The parsing state includes the current position in the sequence being parsed and
 the position of the rightmost token that has been consumed while parsing.
@@ -92,7 +92,7 @@ class Parser(object):
         return self.named(self.name)
 
     def __call__(self, tokens, s):
-        '''Sequence(a), State -> (b, Sequence(a), State)
+        '''Sequence(a), State -> (b, State)
 
         Just a wrapper of the parser function.
         '''
@@ -110,7 +110,7 @@ class Parser(object):
         the position of the rightmost token that has been reached.
         '''
         try:
-            (tree, _, _) = self(tokens, State())
+            (tree, _) = self(tokens, State())
             return tree
         except NoParseError, e:
             max = e.state.max
@@ -138,9 +138,9 @@ class Parser(object):
                 return _Tuple(vs)
         @Parser
         def p(tokens, s):
-            (v1, r1, s2) = self(tokens, s)
-            (v2, r2, s3) = other(r1, s2)
-            return (magic(v1, v2), r2, s3)
+            (v1, s2) = self(tokens, s)
+            (v2, s3) = other(tokens, s2)
+            return (magic(v1, v2), s3)
         # or in terms of bind and pure:
         # p = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
         p.name = '(%s + %s)' % (self.name, other.name)
@@ -176,8 +176,8 @@ class Parser(object):
         '''
         @Parser
         def p(tokens, s):
-            (v, r, s2) = self(tokens, s)
-            return (f(v), r, s2)
+            (v, s2) = self(tokens, s)
+            return (f(v), s2)
         # or in terms of bind and pure:
         # p = self.bind(lambda x: pure(f(x)))
         p.name = '%s >>' % self.name
@@ -191,8 +191,8 @@ class Parser(object):
         '''
         @Parser
         def g(tokens, s):
-            (v, r, s2) = self(tokens, s)
-            return f(v)(r, s2)
+            (v, s2) = self(tokens, s)
+            return f(v)(tokens, s2)
         g.name = '%s >>=' % self.name
         return g
 
@@ -236,8 +236,8 @@ def finished(tokens, s):
 
     Throws an exception if any tokens are left in the input unparsed.
     '''
-    if len(tokens) == 0:
-        return (None, tokens, s)
+    if s.pos >= len(tokens):
+        return (None, s)
     else:
         raise NoParseError('should have reached eof', s)
 finished.name = 'finished'
@@ -253,13 +253,12 @@ def many(p):
     def f_iter(tokens, s):
         'Iterative implementation preventing the stack overflow.'
         res = []
-        rest = tokens
         try:
             while True:
-                (v, rest, s) = p(rest, s)
+                (v, s) = p(tokens, s)
                 res.append(v)
         except NoParseError, e:
-            return (res, rest, e.state)
+            return (res, e.state)
     f_iter.name = '%s *' % p.name
     return f_iter
 
@@ -270,16 +269,16 @@ def some(pred):
     '''
     @Parser
     def f(tokens, s):
-        if len(tokens) == 0:
+        if s.pos >= len(tokens):
             raise NoParseError('no tokens left in the stream', s)
         else:
-            t = tokens[0]
+            t = tokens[s.pos]
             if pred(t):
                 pos = s.pos + 1
                 s2 = State(pos, max(pos, s.max))
                 if debug:
                     log.debug(u'*matched* "%s", new state = %s' % (t, s2))
-                return (t, tokens[1:], s2)
+                return (t, s2)
             else:
                 if debug:
                     log.debug(u'failed "%s", state = %s' % (t, s))
@@ -296,8 +295,8 @@ def a(value):
 
 def pure(x):
     @Parser
-    def f(tokens, s):
-        return (x, tokens, s)
+    def f(_, s):
+        return (x, s)
     f.name = '(pure %r)' % repr(x)
     return f
 

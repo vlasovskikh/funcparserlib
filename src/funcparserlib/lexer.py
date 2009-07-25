@@ -73,9 +73,9 @@ def make_tokenizer(specs):
         name, args = spec
         return name, re.compile(*args)
     compiled = [compile_spec(s) for s in specs]
-    def match_specs(specs, str, (line, pos)):
+    def match_specs(specs, str, i, (line, pos)):
         for type, regexp in specs:
-            m = regexp.match(str)
+            m = regexp.match(str, i)
             if m is not None:
                 value = str[m.start():m.end()]
                 nls = value.count('\n')
@@ -91,7 +91,7 @@ def make_tokenizer(specs):
         line, pos = 1, 0
         i = 0
         while i < len(str):
-            t = match_specs(compiled, str[i:], (line, pos))
+            t = match_specs(compiled, str, i, (line, pos))
             yield t
             line, pos = t.end
             i = i + len(t.value)

@@ -1,4 +1,5 @@
 syntax:glob
+tmp
 funcparserlib.egg-info
 examples/dot/*.png
 *.pyc

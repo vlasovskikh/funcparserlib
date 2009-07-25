@@ -109,12 +109,16 @@ def parse(seq):
 
     return json_file.parse(seq)
 
+def loads(s):
+    'str -> object'
+    return parse(tokenize(s))
+
 def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     try:
         stdin = os.fdopen(sys.stdin.fileno(), 'rb')
         input = stdin.read().decode(ENCODING)
-        tree = parse(tokenize(input))
+        tree = loads(input)
         print pformat(tree)
     except (NoParseError, LexerError), e:
         msg = (u'syntax error: %s' % e).encode(ENCODING)

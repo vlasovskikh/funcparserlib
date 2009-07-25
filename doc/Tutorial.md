@@ -18,6 +18,8 @@ The `funcparserlib` Tutorial
       http://code.google.com/p/funcparserlib/
     </a>
   </dd>
+  <dt>Library Version:</dt>
+  <dd>0.3</dd>
 </dl>
 
 

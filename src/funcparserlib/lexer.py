@@ -78,19 +78,20 @@ def make_tokenizer(specs):
             m = regexp.match(str, i)
             if m is not None:
                 value = str[m.start():m.end()]
-                nls = value.count('\n')
+                nls = value.count(u'\n')
                 n_line = line + nls
                 if nls == 0:
                     n_pos = pos + len(value)
                 else:
-                    n_pos = len(value) - value.rfind('\n') - 1
+                    n_pos = len(value) - value.rfind(u'\n') - 1
                 return Token(type, value, (line, pos), (n_line, n_pos))
         else:
-            raise LexerError((line, pos), str.split('\n', 1)[0])
+            raise LexerError((line, pos), str.split(u'\n', 1)[0])
     def f(str):
+        length = len(str)
         line, pos = 1, 0
         i = 0
-        while i < len(str):
+        while i < length:
             t = match_specs(compiled, str, i, (line, pos))
             yield t
             line, pos = t.end

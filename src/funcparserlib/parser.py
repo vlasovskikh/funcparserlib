@@ -89,7 +89,7 @@ class Parser(object):
     def define(self, p):
         'Defines or redefines the parser wrapped into this one.'
         self.wrapped = p
-        return self.named(self.name)
+        self.named(self.name)
 
     def __call__(self, tokens, s):
         '''Sequence(a), State -> (b, State)

@@ -70,36 +70,35 @@ def parse(seq):
     flatten = lambda list: sum(list, [])
     n = lambda s: a(Token('Name', s)) >> tokval
     op = lambda s: a(Token('Op', s)) >> tokval
-    id = some(lambda t: t.type in ['Name', 'Number', 'String']).named('id') >> tokval
+    op_ = lambda s: skip(op(s))
+    id = some(lambda t:
+        t.type in ['Name', 'Number', 'String']).named('id') >> tokval
     make_graph_attr = lambda args: DefAtts(u'graph', [Attr(*args)])
 
     node_id = id # + maybe(port)
     a_list = (
         id +
-        maybe(skip(op('=')) + id) +
+        maybe(op_('=') + id) +
         skip(maybe(op(',')))
         >> unarg(Attr))
     attr_list = (
-        many(skip(op('[')) + many(a_list) + skip(op(']')))
-        >> flatten).named('attr_list')
+        many(op_('[') + many(a_list) + op_(']'))
+        >> flatten)
     attr_stmt = (
        (n('graph') | n('node') | n('edge')) +
        attr_list
-       >> unarg(DefAtts)).named('attr_stmt')
-    graph_attr = (
-        id + skip(op('=')) + id
-        >> make_graph_attr).named('graph_attr')
-    node_stmt = (node_id + attr_list >> unarg(Node)).named('node_stmt')
+       >> unarg(DefAtts))
+    graph_attr = id + op_('=') + id >> make_graph_attr
+    node_stmt = node_id + attr_list >> unarg(Node)
     # We use a forward_decl becaue of circular definitions like (stmt_list ->
     # stmt -> subgraph -> stmt_list)
     subgraph = forward_decl()
-    edge_rhs = (
-        skip(op('->') | op('--')) + (subgraph | node_id)).named('edge_rhs')
+    edge_rhs = skip(op('->') | op('--')) + (subgraph | node_id)
     edge_stmt = (
         (subgraph | node_id) +
         oneplus(edge_rhs) +
         attr_list
-        >> unarg(Edge)).named('edge_stmt')
+        >> unarg(Edge))
     stmt = (
           attr_stmt
         | edge_stmt
@@ -111,18 +110,18 @@ def parse(seq):
     subgraph.define(
         skip(n('subgraph')) +
         maybe(id) +
-        skip(op('{')) +
+        op_('{') +
         stmt_list +
-        skip(op('}'))
-        >> unarg(SubGraph)).named('subgraph')
+        op_('}')
+        >> unarg(SubGraph))
     graph = (
         maybe(n('strict')) +
         maybe(n('graph') | n('digraph')) +
         maybe(id) +
-        skip(op('{')) +
+        op_('{') +
         stmt_list +
-        skip(op('}'))
-        >> unarg(Graph)).named('graph')
+        op_('}')
+        >> unarg(Graph))
     dotfile = graph + skip(finished)
 
     return dotfile.parse(seq)

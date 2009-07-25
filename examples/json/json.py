@@ -31,15 +31,15 @@ def tokenize(str):
     'str -> Sequence(Token)'
     specs = [
         ('String', (ur'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
-        ('Name', (r'[A-Za-z_][A-Za-z_0-9]*',)),
+        ('Name',   (r'[A-Za-z_][A-Za-z_0-9]*',)),
         ('Number', (r'''
             -?                  # Minus
             (0|([1-9][0-9]*))   # Int
             (\.[0-9]+)?         # Frac
             ([Ee][+-][0-9]+)?   # Exp
             ''', VERBOSE)),
-        ('Op', (r'[{}\[\]\-,:]',)),
-        ('Space', (r'[ \t\r\n]+',)),
+        ('Op',     (r'[{}\[\]\-,:]',)),
+        ('Space',  (r'[ \t\r\n]+',)),
     ]
     useless = ['Space']
     t = make_tokenizer(specs)
@@ -79,23 +79,23 @@ def parse(seq):
     def make_string(n):
         return unescape(n[1:-1])
 
-    null = (n('null') >> const(None)).named('null')
-    true = (n('true') >> const(True)).named('true')
-    false = (n('false') >> const(False)).named('false')
-    number = (toktype('Number') >> make_number).named('number')
-    string = (toktype('String') >> make_string).named('string')
+    null = n('null') >> const(None)
+    true = n('true') >> const(True)
+    false = n('false') >> const(False)
+    number = toktype('Number') >> make_number
+    string = toktype('String') >> make_string
     value = forward_decl()
-    member = (string + op_(':') + value >> tuple).named('member')
+    member = string + op_(':') + value >> tuple
     object = (
         op_('{') +
         maybe(member + many(op_(',') + member)) +
         op_('}')
-        >> make_object).named('object')
+        >> make_object)
     array = (
         op_('[') +
         maybe(value + many(op_(',') + value)) +
         op_(']')
-        >> make_array).named('array')
+        >> make_array)
     value.define(
           null
         | true
@@ -103,8 +103,8 @@ def parse(seq):
         | object
         | array
         | number
-        | string).named('value')
-    json_text = (object | array).named('json_text')
+        | string)
+    json_text = object | array
     json_file = json_text + skip(finished)
 
     return json_file.parse(seq)

@@ -55,6 +55,7 @@ Then you can:
 3. Transform the source code into a sequence of tokens:
 
         >>> toks = dotparser.tokenize(s)
+
         >>> print '\n'.join(unicode(tok) for tok in toks)
         1,0-1,7: Name 'digraph'
         1,8-1,10: Name 'g1'
@@ -90,6 +91,7 @@ Then you can:
 4. Parse the sequence of tokens into a parse tree:
 
         >>> tree = dotparser.parse(toks)
+
         >>> from textwrap import fill
         >>> print fill(repr(tree), 70)
         Graph(strict=None, type='digraph', id='g1', stmts=[Edge(nodes=['n1',
@@ -130,7 +132,7 @@ Then you can:
 6. And so on. Basically, you got full access to the tree-like structure of the
    DOT file
 
-See [the source code][dot] of the DOT parser and the docs at [the funcparserlib
+See [the source code][dot-py] of the DOT parser and the docs at [the funcparserlib
 homepage][funcparserlib] for details.
 
   [dot]: http://www.graphviz.org/

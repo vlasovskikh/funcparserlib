@@ -30,8 +30,8 @@ re_esc = re.compile(regexps['escaped'], VERBOSE)
 def tokenize(str):
     'str -> Sequence(Token)'
     specs = [
+        ('Space',  (r'[ \t\r\n]+',)),
         ('String', (ur'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
-        ('Name',   (r'[A-Za-z_][A-Za-z_0-9]*',)),
         ('Number', (r'''
             -?                  # Minus
             (0|([1-9][0-9]*))   # Int
@@ -39,7 +39,7 @@ def tokenize(str):
             ([Ee][+-][0-9]+)?   # Exp
             ''', VERBOSE)),
         ('Op',     (r'[{}\[\]\-,:]',)),
-        ('Space',  (r'[ \t\r\n]+',)),
+        ('Name',   (r'[A-Za-z_][A-Za-z_0-9]*',)),
     ]
     useless = ['Space']
     t = make_tokenizer(specs)

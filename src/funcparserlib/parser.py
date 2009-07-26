@@ -73,13 +73,9 @@ class Parser(object):
     '''A wrapper around a parser function that defines some operators for parser
     composition.
     '''
-    def __init__(self, p, name=None):
+    def __init__(self, p):
         'Wraps a parser function p into an object.'
-        self.wrapped = p
-        if name is not None:
-            self.name = name
-        else:
-            self.name = p.__doc__
+        self.define(p)
 
     def named(self, name):
         'Specifies the name of the parser for more readable parsing log.'
@@ -87,18 +83,16 @@ class Parser(object):
         return self
 
     def define(self, p):
-        'Defines or redefines the parser wrapped into this one.'
-        self.wrapped = p
-        self.named(self.name)
+        'Defines a parser wrapped into this object.'
+        self.run = getattr(p, 'run', p)
+        self.named(getattr(p, 'name', p.__doc__))
 
-    def __call__(self, tokens, s):
-        '''Sequence(a), State -> (b, State)
+    def run(self, tokens, s):
+        '''(Sequence(a), State -> b, State
 
-        Just a wrapper of the parser function.
+        Runs a parser wrapped into this object.
         '''
-        if debug:
-            log.debug('trying rule "%s"' % self.name)
-        return self.wrapped(tokens, s)
+        raise NotImplementedError('you must define() a parser')
 
     def parse(self, tokens):
         '''Sequence(a) -> b
@@ -110,7 +104,7 @@ class Parser(object):
         the position of the rightmost token that has been reached.
         '''
         try:
-            (tree, _) = self(tokens, State())
+            (tree, _) = self.run(tokens, State())
             return tree
         except NoParseError, e:
             max = e.state.max
@@ -138,8 +132,8 @@ class Parser(object):
                 return _Tuple(vs)
         @Parser
         def p(tokens, s):
-            (v1, s2) = self(tokens, s)
-            (v2, s3) = other(tokens, s2)
+            (v1, s2) = self.run(tokens, s)
+            (v2, s3) = other.run(tokens, s2)
             return (magic(v1, v2), s3)
         # or in terms of bind and pure:
         # p = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
@@ -158,9 +152,9 @@ class Parser(object):
         @Parser
         def f(tokens, s):
             try:
-                return self(tokens, s)
+                return self.run(tokens, s)
             except NoParseError, e:
-                return other(tokens, State(s.pos, e.state.max))
+                return other.run(tokens, State(s.pos, e.state.max))
         f.name = '(%s | %s)' % (self.name, other.name)
         return f
 
@@ -176,7 +170,7 @@ class Parser(object):
         '''
         @Parser
         def p(tokens, s):
-            (v, s2) = self(tokens, s)
+            (v, s2) = self.run(tokens, s)
             return (f(v), s2)
         # or in terms of bind and pure:
         # p = self.bind(lambda x: pure(f(x)))
@@ -191,8 +185,8 @@ class Parser(object):
         '''
         @Parser
         def g(tokens, s):
-            (v, s2) = self(tokens, s)
-            return f(v)(tokens, s2)
+            (v, s2) = self.run(tokens, s)
+            return f(v).run(tokens, s2)
         g.name = '%s >>=' % self.name
         return g
 
@@ -255,7 +249,7 @@ def many(p):
         res = []
         try:
             while True:
-                (v, s) = p(tokens, s)
+                (v, s) = p.run(tokens, s)
                 res.append(v)
         except NoParseError, e:
             return (res, e.state)
@@ -335,7 +329,7 @@ def with_forward_decls(suspension):
     '''
     @Parser
     def f(tokens, s):
-        return suspension()(tokens, s)
+        return suspension().run(tokens, s)
     return f
 
 def forward_decl():

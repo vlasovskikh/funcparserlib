@@ -104,7 +104,7 @@ Test it:
     >>> input.parse('{}foo')
     Traceback (most recent call last):
         ...
-    NoParseError: should have reached eof: f
+    NoParseError: should have reached <EOF>: f
 
 Allow zero or more nested brackets:
 

@@ -1116,7 +1116,7 @@ Test is using a hand crafted illegal sequence of tokens:
     ...     Token(token.ENDMARKER, '')])
     Traceback (most recent call last):
         ...
-    NoParseError: should have reached eof: 0,0-0,0 ENDMARKER ''
+    NoParseError: should have reached <EOF>: 0,0-0,0 ENDMARKER ''
 
 
 ### The `maybe` Combinator

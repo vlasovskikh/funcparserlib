@@ -131,14 +131,14 @@ class Parser(object):
             else:
                 return _Tuple(vs)
         @Parser
-        def p(tokens, s):
+        def _add(tokens, s):
             (v1, s2) = self.run(tokens, s)
             (v2, s3) = other.run(tokens, s2)
             return (magic(v1, v2), s3)
         # or in terms of bind and pure:
         # p = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
-        p.name = '(%s + %s)' % (self.name, other.name)
-        return p
+        _add.name = '(%s + %s)' % (self.name, other.name)
+        return _add
 
     def __or__(self, other):
         '''Parser(a, b), Parser(a, c) -> Parser(a, b or c)
@@ -150,13 +150,13 @@ class Parser(object):
         also + combinator.
         '''
         @Parser
-        def f(tokens, s):
+        def _or(tokens, s):
             try:
                 return self.run(tokens, s)
             except NoParseError, e:
                 return other.run(tokens, State(s.pos, e.state.max))
-        f.name = '(%s | %s)' % (self.name, other.name)
-        return f
+        _or.name = '(%s | %s)' % (self.name, other.name)
+        return _or
 
     def __rshift__(self, f):
         '''Parser(a, b), (b -> c) -> Parser(a, c)
@@ -169,13 +169,13 @@ class Parser(object):
         b) -> Parser(a, c).
         '''
         @Parser
-        def p(tokens, s):
+        def _shift(tokens, s):
             (v, s2) = self.run(tokens, s)
             return (f(v), s2)
         # or in terms of bind and pure:
         # p = self.bind(lambda x: pure(f(x)))
-        p.name = '%s >>' % self.name
-        return p
+        _shift.name = '%s >>' % self.name
+        return _shift
 
     def bind(self, f):
         '''Parser(a, b), (b -> Parser(a, c)) -> Parser(a, c)
@@ -184,11 +184,11 @@ class Parser(object):
         combinators. Functions bind and pure make the Parser a Monad.
         '''
         @Parser
-        def g(tokens, s):
+        def _bind(tokens, s):
             (v, s2) = self.run(tokens, s)
             return f(v).run(tokens, s2)
-        g.name = '%s >>=' % self.name
-        return g
+        _bind.name = '%s >>=' % self.name
+        return _bind
 
 class State(object):
     '''A parsing state that is maintained basically for error reporting.
@@ -244,7 +244,7 @@ def many(p):
     list of parsed values.
     '''
     @Parser
-    def f_iter(tokens, s):
+    def _many(tokens, s):
         'Iterative implementation preventing the stack overflow.'
         res = []
         try:
@@ -253,8 +253,8 @@ def many(p):
                 res.append(v)
         except NoParseError, e:
             return (res, e.state)
-    f_iter.name = '%s *' % p.name
-    return f_iter
+    _many.name = '%s *' % p.name
+    return _many
 
 def some(pred):
     '''(a -> bool) -> Parser(a, a)
@@ -262,7 +262,7 @@ def some(pred):
     Returns a parser that parses a token if it satisfies a predicate pred.
     '''
     @Parser
-    def f(tokens, s):
+    def _some(tokens, s):
         if s.pos >= len(tokens):
             raise NoParseError('no tokens left in the stream', s)
         else:
@@ -277,8 +277,8 @@ def some(pred):
                 if debug:
                     log.debug(u'failed "%s", state = %s' % (t, s))
                 raise NoParseError('got unexpected token', s)
-    f.name = '(some ...)'
-    return f
+    _some.name = '(some ...)'
+    return _some
 
 def a(value):
     '''Eq(a) -> Parser(a, a)
@@ -289,10 +289,10 @@ def a(value):
 
 def pure(x):
     @Parser
-    def f(_, s):
+    def _pure(_, s):
         return (x, s)
-    f.name = '(pure %r)' % repr(x)
-    return f
+    _pure.name = '(pure %r)' % repr(x)
+    return _pure
 
 def maybe(p):
     '''Parser(a, b) -> Parser(a, b or None)

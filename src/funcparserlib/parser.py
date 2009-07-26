@@ -136,7 +136,7 @@ class Parser(object):
             (v2, s3) = other.run(tokens, s2)
             return (magic(v1, v2), s3)
         # or in terms of bind and pure:
-        # p = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
+        # _add = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
         _add.name = '(%s + %s)' % (self.name, other.name)
         return _add
 
@@ -173,7 +173,7 @@ class Parser(object):
             (v, s2) = self.run(tokens, s)
             return (f(v), s2)
         # or in terms of bind and pure:
-        # p = self.bind(lambda x: pure(f(x)))
+        # _shift = self.bind(lambda x: pure(f(x)))
         _shift.name = '%s >>' % self.name
         return _shift
 

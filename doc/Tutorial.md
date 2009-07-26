@@ -19,7 +19,7 @@ The `funcparserlib` Tutorial
     </a>
   </dd>
   <dt>Library Version:</dt>
-  <dd>0.3</dd>
+  <dd>0.3.1 (from the future)</dd>
 </dl>
 
 
@@ -348,7 +348,7 @@ use overloaded operators `funcparserlib` wraps parser functions into a class (we
 have already seen this approach earlier in the lexer). This class is named
 `Parser` and all the combinators we will be using deal with objects of this
 class. So the typedef `Parser(a, b)` above is just a parameterized class, not a
-function.
+function. The parser itself is ivoked via `Parser.run` function.
 
 In fact, all the plain parser functions are hidden from you by `funcparserlib`
 so you don't need to know these internals. So, every parser `p` you have ever

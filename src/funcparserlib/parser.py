@@ -88,7 +88,7 @@ class Parser(object):
         self.named(getattr(p, 'name', p.__doc__))
 
     def run(self, tokens, s):
-        '''(Sequence(a), State -> b, State
+        '''Sequence(a), State -> (b, State)
 
         Runs a parser wrapped into this object.
         '''
@@ -233,7 +233,7 @@ def finished(tokens, s):
     if s.pos >= len(tokens):
         return (None, s)
     else:
-        raise NoParseError('should have reached eof', s)
+        raise NoParseError('should have reached <EOF>', s)
 finished.name = 'finished'
 
 def many(p):

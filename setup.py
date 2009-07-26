@@ -9,7 +9,7 @@ setup(
     package_dir={'': 'src'},
     author='Andrey Vlasovskikh',
     author_email='andrey.vlasovskikh@gmail.com',
-    description='A recursive descent parser library based on functional'
+    description='Recursive descent parser library based on functional '
         'combinators',
     license='MIT',
     url='http://code.google.com/p/funcparserlib/')

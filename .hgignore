@@ -1,4 +1,6 @@
 syntax:glob
+build
+dist
 tmp
 funcparserlib.egg-info
 examples/dot/*.png

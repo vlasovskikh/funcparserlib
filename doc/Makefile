@@ -1,4 +1,4 @@
-default: test-tutorial test-brackets
+test: test-tutorial test-brackets
 
 test-tutorial:
 	python -c 'import doctest; doctest.testfile("Tutorial.md")'

@@ -17,8 +17,8 @@ develop:
 	$(SETUP) develop --prefix "$(DEVPREFIX)"
 
 test:
-	make -C examples/dot test
-	make -C examples/json test
+	make -C examples/dot test && \
+	make -C examples/json test && \
 	make -C doc test
 
 clean:

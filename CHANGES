@@ -1,6 +1,16 @@
 The Changelog
 =============
 
+
+0.3.2, 2009-07-26
+-----------------
+
+A bugfix release, added more docs.
+
+* Fixed some string and number encoding issuses in examples
+* Added the Parsing Stages Illustrated page
+
+
 0.3.1, 2009-07-26
 -----------------
 
@@ -15,6 +25,7 @@ Major optimizations (10x faster than the version 0.3), added `forward_decl`,
 * A single immutable input sequence is used in parsers
 * The slow `logging` is enabled only when the `debug` flag is set
 * Added the project Makefile and this file
+
 
 0.3, 2009-07-23
 ---------------

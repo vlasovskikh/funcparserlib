@@ -81,10 +81,12 @@ Intro
 In this tutorial, we will write _an expression calculator_ that uses syntax
 similar to Python or Haskell expressions. Writing a calculator is a common
 example in articles related to parsers and parsing techniques, so it is a good
-starting point in learning `funcparserlib`. If you are interested in more
-real-world examples, see the sources of [a GraphViz DOT parser][dot-parser] or
-[a JSON parser][json-parser] available in `./examples` directory of
-`funcparserlib`.
+starting point in learning `funcparserlib`.
+
+If you are interested in more real-world examples, see the sources of [a
+GraphViz DOT parser][dot-parser] or [a JSON parser][json-parser] available in
+`./examples` directory of `funcparserlib`. If you need just a short intro
+instead of the full tutorial, see the [Nested Brackets Mini-HOWTO][nested].
 
 We will show how to write a parser and an evaluator of expressions using
 `funcparserlib`. The library comes with its own lexer module, but in this
@@ -1259,6 +1261,7 @@ instances for parsers:
   [funcparserlib-issues]: http://code.google.com/p/funcparserlib/issues/list
   [dot-parser]: http://code.google.com/p/funcparserlib/source/browse/examples/dot/dot.py
   [json-parser]: http://code.google.com/p/funcparserlib/source/browse/examples/json/json.py
+  [nested]: http://archlinux.folding-maps.org/2009/funcparserlib/Brackets
   [sequences]: http://www.python.org/dev/peps/pep-3119/#sequences
   [parser-py]:  http://code.google.com/p/funcparserlib/source/browse/src/funcparserlib/parser.py
 

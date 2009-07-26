@@ -16,8 +16,10 @@ default installation command under the superuser is:
 Documentation
 -------------
 
-The `funcparserlib` Tutorial is available as `./doc/Tutorial.md`. The link to
-a rendered HTML version can be found on the homepage.
+The comprehensive [funcparserlib Tutorial][1] is available as `./doc/Tutorial.md`.
+
+A short intro to `funcparserlib` can be found in the [Nested Brackets
+Mini-HOWTO][2], see `./doc/Brackets.md`.
 
 See also comments inside the modules `funcparserlib.parser` and
 `funcparserlib.lexer` or generate the API docs from the modules using `pydoc`.
@@ -27,6 +29,8 @@ There a couple of examples available in `./examples` directory:
 * GraphViz DOT parser
 * JSON paser
 
+  [1]: Tutorial
+  [2]: Brackets
 
 <!-- vim:set ft=markdown tw=80: -->
 

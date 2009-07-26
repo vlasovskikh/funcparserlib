@@ -173,7 +173,7 @@ def main():
         input = stdin.read().decode(ENCODING)
         tree = parse(tokenize(input))
         #print pformat(tree)
-        print pretty_parse_tree(tree)
+        print pretty_parse_tree(tree).encode(ENCODING)
     except (NoParseError, LexerError), e:
         msg = (u'syntax error: %s' % e).encode(ENCODING)
         print >> sys.stderr, msg

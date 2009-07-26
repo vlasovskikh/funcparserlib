@@ -834,8 +834,8 @@ and test it:
 
 Cool, we just have calculated the factorial of 4!
 
-    >>> expr.parse(tokenize('2 ** 32 - 1'))
-    4294967295L
+    >>> expr.parse(tokenize('2 ** 32 - 1')) == 4294967295
+    True
 
 and this is the largest `unsigned int` possible on 32-bit computers.
 

@@ -29,8 +29,11 @@ There a couple of examples available in `./examples` directory:
 * GraphViz DOT parser
 * JSON paser
 
+See also [the changelog][3].
+
   [1]: Tutorial
   [2]: Brackets
+  [3]: Changes
 
 <!-- vim:set ft=markdown tw=80: -->
 

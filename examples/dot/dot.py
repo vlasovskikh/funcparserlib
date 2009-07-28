@@ -166,8 +166,10 @@ def pretty_parse_tree(x):
     return pretty_tree(x, kids, show)
 
 def main():
-    import logging
-    logging.basicConfig(level=logging.INFO)
+    #import logging
+    #logging.basicConfig(level=logging.DEBUG)
+    #import funcparserlib
+    #funcparserlib.parser.debug = True
     try:
         stdin = os.fdopen(sys.stdin.fileno(), 'rb')
         input = stdin.read().decode(ENCODING)

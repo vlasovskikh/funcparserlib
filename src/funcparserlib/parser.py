@@ -84,7 +84,8 @@ class Parser(object):
 
     def define(self, p):
         'Defines a parser wrapped into this object.'
-        self.run = getattr(p, 'run', p)
+        f = getattr(p, 'run', p)
+        setattr(self, '_run' if debug else 'run', f)
         self.named(getattr(p, 'name', p.__doc__))
 
     def run(self, tokens, s):
@@ -92,6 +93,11 @@ class Parser(object):
 
         Runs a parser wrapped into this object.
         '''
+        if debug:
+            log.debug('trying %s' % self.name)
+        return self._run(tokens, s)
+
+    def _run(self, tokens, s):
         raise NotImplementedError('you must define() a parser')
 
     def parse(self, tokens):
@@ -140,7 +146,7 @@ class Parser(object):
             return (magic(v1, v2), s3)
         # or in terms of bind and pure:
         # _add = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
-        _add.name = '(%s + %s)' % (self.name, other.name)
+        _add.name = '(%s , %s)' % (self.name, other.name)
         return _add
 
     def __or__(self, other):
@@ -177,7 +183,7 @@ class Parser(object):
             return (f(v), s2)
         # or in terms of bind and pure:
         # _shift = self.bind(lambda x: pure(f(x)))
-        _shift.name = '%s >>' % self.name
+        _shift.name = '(%s)' % self.name
         return _shift
 
     def bind(self, f):
@@ -190,7 +196,7 @@ class Parser(object):
         def _bind(tokens, s):
             (v, s2) = self.run(tokens, s)
             return f(v).run(tokens, s2)
-        _bind.name = '%s >>=' % self.name
+        _bind.name = '(%s >>=)' % self.name
         return _bind
 
 class State(object):
@@ -259,7 +265,7 @@ def many(p):
                 res.append(v)
         except NoParseError, e:
             return (res, e.state)
-    _many.name = '%s *' % p.name
+    _many.name = '{ %s }' % p.name
     return _many
 
 def some(pred):
@@ -283,7 +289,7 @@ def some(pred):
                 if debug:
                     log.debug(u'failed "%s", state = %s' % (t, s))
                 raise NoParseError('got unexpected token', s)
-    _some.name = '(some ...)'
+    _some.name = '(some)'
     return _some
 
 def a(value):
@@ -308,7 +314,7 @@ def maybe(p):
     NOTE: In a statically typed language, the type Maybe b could be more
     approprieate.
     '''
-    return (p | pure(None)).named('(maybe %s)' % p.name)
+    return (p | pure(None)).named('[ %s ]' % p.name)
 
 def skip(p):
     '''Parser(a, b) -> Parser(a, _Ignored(b))
@@ -323,7 +329,8 @@ def oneplus(p):
 
     Returns a parser that applies the parser p one or more times.
     '''
-    return (p + many(p) >> (lambda x: [x[0]] + x[1])).named('%s +' % p.name)
+    q = p + many(p) >> (lambda x: [x[0]] + x[1])
+    return q.named('(%s , { %s })' % (p.name, p.name))
 
 def with_forward_decls(suspension):
     '''(None -> Parser(a, b)) -> Parser(a, b)

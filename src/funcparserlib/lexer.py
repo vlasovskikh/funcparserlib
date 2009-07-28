@@ -77,7 +77,7 @@ def make_tokenizer(specs):
         for type, regexp in specs:
             m = regexp.match(str, i)
             if m is not None:
-                value = str[m.start():m.end()]
+                value = m.group()
                 nls = value.count(u'\n')
                 n_line = line + nls
                 if nls == 0:

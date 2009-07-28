@@ -126,10 +126,13 @@ class Parser(object):
             vs = [v for v in [v1, v2] if not isinstance(v, _Ignored)]
             if len(vs) == 1:
                 return vs[0]
-            elif len(vs) == 2 and isinstance(vs[0], _Tuple):
-                return _Tuple(v1 + (v2,))
+            elif len(vs) == 2:
+                if isinstance(vs[0], _Tuple):
+                    return _Tuple(v1 + (v2,))
+                else:
+                    return _Tuple(vs)
             else:
-                return _Tuple(vs)
+                return _Ignored(())
         @Parser
         def _add(tokens, s):
             (v1, s2) = self.run(tokens, s)
@@ -223,6 +226,9 @@ class _Tuple(tuple): pass
 class _Ignored(object):
     def __init__(self, value):
         self.value = value
+
+    def __repr__(self):
+        return '_Ignored(%s)' % repr(self.value)
 
 @Parser
 def finished(tokens, s):

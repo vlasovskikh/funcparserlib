@@ -61,8 +61,8 @@ Debug messages are emitted via a `logging.Logger` object named
 `"funcparserlib"`.
 '''
 
-__all__ = ['finished', 'many', 'some', 'a', 'maybe', 'skip', 'oneplus',
-    'forward_decl', 'NoParseError', 'Parser']
+__all__ = ['some', 'a', 'many', 'pure', 'finished', 'maybe', 'skip', 'oneplus',
+    'forward_decl', 'NoParseError']
 
 import logging
 log = logging.getLogger('funcparserlib')

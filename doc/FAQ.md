@@ -34,10 +34,9 @@ So we can deduce that, given a universally successful parser, `many` returns a
 parser that may apply it to the input _forever._ This is the cause of an infinite
 loop.
 
-You **must not** pass a universally successful parser to a parser returned by
-`many`.
+You **must not** pass a universally successful parser to the `many` combinator.
 
-Consider the following parers:
+Consider the following parsers:
 
     from funcparserlib.parser import a, many, maybe, pure
 

@@ -343,7 +343,7 @@ arguments and return them as result values. Parser combinators are:
 from lists to [sequences][] and provide more readable error reports by tracking
 a parsing state (in a functional way of course):
 
-    f :: Sequence(a), State -> (b, Sequence(a), State)
+    f :: Sequence(a), State -> (b, State)
 
 But this parser type is no fun any more. In order to get rid of it as well as to
 use overloaded operators `funcparserlib` wraps parser functions into a class (we
@@ -1053,7 +1053,7 @@ Our `expr` parses the first three tokens and then stops calculating the result.
 Why does it behave this way? Let's recall the type of a parser function (that is
 hidden inside `Parser`):
 
-    p :: Sequence(a), State -> (b, Sequence(a), State)
+    p :: Sequence(a), State -> (b, State)
 
 A parser function takes tokens from the input sequence and transforms them into
 a tuple of a resulting value of type `b` _and_ the rest of the input sequence.
@@ -1087,7 +1087,7 @@ lengh of the input sequence. Let's call it `finished`:
     @Parser
     def finished(tokens, s):
         if len(tokens) == 0:
-            return (None, tokens, s)
+            return (None, s)
         else:
             raise NoParseError('sequence must be empty', s)
 

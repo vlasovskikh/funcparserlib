@@ -8,7 +8,7 @@ This is a changelog of [funcparserlib][1].
 
 A bugfix release, added more docs
 
-* Fixed bug with in results of skip + skip parsers
+* Fixed bug in results of skip + skip parsers
 * Added FAQ question about infinite loops in parsers
 * Debug rule tracing can be enabled again
 

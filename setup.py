@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='funcparserlib',
-    version='0.3.3',
+    version='0.3.4dev',
     packages=['funcparserlib'],
     package_dir={'': 'src'},
     author='Andrey Vlasovskikh',

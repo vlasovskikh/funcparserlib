@@ -40,15 +40,15 @@ def run(input):
         return 'excpt'
 
 def main():
+    dir = '.'
     if len(sys.argv) == 1:
-        dir = '.'
         paths = (os.path.join(dir, x) for x in os.listdir(dir))
         files = sorted(x for x in paths if os.access(x, os.X_OK))
     else:
-        files = sys.argv[1:]
+        files = (os.path.join(dir, x) for x in sys.argv[1:])
     stat = dict(ok=0, fail=0, excpt=0)
     for f in files:
-        print >> sys.stderr, os.path.basename(f),
+        print >> sys.stderr, os.path.normpath(f),
         res = run(f)
         print >> sys.stderr, res
         stat[res] = stat.setdefault(res, 0) + 1

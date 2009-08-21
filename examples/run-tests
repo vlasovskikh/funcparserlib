@@ -1,6 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Copyright (c) 2009 Andrey Vlasovskikh
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 from __future__ import with_statement
 import sys, os
 from subprocess import Popen, PIPE
@@ -17,39 +38,40 @@ def same(f1, f2):
         print >> sys.stderr, '\n', out
         return False
 
-def run(input):
+def run(path):
     'str -> str'
-    outname = '%s.out' % input
-    errname = '%s.err' % input
-    try:
-        with nested(TempFile(), TempFile()) as (out, err):
-            dot = Popen([input], stdout=out, stderr=err)
-            ret = dot.wait()
-            if os.path.exists(errname):
-                ok = (same(errname, err.name) and ret != 0)
-            elif os.path.exists(outname):
-                ok = (same(outname, out.name))
-            else:
-                ok = (ret == 0)
-            if not ok:
-                err.seek(0)
-                print >> sys.stderr, '\n', err.read()
-            return 'ok' if ok else 'fail'
-    except Exception, e:
-        print >> sys.stderr, e
-        return 'excpt'
+    outname = '%s.out' % path
+    errname = '%s.err' % path
+    dirname = os.path.normpath(os.path.dirname(path))
+    filename = os.path.join('.', os.path.basename(path))
+    with nested(TempFile(), TempFile()) as (out, err):
+        dot = Popen([filename], stdout=out, stderr=err, cwd=dirname)
+        ret = dot.wait()
+        if os.path.exists(errname):
+            ok = (same(errname, err.name) and ret != 0)
+        elif os.path.exists(outname):
+            ok = same(outname, out.name)
+        else:
+            ok = (ret == 0)
+        if not ok:
+            err.seek(0)
+            print >> sys.stderr, '\n', err.read()
+        return 'ok' if ok else 'fail'
 
 def main():
-    dir = '.'
     if len(sys.argv) == 1:
-        paths = (os.path.join(dir, x) for x in os.listdir(dir))
-        files = sorted(x for x in paths if os.access(x, os.X_OK))
+        files = sorted(x for x in os.listdir('.')
+            if not os.path.isdir(x) and os.access(x, os.X_OK))
     else:
-        files = (os.path.join(dir, x) for x in sys.argv[1:])
+        files = sys.argv[1:]
     stat = dict(ok=0, fail=0, excpt=0)
     for f in files:
         print >> sys.stderr, os.path.normpath(f),
-        res = run(f)
+        try:
+            res = run(f)
+        except Exception, e:
+            res = 'excpt'
+            print >> sys.stderr, '\n', e
         print >> sys.stderr, res
         stat[res] = stat.setdefault(res, 0) + 1
     print >> sys.stderr, '--- stats ---'

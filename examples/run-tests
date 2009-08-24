@@ -76,6 +76,7 @@ def main():
         stat[res] = stat.setdefault(res, 0) + 1
     print >> sys.stderr, '--- stats ---'
     print ' '.join('%s %d' % (k, v) for k, v in stat.items())
+    sys.exit(0 if stat['fail'] + stat['excpt'] == 0 else 1)
 
 if __name__ == '__main__':
     main()

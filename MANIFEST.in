@@ -1,4 +1,5 @@
 recursive-include doc *
 recursive-include examples *
-include LICENSE CHANGES
+include LICENSE CHANGES requires.txt
+
 

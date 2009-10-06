@@ -19,6 +19,6 @@ test:
 
 clean:
 	$(SETUP) clean
-	rm -fr build dist
+	rm -fr build dist MANIFEST
 	find -name '*.pyc' | xargs rm -f
 

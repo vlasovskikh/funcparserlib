@@ -67,8 +67,13 @@ class Token(object):
 class Spec(object):
     def __init__(self, type, regexp, flags=0):
         self.type = type
+        self._regexp = regexp
+        self._flags = flags
         # Maybe the regexp should be compiled lazily
         self.re = re.compile(regexp, flags)
+
+    def __repr__(self):
+        return 'Spec(%r, %r, %r)' % (self.type, self._regexp, self._flags)
 
 def make_tokenizer(specs):
     '[Spec] -> (str -> Iterable(Token))'

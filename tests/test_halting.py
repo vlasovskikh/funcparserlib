@@ -3,11 +3,10 @@
 'Tests for issue #8: prevent definitions of non-halting parsers.'
 
 from funcparserlib.parser import a, many, maybe, pure, oneplus, GrammarError
+from funcparserlib.contrib.common import const
 from nose.tools import ok_, assert_raises
 
-const = lambda x: lambda _: x
 x = a('x')
-
 p1 = maybe(x)
 p3 = maybe(x) + x
 p4 = many(p3)

@@ -16,12 +16,15 @@ At the moment, the parser builds only a parse tree, not an abstract syntax tree
 '''
 
 import sys, os
-from re import MULTILINE
 from pprint import pformat
-from funcparserlib.util import pretty_tree, SyntaxError
-from funcparserlib.lexer import make_tokenizer, Spec, Token
-from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-    oneplus, forward_decl)
+from funcparserlib.lexer import make_tokenizer, Spec
+from funcparserlib.parser import (maybe, many, finished, skip, oneplus,
+    forward_decl, SyntaxError)
+from funcparserlib.util import pretty_tree
+from funcparserlib.contrib.common import unarg, flatten, n, op, op_, sometoks
+from funcparserlib.contrib.lexer import (comment, multiline_comment, newline,
+    space)
+
 try:
     from collections import namedtuple
 except ImportError:
@@ -51,29 +54,22 @@ DefAttrs = namedtuple('DefAttrs', 'object attrs')
 def tokenize(str):
     'str -> Sequence(Token)'
     specs = [
-        Spec('comment', r'/\*(.|[\r\n])*?\*/', MULTILINE),
-        Spec('comment', r'//.*'),
-        Spec('nl',      r'[\r\n]+'),
-        Spec('space',   r'[ \t\r\n]+'),
+        multiline_comment(r'/\*', r'\*/'),
+        comment(r'//'),
+        newline,
+        space,
         Spec('name',    r'[A-Za-z\200-\377_][A-Za-z\200-\377_0-9]*'),
         Spec('op',      r'[{};,=\[\]]|(->)|(--)'),
         Spec('number',  r'-?(\.[0-9]+)|([0-9]+(\.[0-9]*)?)'),
         Spec('string',  r'"[^"]*"'), # '\"' escapes are ignored
     ]
-    useless = ['comment', 'nl', 'space']
+    useless = ['comment', 'newline', 'space']
     t = make_tokenizer(specs)
     return [x for x in t(str) if x.type not in useless]
 
 def parse(seq):
     'Sequence(Token) -> object'
-    unarg = lambda f: lambda args: f(*args)
-    tokval = lambda x: x.value
-    flatten = lambda list: sum(list, [])
-    n = lambda s: a(Token('name', s)) >> tokval
-    op = lambda s: a(Token('op', s)) >> tokval
-    op_ = lambda s: skip(op(s))
-    id = some(lambda t:
-        t.type in ['name', 'number', 'string']).named('id') >> tokval
+    id = sometoks(['name', 'number', 'string']).named('id')
     make_graph_attr = lambda args: DefAttrs(u'graph', [Attr(*args)])
     make_edge = lambda x, xs, attrs: Edge([x] + xs, attrs)
 

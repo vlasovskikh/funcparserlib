@@ -10,10 +10,10 @@ The parser is based on [the JSON grammar][1].
 import sys, os, re, logging
 from re import VERBOSE
 from pprint import pformat
-from funcparserlib.util import SyntaxError
-from funcparserlib.lexer import make_tokenizer, Spec, Token
-from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-    forward_decl)
+from funcparserlib.lexer import make_tokenizer, Spec
+from funcparserlib.parser import (maybe, many, finished, skip, forward_decl,
+    SyntaxError)
+from funcparserlib.contrib.common import const, n, op, op_, sometok
 
 ENCODING = 'utf-8'
 regexps = {
@@ -48,12 +48,6 @@ def tokenize(str):
 
 def parse(seq):
     'Sequence(Token) -> object'
-    const = lambda x: lambda _: x
-    tokval = lambda x: x.value
-    toktype = lambda t: some(lambda x: x.type == t) >> tokval
-    op = lambda s: a(Token('op', s)) >> tokval
-    op_ = lambda s: skip(op(s))
-    n = lambda s: a(Token('name', s)) >> tokval
     def make_array(n):
         if n is None:
             return []
@@ -83,8 +77,8 @@ def parse(seq):
     null = n('null') >> const(None)
     true = n('true') >> const(True)
     false = n('false') >> const(False)
-    number = toktype('number') >> make_number
-    string = toktype('string') >> make_string
+    number = sometok('number') >> make_number
+    string = sometok('string') >> make_string
     value = forward_decl()
     member = string + op_(':') + value >> tuple
     object = (

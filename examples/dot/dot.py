@@ -19,7 +19,7 @@ import sys, os
 from re import MULTILINE
 from pprint import pformat
 from funcparserlib.util import pretty_tree
-from funcparserlib.lexer import make_tokenizer, Token, LexerError
+from funcparserlib.lexer import make_tokenizer, Spec, Token, LexerError
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
     oneplus, forward_decl, NoParseError)
 try:
@@ -51,16 +51,16 @@ DefAttrs = namedtuple('DefAttrs', 'object attrs')
 def tokenize(str):
     'str -> Sequence(Token)'
     specs = [
-        ('Comment', (r'/\*(.|[\r\n])*?\*/', MULTILINE)),
-        ('Comment', (r'//.*',)),
-        ('NL',      (r'[\r\n]+',)),
-        ('Space',   (r'[ \t\r\n]+',)),
-        ('Name',    (r'[A-Za-z\200-\377_][A-Za-z\200-\377_0-9]*',)),
-        ('Op',      (r'[{};,=\[\]]|(->)|(--)',)),
-        ('Number',  (r'-?(\.[0-9]+)|([0-9]+(\.[0-9]*)?)',)),
-        ('String',  (r'"[^"]*"',)), # '\"' escapes are ignored
+        Spec('comment', r'/\*(.|[\r\n])*?\*/', MULTILINE),
+        Spec('comment', r'//.*'),
+        Spec('nl',      r'[\r\n]+'),
+        Spec('space',   r'[ \t\r\n]+'),
+        Spec('name',    r'[A-Za-z\200-\377_][A-Za-z\200-\377_0-9]*'),
+        Spec('op',      r'[{};,=\[\]]|(->)|(--)'),
+        Spec('number',  r'-?(\.[0-9]+)|([0-9]+(\.[0-9]*)?)'),
+        Spec('string',  r'"[^"]*"'), # '\"' escapes are ignored
     ]
-    useless = ['Comment', 'NL', 'Space']
+    useless = ['comment', 'nl', 'space']
     t = make_tokenizer(specs)
     return [x for x in t(str) if x.type not in useless]
 
@@ -69,11 +69,11 @@ def parse(seq):
     unarg = lambda f: lambda args: f(*args)
     tokval = lambda x: x.value
     flatten = lambda list: sum(list, [])
-    n = lambda s: a(Token('Name', s)) >> tokval
-    op = lambda s: a(Token('Op', s)) >> tokval
+    n = lambda s: a(Token('name', s)) >> tokval
+    op = lambda s: a(Token('op', s)) >> tokval
     op_ = lambda s: skip(op(s))
     id = some(lambda t:
-        t.type in ['Name', 'Number', 'String']).named('id') >> tokval
+        t.type in ['name', 'number', 'string']).named('id') >> tokval
     make_graph_attr = lambda args: DefAttrs(u'graph', [Attr(*args)])
     make_edge = lambda x, xs, attrs: Edge([x] + xs, attrs)
 

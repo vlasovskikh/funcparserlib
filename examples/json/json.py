@@ -10,7 +10,7 @@ The parser is based on [the JSON grammar][1].
 import sys, os, re, logging
 from re import VERBOSE
 from pprint import pformat
-from funcparserlib.lexer import make_tokenizer, Token, LexerError
+from funcparserlib.lexer import make_tokenizer, Spec, Token, LexerError
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
     forward_decl, NoParseError)
 
@@ -30,18 +30,18 @@ re_esc = re.compile(regexps['escaped'], VERBOSE)
 def tokenize(str):
     'str -> Sequence(Token)'
     specs = [
-        ('Space',  (r'[ \t\r\n]+',)),
-        ('String', (ur'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
-        ('Number', (r'''
+        Spec('space', r'[ \t\r\n]+'),
+        Spec('string', ur'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE),
+        Spec('number', r'''
             -?                  # Minus
             (0|([1-9][0-9]*))   # Int
             (\.[0-9]+)?         # Frac
             ([Ee][+-][0-9]+)?   # Exp
-            ''', VERBOSE)),
-        ('Op',     (r'[{}\[\]\-,:]',)),
-        ('Name',   (r'[A-Za-z_][A-Za-z_0-9]*',)),
+            ''', VERBOSE),
+        Spec('op', r'[{}\[\]\-,:]'),
+        Spec('name', r'[A-Za-z_][A-Za-z_0-9]*'),
     ]
-    useless = ['Space']
+    useless = ['space']
     t = make_tokenizer(specs)
     return [x for x in t(str) if x.type not in useless]
 
@@ -50,9 +50,9 @@ def parse(seq):
     const = lambda x: lambda _: x
     tokval = lambda x: x.value
     toktype = lambda t: some(lambda x: x.type == t) >> tokval
-    op = lambda s: a(Token('Op', s)) >> tokval
+    op = lambda s: a(Token('op', s)) >> tokval
     op_ = lambda s: skip(op(s))
-    n = lambda s: a(Token('Name', s)) >> tokval
+    n = lambda s: a(Token('name', s)) >> tokval
     def make_array(n):
         if n is None:
             return []
@@ -82,8 +82,8 @@ def parse(seq):
     null = n('null') >> const(None)
     true = n('true') >> const(True)
     false = n('false') >> const(False)
-    number = toktype('Number') >> make_number
-    string = toktype('String') >> make_string
+    number = toktype('number') >> make_number
+    string = toktype('string') >> make_string
     value = forward_decl()
     member = string + op_(':') + value >> tuple
     object = (

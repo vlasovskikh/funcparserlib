@@ -69,17 +69,17 @@ class Token(object):
         return "%s %s '%s'" % (self._pos_str().ljust(20),
             self.type.ljust(14), self.value)
 
+class Spec(object):
+    def __init__(self, type, regexp, flags=0):
+        self.type = type
+        # Maybe the regexp should be compiled lazily
+        self.re = re.compile(regexp, flags)
+
 def make_tokenizer(specs):
-    '[(str, (str, int?))] -> (str -> Iterable(Token))'
-    # TODO: Revisit the token spec, e.g. introduce a class for it in order to
-    # set options via named arguments of the constructor
-    def compile_spec(spec):
-        name, args = spec
-        return name, re.compile(*args)
-    compiled = [compile_spec(s) for s in specs]
+    '[Spec] -> (str -> Iterable(Token))'
     def match_specs(specs, str, i, (line, pos)):
-        for type, regexp in specs:
-            m = regexp.match(str, i)
+        for spec in specs:
+            m = spec.re.match(str, i)
             if m is not None:
                 value = m.group()
                 nls = value.count(u'\n')
@@ -88,7 +88,7 @@ def make_tokenizer(specs):
                     n_pos = pos + len(value)
                 else:
                     n_pos = len(value) - value.rfind(u'\n') - 1
-                return Token(type, value, (line, pos), (n_line, n_pos))
+                return Token(spec.type, value, (line, pos), (n_line, n_pos))
         else:
             errline = str.splitlines()[line - 1]
             raise LexerError((line, pos), errline)
@@ -97,31 +97,30 @@ def make_tokenizer(specs):
         line, pos = 1, 0
         i = 0
         while i < length:
-            t = match_specs(compiled, str, i, (line, pos))
+            t = match_specs(specs, str, i, (line, pos))
             yield t
             line, pos = t.end
             i = i + len(t.value)
     return f
-
 
 # This is an example of a token spec. See also [this article][1] for a
 # discussion of searching for multiline comments using regexps (including `*?`).
 #
 #   [1]: http://ostermiller.org/findcomment.html
 _example_token_specs = [
-    ('COMMENT', (r'\(\*(.|[\r\n])*?\*\)', re.MULTILINE)),
-    ('COMMENT', (r'\{(.|[\r\n])*?\}', re.MULTILINE)),
-    ('COMMENT', (r'//.*',)),
-    ('NL',      (r'[\r\n]+',)),
-    ('SPACE',   (r'[ \t\r\n]+',)),
-    ('NAME',    (r'[A-Za-z_][A-Za-z_0-9]*',)),
-    ('REAL',    (r'[0-9]+\.[0-9]*([Ee][+\-]?[0-9]+)*',)),
-    ('INT',     (r'[0-9]+',)),
-    ('INT',     (r'\$[0-9A-Fa-f]+',)),
-    ('OP',      (r'(\.\.)|(<>)|(<=)|(>=)|(:=)|[;,=\(\):\[\]\.+\-<>\*/@\^]',)),
-    ('STRING',  (r"'([^']|(''))*'",)),
-    ('CHAR',    (r'#[0-9]+',)),
-    ('CHAR',    (r'#\$[0-9A-Fa-f]+',)),
+    Spec('comment', r'\(\*(.|[\r\n])*?\*\)', re.MULTILINE),
+    Spec('comment', r'\{(.|[\r\n])*?\}', re.MULTILINE),
+    Spec('comment', r'//.*'),
+    Spec('nl',      r'[\r\n]+'),
+    Spec('space',   r'[ \t\r\n]+'),
+    Spec('name',    r'[A-Za-z_][A-Za-z_0-9]*'),
+    Spec('real',    r'[0-9]+\.[0-9]*([Ee][+\-]?[0-9]+)*'),
+    Spec('int',     r'[0-9]+'),
+    Spec('int',     r'\$[0-9A-Fa-f]+'),
+    Spec('op',      r'(\.\.)|(<>)|(<=)|(>=)|(:=)|[;,=\(\):\[\]\.+\-<>\*/@\^]'),
+    Spec('string',  r"'([^']|(''))*'"),
+    Spec('char',    r'#[0-9]+'),
+    Spec('char',    r'#\$[0-9A-Fa-f]+'),
 ]
 #tokenize = make_tokenizer(_example_token_specs)
 

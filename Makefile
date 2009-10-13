@@ -4,7 +4,7 @@ DESTDIR = /
 PREFIX = /usr
 INSTALL_OPTS = --root "$(DESTDIR)" --prefix "$(PREFIX)"
 
-.PHONY: default install test clean
+.PHONY: default install test doctest unittest examples clean
 
 default:
 	$(SETUP) build
@@ -12,10 +12,14 @@ default:
 install:
 	$(SETUP) install $(INSTALL_OPTS)
 
-test:
+test: examples doctest
+
+doctest:
+	make -C doc
+
+examples:
 	make -C examples/dot test && \
-	make -C examples/json test && \
-	make -C doc test
+	make -C examples/json test
 
 clean:
 	$(SETUP) clean

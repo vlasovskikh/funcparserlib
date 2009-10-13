@@ -90,7 +90,8 @@ def make_tokenizer(specs):
                     n_pos = len(value) - value.rfind(u'\n') - 1
                 return Token(type, value, (line, pos), (n_line, n_pos))
         else:
-            raise LexerError((line, pos), str.split(u'\n', 1)[0])
+            errline = str.splitlines()[line - 1]
+            raise LexerError((line, pos), errline)
     def f(str):
         length = len(str)
         line, pos = 1, 0

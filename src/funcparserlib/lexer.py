@@ -60,7 +60,11 @@ class Token(object):
     def __unicode__(self):
         s = "%s %s '%s'" % (self._pos_str(), self.type, self.value)
         return s.strip()
-    
+
+    @property
+    def name(self):
+        return self.value
+
     def pformat(self):
         return "%s %s '%s'" % (self._pos_str().ljust(20),
             self.type.ljust(14), self.value)

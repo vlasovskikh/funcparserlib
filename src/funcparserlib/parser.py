@@ -297,7 +297,8 @@ def a(value):
 
     Returns a parser that parses a token that is equal to the value value.
     '''
-    return some(lambda t: t == value).named('(a "%s")' % value)
+    name = getattr(value, 'name', value)
+    return some(lambda t: t == value).named('(a "%s")' % name)
 
 def pure(x):
     @Parser

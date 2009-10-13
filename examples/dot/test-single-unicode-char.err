@@ -1,1 +1,1 @@
-syntax error: cannot tokenize data: 1,0: "ф"
+syntax error: 1,0-1,1: cannot tokenize data: "ф"

@@ -10,9 +10,10 @@ The parser is based on [the JSON grammar][1].
 import sys, os, re, logging
 from re import VERBOSE
 from pprint import pformat
-from funcparserlib.lexer import make_tokenizer, Token, LexerError
-from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-    forward_decl, NoParseError)
+from funcparserlib.lexer import make_tokenizer, Spec
+from funcparserlib.parser import (maybe, many, finished, skip, forward_decl,
+    SyntaxError)
+from funcparserlib.contrib.common import const, n, op, op_, sometok
 
 ENCODING = 'utf-8'
 regexps = {
@@ -30,29 +31,23 @@ re_esc = re.compile(regexps['escaped'], VERBOSE)
 def tokenize(str):
     'str -> Sequence(Token)'
     specs = [
-        ('Space',  (r'[ \t\r\n]+',)),
-        ('String', (ur'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
-        ('Number', (r'''
+        Spec('space', r'[ \t\r\n]+'),
+        Spec('string', ur'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE),
+        Spec('number', r'''
             -?                  # Minus
             (0|([1-9][0-9]*))   # Int
             (\.[0-9]+)?         # Frac
             ([Ee][+-][0-9]+)?   # Exp
-            ''', VERBOSE)),
-        ('Op',     (r'[{}\[\]\-,:]',)),
-        ('Name',   (r'[A-Za-z_][A-Za-z_0-9]*',)),
+            ''', VERBOSE),
+        Spec('op', r'[{}\[\]\-,:]'),
+        Spec('name', r'[A-Za-z_][A-Za-z_0-9]*'),
     ]
-    useless = ['Space']
+    useless = ['space']
     t = make_tokenizer(specs)
     return [x for x in t(str) if x.type not in useless]
 
 def parse(seq):
     'Sequence(Token) -> object'
-    const = lambda x: lambda _: x
-    tokval = lambda x: x.value
-    toktype = lambda t: some(lambda x: x.type == t) >> tokval
-    op = lambda s: a(Token('Op', s)) >> tokval
-    op_ = lambda s: skip(op(s))
-    n = lambda s: a(Token('Name', s)) >> tokval
     def make_array(n):
         if n is None:
             return []
@@ -82,8 +77,8 @@ def parse(seq):
     null = n('null') >> const(None)
     true = n('true') >> const(True)
     false = n('false') >> const(False)
-    number = toktype('Number') >> make_number
-    string = toktype('String') >> make_string
+    number = sometok('number') >> make_number
+    string = sometok('string') >> make_string
     value = forward_decl()
     member = string + op_(':') + value >> tuple
     object = (
@@ -120,7 +115,7 @@ def main():
         input = stdin.read().decode(ENCODING)
         tree = loads(input)
         print pformat(tree)
-    except (NoParseError, LexerError), e:
+    except SyntaxError, e:
         msg = (u'syntax error: %s' % e).encode(ENCODING)
         print >> sys.stderr, msg
         sys.exit(1)

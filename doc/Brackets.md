@@ -82,12 +82,12 @@ Test it:
     >>> nested.parse('{{}')
     Traceback (most recent call last):
         ...
-    NoParseError: no tokens left in the stream: <EOF>
+    ParserError: no tokens left in the stream: <EOF>
 
     >>> nested.parse('{foo}')
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: f
+    ParserError: got unexpected token: f
 
     >>> nested.parse('{}foo')
     ('{', None, '}')
@@ -104,7 +104,7 @@ Test it:
     >>> input.parse('{}foo')
     Traceback (most recent call last):
         ...
-    NoParseError: should have reached <EOF>: f
+    ParserError: should have reached <EOF>: f
 
 Allow zero or more nested brackets:
 

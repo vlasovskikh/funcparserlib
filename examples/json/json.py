@@ -10,9 +10,10 @@ The parser is based on [the JSON grammar][1].
 import sys, os, re, logging
 from re import VERBOSE
 from pprint import pformat
-from funcparserlib.lexer import make_tokenizer, Spec, Token, LexerError
+from funcparserlib.util import SyntaxError
+from funcparserlib.lexer import make_tokenizer, Spec, Token
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-    forward_decl, NoParseError)
+    forward_decl)
 
 ENCODING = 'utf-8'
 regexps = {
@@ -120,7 +121,7 @@ def main():
         input = stdin.read().decode(ENCODING)
         tree = loads(input)
         print pformat(tree)
-    except (NoParseError, LexerError), e:
+    except SyntaxError, e:
         msg = (u'syntax error: %s' % e).encode(ENCODING)
         print >> sys.stderr, msg
         sys.exit(1)

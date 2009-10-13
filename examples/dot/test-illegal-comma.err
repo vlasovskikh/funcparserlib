@@ -1,1 +1,1 @@
-syntax error: got unexpected token: 4,6-4,7: op ','
+syntax error: 4,6-4,7: got unexpected token: op ','

@@ -18,10 +18,10 @@ At the moment, the parser builds only a parse tree, not an abstract syntax tree
 import sys, os
 from re import MULTILINE
 from pprint import pformat
-from funcparserlib.util import pretty_tree
-from funcparserlib.lexer import make_tokenizer, Spec, Token, LexerError
+from funcparserlib.util import pretty_tree, SyntaxError
+from funcparserlib.lexer import make_tokenizer, Spec, Token
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-    oneplus, forward_decl, NoParseError)
+    oneplus, forward_decl)
 try:
     from collections import namedtuple
 except ImportError:
@@ -176,7 +176,7 @@ def main():
         tree = parse(tokenize(input))
         #print pformat(tree)
         print pretty_parse_tree(tree).encode(ENCODING)
-    except (NoParseError, LexerError), e:
+    except SyntaxError, e:
         msg = (u'syntax error: %s' % e).encode(ENCODING)
         print >> sys.stderr, msg
         sys.exit(1)

@@ -62,11 +62,12 @@ Debug messages are emitted via a `logging.Logger` object named
 '''
 
 __all__ = ['some', 'a', 'many', 'pure', 'finished', 'maybe', 'skip', 'oneplus',
-    'forward_decl', 'NoParseError']
+    'forward_decl', 'SyntaxError']
 
 import logging
-log = logging.getLogger('funcparserlib')
+from funcparserlib.util import SyntaxError
 
+log = logging.getLogger('funcparserlib')
 debug = False
 
 class Parser(object):
@@ -115,8 +116,9 @@ class Parser(object):
             return tree
         except NoParseError, e:
             max = e.state.max
-            tok = tokens[max] if len(tokens) > max else '<EOF>'
-            raise NoParseError(u'%s: %s' % (e.msg, tok))
+            tok = tokens[max] if max < len(tokens) else '<EOF>'
+            raise ParserError(u'%s: %s' % (e.msg, tok),
+                getattr(tok, 'pos', None))
 
     def __add__(self, other):
         '''Parser(a, b), Parser(a, c) -> Parser(a, _Tuple(b, c))
@@ -221,7 +223,13 @@ class State(object):
     def __repr__(self):
         return 'State(%r, %r)' % (self.pos, self.max)
 
-class GrammarError(Exception): pass
+class ParserError(SyntaxError):
+    'User-visible parsing error.'
+    pass
+
+class GrammarError(Exception):
+    'Raised when the grammar definition itself contains errors.'
+    pass
 
 class NoParseError(Exception):
     def __init__(self, msg='', state=None):

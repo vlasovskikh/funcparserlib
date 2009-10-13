@@ -21,7 +21,7 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-__all__ = ['make_tokenizer', 'Token', 'LexerError']
+__all__ = ['make_tokenizer', 'Spec', 'Token', 'LexerError']
 
 import re
 from funcparserlib.util import SyntaxError, pos_to_str

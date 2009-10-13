@@ -24,6 +24,8 @@
 from re import MULTILINE
 from funcparserlib.lexer import Spec
 
+__all__ = ['comment', 'multiline_comment', 'newline', 'space']
+
 # Comments
 def comment(start):
     return Spec('comment', r'%s.*' % start)

@@ -24,6 +24,11 @@
 from funcparserlib.lexer import Token
 from funcparserlib.parser import a, skip, some
 
+__all__ = [
+    'const', 'flatten', 'unarg', 'tokval', 'mktok', 'n', 'op', 'op_', 'sometok',
+    'sometoks',
+]
+
 # Well-known functions
 const = lambda x: lambda _: x
 flatten = lambda list: sum(list, [])

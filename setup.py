@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name='funcparserlib',
-    version='0.3.4',
+    version='0.4dev',
     packages=['funcparserlib', 'funcparserlib.contrib'],
     package_dir={'': 'src'},
     author='Andrey Vlasovskikh',

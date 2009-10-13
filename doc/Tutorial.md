@@ -409,7 +409,7 @@ and how it reports errors:
     >>> number.parse(tokenize('a'))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 1,0-1,1 NAME 'a'
+    ParserError: got unexpected token: 1,0-1,1 NAME 'a'
 
 Notice that the lexer and the `Token` wrapper class help us identify the
 position in which the error occured.
@@ -678,7 +678,7 @@ and what if none of the alternatives matches:
     >>> expr.parse(tokenize('2 + 2'))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 1,2-1,3 OP '+'
+    ParserError: got unexpected token: 1,2-1,3 OP '+'
 
 Let's cover all the basic arithmetic binary operators using one more bit of
 abstraction:
@@ -1000,7 +1000,7 @@ Look at the examples:
     >>> (skip(number) + number).parse(tokenize('+ 2 3'))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 1,0-1,1 OP '+'
+    ParserError: got unexpected token: 1,0-1,1 OP '+'
 
 Note, that `skip` still requires its argument parser to succeed.
 
@@ -1076,7 +1076,7 @@ Test it:
     >>> toplevel.parse(tokenize('2 + 3 foo'))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 1,6-1,9 NAME 'foo'
+    ParserError: got unexpected token: 1,6-1,9 NAME 'foo'
     >>> toplevel.parse(tokenize('2 + 3'))
     5
 
@@ -1116,7 +1116,7 @@ Test is using a hand crafted illegal sequence of tokens:
     ...     Token(token.ENDMARKER, '')])
     Traceback (most recent call last):
         ...
-    NoParseError: should have reached <EOF>: 0,0-0,0 ENDMARKER ''
+    ParserError: should have reached <EOF>: 0,0-0,0 ENDMARKER ''
 
 
 ### The `maybe` Combinator
@@ -1126,7 +1126,7 @@ And what about the empty input:
     >>> toplevel.parse(tokenize(''))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 1,0-1,0 ENDMARKER ''
+    ParserError: got unexpected token: 1,0-1,0 ENDMARKER ''
 
 In a calculator (as in any shell) the empty string should be considered as a
 no-op command. The result should be nothing, not an error message.
@@ -1174,7 +1174,7 @@ Test it:
     >>> (_maybe(op('(')) + number).parse(tokenize('5'))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 2,0-2,0 ENDMARKER ''
+    ParserError: got unexpected token: 2,0-2,0 ENDMARKER ''
 
 Oops, it doesn't work! The reason is that `some(const(True))` always consumes
 one token despite the fact that the predicate `const(True)` doesn't require a

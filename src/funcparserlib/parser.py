@@ -62,11 +62,12 @@ Debug messages are emitted via a `logging.Logger` object named
 '''
 
 __all__ = ['some', 'a', 'many', 'pure', 'finished', 'maybe', 'skip', 'oneplus',
-    'forward_decl', 'NoParseError']
+    'forward_decl', 'SyntaxError']
 
 import logging
-log = logging.getLogger('funcparserlib')
+from funcparserlib.util import SyntaxError
 
+log = logging.getLogger('funcparserlib')
 debug = False
 
 class Parser(object):
@@ -87,6 +88,7 @@ class Parser(object):
         f = getattr(p, 'run', p)
         setattr(self, '_run' if debug else 'run', f)
         self.named(getattr(p, 'name', p.__doc__))
+        self.always_succeeds = False
 
     def run(self, tokens, s):
         '''Sequence(a), State -> (b, State)
@@ -114,8 +116,9 @@ class Parser(object):
             return tree
         except NoParseError, e:
             max = e.state.max
-            tok = tokens[max] if len(tokens) > max else '<EOF>'
-            raise NoParseError(u'%s: %s' % (e.msg, tok))
+            tok = tokens[max] if max < len(tokens) else '<EOF>'
+            raise ParserError(u'%s: %s' % (e.msg, tok),
+                getattr(tok, 'pos', None))
 
     def __add__(self, other):
         '''Parser(a, b), Parser(a, c) -> Parser(a, _Tuple(b, c))
@@ -147,6 +150,7 @@ class Parser(object):
         # or in terms of bind and pure:
         # _add = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
         _add.name = '(%s , %s)' % (self.name, other.name)
+        _add.always_succeeds = self.always_succeeds and other.always_succeeds
         return _add
 
     def __or__(self, other):
@@ -165,6 +169,7 @@ class Parser(object):
             except NoParseError, e:
                 return other.run(tokens, State(s.pos, e.state.max))
         _or.name = '(%s | %s)' % (self.name, other.name)
+        _or.always_succeeds = self.always_succeeds or other.always_succeeds
         return _or
 
     def __rshift__(self, f):
@@ -183,7 +188,8 @@ class Parser(object):
             return (f(v), s2)
         # or in terms of bind and pure:
         # _shift = self.bind(lambda x: pure(f(x)))
-        _shift.name = '(%s)' % self.name
+        _shift.name = self.name
+        _shift.always_succeeds = self.always_succeeds
         return _shift
 
     def bind(self, f):
@@ -197,6 +203,7 @@ class Parser(object):
             (v, s2) = self.run(tokens, s)
             return f(v).run(tokens, s2)
         _bind.name = '(%s >>=)' % self.name
+        _bind.always_succeeds = self.always_succeeds
         return _bind
 
 class State(object):
@@ -215,6 +222,14 @@ class State(object):
 
     def __repr__(self):
         return 'State(%r, %r)' % (self.pos, self.max)
+
+class ParserError(SyntaxError):
+    'User-visible parsing error.'
+    pass
+
+class GrammarError(Exception):
+    'Raised when the grammar definition itself contains errors.'
+    pass
 
 class NoParseError(Exception):
     def __init__(self, msg='', state=None):
@@ -266,6 +281,10 @@ def many(p):
         except NoParseError, e:
             return (res, e.state)
     _many.name = '{ %s }' % p.name
+    _many.always_succeeds = True
+    if p.always_succeeds:
+        raise GrammarError('parser %s does not halt, please fix your grammar. '
+            'see FAQ for details' % _many.name)
     return _many
 
 def some(pred):
@@ -305,6 +324,7 @@ def pure(x):
     def _pure(_, s):
         return (x, s)
     _pure.name = '(pure %r)' % repr(x)
+    _pure.always_succeeds = True
     return _pure
 
 def maybe(p):

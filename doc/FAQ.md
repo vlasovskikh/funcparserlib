@@ -11,6 +11,9 @@ Because the grammar you've defined allows infinite empty sequences. It's a
 general pitfall of grammar rules and it must be avoided. Let's explain why this
 may happen.
 
+**Upd:** There is an automatic defense against looping in the tip version of
+`funcpaserlib`. It raises an exception telling you to fix your grammar.
+
 _A universally successful parser_ is a parser that _may consume no token_ from
 the input sequence _returning a value_ without raising `NoParseError`. It still
 may consume some tokens and return values, but when it cannot, it just returns
@@ -57,6 +60,13 @@ Here `p1`, `p2`, `p4`, `p5`, `p6`, and `p9` are universally successful parsers
 while `p3`, `p7`, and `p8` are is not. Parsers `p2`, `p6`, and `p7` may enter an
 infinite loop, while others cannot. Just apply the statements we have made
 above to these parsers to figure out why.
+
+
+2. A `GrammarError` tells that my parser does not halt. What does it mean?
+--------------------------------------------------------------------------
+
+It's an automatic defense against infinite loops caused by passing a universally
+successful parser to the `many` combinator. See Item 1 of this FAQ.
 
   [1]: http://code.google.com/p/funcparserlib/
 

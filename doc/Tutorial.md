@@ -19,7 +19,7 @@ The `funcparserlib` Tutorial
     </a>
   </dd>
   <dt>Library Version:</dt>
-  <dd>0.3.4</dd>
+  <dd>0.4dev</dd>
 </dl>
 
 

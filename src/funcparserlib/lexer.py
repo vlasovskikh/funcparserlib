@@ -31,11 +31,10 @@ class LexerError(SyntaxError):
         SyntaxError.__init__(self, u'cannot tokenize data: "%s"' % msg, pos)
 
 class Token(object):
-    def __init__(self, type, value, start=None, end=None):
+    def __init__(self, type, value, pos=None):
         self.type = type
         self.value = value
-        self.start = start
-        self.end = end
+        self.pos = pos
 
     def __repr__(self):
         return 'Token(%r, %r)' % (self.type, self.value)
@@ -59,10 +58,6 @@ class Token(object):
     @property
     def name(self):
         return self.value
-
-    @property
-    def pos(self):
-        return (self.start, self.end)
 
 class Spec(object):
     def __init__(self, type, regexp, flags=0):
@@ -88,7 +83,7 @@ def make_tokenizer(specs):
                     n_pos = pos + len(value)
                 else:
                     n_pos = len(value) - value.rfind(u'\n') - 1
-                return Token(spec.type, value, (line, pos), (n_line, n_pos))
+                return Token(spec.type, value, ((line, pos), (n_line, n_pos)))
         else:
             errline = str.splitlines()[line - 1]
             raise LexerError(errline, ((line, pos), (line, len(errline))))
@@ -99,7 +94,8 @@ def make_tokenizer(specs):
         while i < length:
             t = match_specs(specs, str, i, (line, pos))
             yield t
-            line, pos = t.end
+            _, end = t.pos
+            line, pos = end
             i = i + len(t.value)
     return f
 

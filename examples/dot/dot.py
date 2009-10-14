@@ -22,8 +22,8 @@ from funcparserlib.parser import (maybe, many, finished, skip, oneplus,
     forward_decl, SyntaxError)
 from funcparserlib.util import pretty_tree
 from funcparserlib.contrib.common import unarg, flatten, n, op, op_, sometoks
-from funcparserlib.contrib.lexer import (comment, multiline_comment, newline,
-    space)
+from funcparserlib.contrib.lexer import (make_comment, make_multiline_comment,
+    newline, space)
 
 try:
     from collections import namedtuple
@@ -54,8 +54,8 @@ DefAttrs = namedtuple('DefAttrs', 'object attrs')
 def tokenize(str):
     'str -> Sequence(Token)'
     specs = [
-        multiline_comment(r'/\*', r'\*/'),
-        comment(r'//'),
+        make_multiline_comment(r'/\*', r'\*/'),
+        make_comment(r'//'),
         newline,
         space,
         Spec('name',    r'[A-Za-z\200-\377_][A-Za-z\200-\377_0-9]*'),

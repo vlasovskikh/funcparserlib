@@ -24,13 +24,13 @@
 from re import MULTILINE
 from funcparserlib.lexer import Spec
 
-__all__ = ['comment', 'multiline_comment', 'newline', 'space']
+__all__ = ['make_comment', 'make_multiline_comment', 'newline', 'space']
 
 # Comments
-def comment(start):
+def make_comment(start):
     return Spec('comment', r'%s.*' % start)
 
-def multiline_comment(open, close):
+def make_multiline_comment(open, close):
     return Spec('comment', r'%s(.|[\r\n])*?%s' % (open, close), MULTILINE)
 
 # Common tokens

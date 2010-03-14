@@ -86,7 +86,7 @@ def make_tokenizer(specs):
                 return Token(spec.type, value, ((line, pos), (n_line, n_pos)))
         else:
             errline = str.splitlines()[line - 1]
-            raise LexerError(errline, ((line, pos), (line, len(errline))))
+            raise LexerError(errline, ((line, pos + 1), (line, len(errline))))
     def f(str):
         length = len(str)
         line, pos = 1, 0

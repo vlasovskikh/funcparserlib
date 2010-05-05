@@ -1,1 +1,1 @@
-syntax error: 1,0-1,13: got unexpected token: string '"неправильно"'
+syntax error: 1,1-1,13: got unexpected token: string '"неправильно"'

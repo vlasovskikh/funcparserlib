@@ -34,9 +34,12 @@ def pretty_tree(x, kids, show):
         if len(xs) == 0:
             return line
         else:
-            next_indent = indent + (
-                CONT if sym == MID
-                     else (ROOT if sym == ROOT else LAST))
+            if sym == MID:
+                next_indent = indent + (CONT)
+            elif sym == ROOT:
+                next_indent = indent + (ROOT)
+            else:
+                next_indent = indent + (LAST)
             syms = [MID] * (len(xs) - 1) + [END]
             lines = [rec(x, next_indent, sym) for x, sym in zip(xs, syms)]
             return '\n'.join([line] + lines)

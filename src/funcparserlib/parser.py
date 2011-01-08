@@ -85,7 +85,10 @@ class Parser(object):
     def define(self, p):
         'Defines a parser wrapped into this object.'
         f = getattr(p, 'run', p)
-        setattr(self, '_run' if debug else 'run', f)
+        if debug:
+            setattr(self, '_run', f)
+        else:
+            setattr(self, 'run', f)
         self.named(getattr(p, 'name', p.__doc__))
 
     def run(self, tokens, s):
@@ -114,7 +117,10 @@ class Parser(object):
             return tree
         except NoParseError, e:
             max = e.state.max
-            tok = tokens[max] if len(tokens) > max else '<EOF>'
+            if len(tokens) > max:
+                tok = tokens[max]
+            else:
+                tok = '<EOF>'
             raise NoParseError(u'%s: %s' % (e.msg, tok))
 
     def __add__(self, other):

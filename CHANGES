@@ -3,6 +3,17 @@ The Changelog
 
 This is a changelog of [funcparserlib][1].
 
+
+0.3.5, 2011-01-13
+-----------------
+
+A maintenance release.
+
+* Python 2.4 compatibility
+* More readable terminal names for error reporting
+* Fixed wrong token positions in lexer error messages
+
+
 0.3.4, 2009-10-06
 -----------------
 

@@ -412,7 +412,3 @@ class _ForwardDecl(Parser):
 
 forward_decl = _ForwardDecl
 
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
-

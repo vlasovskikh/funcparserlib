@@ -22,6 +22,9 @@ TODO
 
         from funcparserlib import tok, many, maybe, fwd
 
+* NEW LL(1) optimization possibly has bugs. Ensure that `_Alt` is optimized
+  correctly. `left_recursive` may have bugs as well
+
 * NEW Clean up all the `tok()`-related stuff in `funcparserlib.parser`
 
 * ACCEPTED Measure the performance, make the new version better than 0.3.4

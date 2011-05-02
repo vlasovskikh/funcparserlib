@@ -31,6 +31,8 @@ class LexerError(SyntaxError):
         SyntaxError.__init__(self, u'cannot tokenize data: "%s"' % msg, pos)
 
 class Token(object):
+    __slots__ = ['type', 'value', 'pos']
+
     def __init__(self, type, value, pos=None):
         self.type = type
         self.value = value
@@ -76,32 +78,32 @@ class Spec(object):
 
 def make_tokenizer(specs):
     '[Spec] -> (str -> Iterable(Token))'
-    def match_specs(specs, str, i, (line, pos)):
-        for spec in specs:
-            m = spec.re.match(str, i)
-            if m is not None:
-                value = m.group()
-                nls = value.count(u'\n')
-                n_line = line + nls
-                if nls == 0:
-                    n_pos = pos + len(value)
-                else:
-                    n_pos = len(value) - value.rfind(u'\n') - 1
-                return Token(spec.type, value, ((line, pos + 1), (n_line, n_pos)))
-        else:
-            errline = str.splitlines()[line - 1]
-            raise LexerError(errline, ((line, pos + 1), (line, len(errline))))
-    def f(str):
-        length = len(str)
+    def tokenize(s):
+        length = len(s)
         line, pos = 1, 0
         i = 0
         while i < length:
-            t = match_specs(specs, str, i, (line, pos))
-            yield t
-            _, end = t.pos
-            line, pos = end
-            i = i + len(t.value)
-    return f
+            for spec in specs:
+                m = spec.re.match(s, i)
+                if m is not None:
+                    value = m.group()
+                    nls = value.count(u'\n')
+                    n_line = line + nls
+                    value_len = len(value)
+                    if nls == 0:
+                        n_pos = pos + value_len
+                    else:
+                        n_pos = value_len - value.rfind(u'\n') - 1
+                    yield Token(spec.type, value,
+                                ((line, pos + 1), (n_line, n_pos)))
+                    line, pos = n_line, n_pos
+                    i += value_len
+                    break
+            else:
+                errline = s.splitlines()[line - 1]
+                raise LexerError(errline,
+                                 ((line, pos + 1), (line, len(errline))))
+    return tokenize
 
 # This is an example of a token spec. See also [this article][1] for a
 # discussion of searching for multiline comments using regexps (including `*?`).

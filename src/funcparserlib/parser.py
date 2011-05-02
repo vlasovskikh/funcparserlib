@@ -60,9 +60,10 @@ info.
 
 __all__ = [
     'some', 'a', 'many', 'fwd', 'eof', 'maybe', 'skip', 'oneplus', 'pure',
-    'name_parser_vars', 'SyntaxError', 'ParserError',
+    'name_parser_vars', 'SyntaxError', 'ParserError', 'memoize',
 ]
 
+import sys
 from funcparserlib.util import SyntaxError
 
 class ParserError(SyntaxError):
@@ -104,7 +105,19 @@ class Parser(object):
                                'grammar; see the FAQ for details' %
                                ebnf_rule(p))
         try:
+            # DEBUG:
+            ms = [m for m in all_parsers(self) if isinstance(m, _Memoize)]
+            for m in ms:
+                m.cache = {}
+                m.hits = m.misses = 0
+
             (tree, _) = self(tokens, State())
+
+            # DEBUG:
+            #for m in ms:
+            #    print >> sys.stderr, '%s: hits=%d, misses=%d' % (
+            #            m.p, m.hits, m.misses)
+            #
             return tree
         except NoParseError, e:
             max = e.state.max
@@ -355,6 +368,34 @@ class _Tok(Parser):
     def ebnf(self):
         return '"%s"' % self.value if self.value else '? %s ?' % self.type
 
+class _Memoize(Parser):
+    def __init__(self, p):
+        self.p = p
+        self.cache = {}
+        self.hits = 0
+        self.misses = 0
+
+    def __getattr__(self, name):
+        return getattr(self.p, name)
+
+    def __call__(self, tokens, s):
+        cache = self.cache
+        try:
+            res = cache[s.pos]
+            self.hits += 1
+        except KeyError:
+            res = self.p(tokens, s)
+            cache[s.pos] = res
+            self.misses += 1
+        # DEBUG:
+        #print >> sys.stderr, '%s: hits=%d, misses=%d' % (
+        #        self.p, self.hits, self.misses)
+        return res
+
+    def ebnf(self):
+        return str(self.p)
+
+
 class State(object):
     '''A parsing state that is maintained basically for error reporting.
 
@@ -424,7 +465,7 @@ def non_halting(p):
 
 def left_recursive(p, fwds=[], seqs=[]):
     '''Returns a left-recursive part of parser `p` or `None`.'''
-    if isinstance(p, (_Map, _Many)):
+    if isinstance(p, (_Map, _Many, _Memoize)):
         return left_recursive(p.p, fwds, seqs)
     elif isinstance(p, _Fwd):
         if p in fwds:
@@ -452,7 +493,7 @@ def makes_progress(p, fwds=[]):
     '''Returns `True` if parser `p` must consume one or more tokens in order to
     succeed.
     '''
-    if isinstance(p, _Map):
+    if isinstance(p, (_Map, _Memoize)):
         return makes_progress(p.p, fwds)
     elif isinstance(p, _Fwd):
         if p in fwds:
@@ -474,7 +515,7 @@ def ebnf_grammar(p):
         if p in ps:
             return [], ps
         ps = [p] + ps
-        if isinstance(p, (_Map, _Fwd, _Many)):
+        if isinstance(p, (_Map, _Fwd, _Many, _Memoize)):
             rs, ps = ebnf_rules(p.p, ps)
         elif isinstance(p, (_Seq, _Alt)):
             rs = []
@@ -511,7 +552,7 @@ def all_parsers(p):
     def rec(p, fwds=[]):
         if isinstance(p, (_Seq, _Alt)):
             return sum([rec(x, fwds) for x in p.ps], [p])
-        elif isinstance(p, (_Many, _Map)):
+        elif isinstance(p, (_Many, _Map, _Memoize)):
             return [p] + rec(p.p, fwds)
         elif isinstance(p, _Fwd):
             if p in fwds:
@@ -529,7 +570,7 @@ def first(p):
         return first(p.ps[0])
     elif isinstance(p, _Alt):
         return sum([first(x) for x in p.ps], [])
-    elif isinstance(p, (_Map, _Fwd, _Many)):
+    elif isinstance(p, (_Map, _Fwd, _Many, _Memoize)):
         return first(p.p)
     elif isinstance(p, (_Eof, _Pure)):
         return []
@@ -543,4 +584,5 @@ tok = _Tok
 some = _Some
 pure = _Pure
 fwd = _Fwd
+memoize = _Memoize
 

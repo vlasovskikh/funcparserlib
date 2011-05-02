@@ -21,8 +21,7 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from funcparserlib.lexer import Token
-from funcparserlib.parser import a, skip, some, tok
+from funcparserlib.parser import skip, tok
 
 __all__ = [
     'const', 'flatten', 'unarg', 'tokval', 'mktok', 'n', 'op', 'op_', 'sometok',

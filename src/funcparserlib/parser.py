@@ -88,7 +88,6 @@ class Parser(object):
         parser state. Also it makes error messages more readable by specifying
         the position of the rightmost token that has been reached.
         '''
-        sys.setrecursionlimit(10000)
         try:
             (tree, _) = self(tokens, State())
             return tree
@@ -212,17 +211,25 @@ class _Or(Parser):
     '''A choice composition of two parsers.'''
 
     def __init__(self, p1, p2):
-        self.p1 = p1
-        self.p2 = p2
+        if isinstance(p1, _Or):
+            self.ps = p1.ps + [p2]
+        else:
+            self.ps = [p1, p2]
 
     def __call__(self, tokens, s):
-        try:
-            return self.p1(tokens, s)
-        except NoParseError, e:
-            return self.p2(tokens, State(s.pos, e.state.max))
+        assert len(self.ps) > 0
+        e = NoParseError('no error', s)
+        for p in self.ps:
+            try:
+                return p(tokens, s)
+            except NoParseError, npe:
+                e = npe
+                s = State(s.pos, e.state.max)
+                continue
+        raise e
 
     def __str__(self):
-        return '(%s | %s)' % (self.p1, self.p2)
+        return '(%s)' % ' | '.join(str(x) for x in self.ps)
 
 class State(object):
     '''A parsing state that is maintained basically for error reporting.

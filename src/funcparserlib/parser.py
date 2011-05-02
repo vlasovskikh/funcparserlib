@@ -203,17 +203,38 @@ class _Alt(Parser):
             self.ps = p1.ps + [p2]
         else:
             self.ps = [p1, p2]
+        self.table = None
 
     def __call__(self, tokens, s):
-        e = NoParseError('no error', s)
-        for p in self.ps:
+        if self.table is None:
+            self.table = {}
             try:
-                return p(tokens, s)
-            except NoParseError, npe:
-                e = npe
-                s = State(s.pos, e.state.max)
-                continue
-        raise e
+                fs = [first(p) for p in self.ps]
+                if all(len(f) == 1 for f in fs):
+                    for f, p in zip(fs, self.ps):
+                        self.table[f[0]] = p
+            except GrammarError:
+                pass
+        if not self.table:
+            e = NoParseError('no error', s)
+            for p in self.ps:
+                try:
+                    return p(tokens, s)
+                except NoParseError, npe:
+                    e = npe
+                    s = State(s.pos, e.state.max)
+                    continue
+            raise e
+        else:
+            try:
+                t = tokens[s.pos]
+            except IndexError:
+                raise NoParseError('no tokens left in the stream', s)
+            for k, v in self.table.items():
+                if (k.type == t.type and
+                        (k.value is None or k.value == t.value)):
+                    return v(tokens, s)
+            return self.ps[-1](tokens, s)
 
     def ebnf(self):
         return ' | '.join(ebnf_brackets(str(x)) for x in self.ps)
@@ -502,22 +523,16 @@ def all_parsers(p):
     return list(set(rec(p)))
 
 def first(p):
-    # Perhaps parser shouldn't depend on lexer... I'm not sure
-    from funcparserlib.lexer import Token
     if isinstance(p, _Tok):
-        return [Token(p.type, p.value)]
-    elif isinstance(p, _Eof):
-        return ['$']
-    elif isinstance(p, _Pure):
-        return ['E']
-    elif isinstance(p, _Many):
-        return first(p.p) + ['E']
+        return [p]
     elif isinstance(p, _Seq):
         return first(p.ps[0])
     elif isinstance(p, _Alt):
         return sum([first(x) for x in p.ps], [])
-    elif isinstance(p, (_Map, _Fwd)):
+    elif isinstance(p, (_Map, _Fwd, _Many)):
         return first(p.p)
+    elif isinstance(p, (_Eof, _Pure)):
+        return []
     else:
         raise GrammarError('cannot analyse parser %s' % ebnf_rule(p))
 

@@ -43,9 +43,12 @@ class Token(object):
 
     def __eq__(self, other):
         # FIXME: Case sensitivity is assumed here
-        return (self.type == other.type
-            and self.value == other.value)
-
+        if not isinstance(other, Token):
+            return False
+        return (self.type == other.type and
+                (self.value is None or
+                 other.value is None or
+                 self.value == other.value))
 
     def __hash__(self):
         return hash(self.type) ^ hash(self.value) ^ hash(self.pos)

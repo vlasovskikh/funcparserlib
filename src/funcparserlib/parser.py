@@ -210,19 +210,33 @@ class _Alt(Parser):
             self.ps = p1.ps + [p2]
         else:
             self.ps = [p1, p2]
-        self.table = None
+        self.toks = None
 
     def __call__(self, tokens, s):
-        if self.table is None:
-            self.table = {}
+        if self.toks is None:
+            self.toks = []
             try:
-                fs = [first(p) for p in self.ps]
-                if all(len(f) == 1 for f in fs):
-                    for f, p in zip(fs, self.ps):
-                        self.table[f[0]] = p
+                qss = [first(p) for p in self.ps]
+                if all(len(qs) == 1 for qs in qss):
+                    qs = [x[0] for x in qss]
+                    self.toks = [(q.tok, p)
+                                 for p, q in zip(self.ps, qs)]
             except GrammarError:
                 pass
-        if not self.table:
+
+        # If there is only 1 possible token for each of the alternatives, then
+        # optimize parser lookup
+        if self.toks:
+            try:
+                t = tokens[s.pos]
+            except IndexError:
+                raise NoParseError('no tokens left in the stream', s)
+
+            for tok, p in self.toks:
+                if t == tok:
+                    return p(tokens, s)
+            raise NoParseError('got unexpected token', s)
+        else:
             e = NoParseError('no error', s)
             for p in self.ps:
                 try:
@@ -232,16 +246,6 @@ class _Alt(Parser):
                     s = State(s.pos, e.state.max)
                     continue
             raise e
-        else:
-            try:
-                t = tokens[s.pos]
-            except IndexError:
-                raise NoParseError('no tokens left in the stream', s)
-            for k, v in self.table.items():
-                if (k.type == t.type and
-                        (k.value is None or k.value == t.value)):
-                    return v(tokens, s)
-            return self.ps[-1](tokens, s)
 
     def ebnf(self):
         return ' | '.join(ebnf_brackets(str(x)) for x in self.ps)

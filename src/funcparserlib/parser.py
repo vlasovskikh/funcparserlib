@@ -425,6 +425,12 @@ def non_halting(p):
 
 def left_recursive(p, fwds=[], seqs=[]):
     '''Returns a left-recursive part of parser `p` or `None`.'''
+    def any_(xs):
+        for x in xs:
+            if x:
+                return x
+        return None
+
     if isinstance(p, (_Map, _Many, _Memoize)):
         return left_recursive(p.p, fwds, seqs)
     elif isinstance(p, _Fwd):
@@ -437,9 +443,9 @@ def left_recursive(p, fwds=[], seqs=[]):
             return None
         else:
             return (left_recursive(p.ps[0], fwds, seqs) or
-                    any(left_recursive(x, [], [p] + seqs) for x in p.ps[1:]))
+                    any_(left_recursive(x, [], [p] + seqs) for x in p.ps[1:]))
     elif isinstance(p, _Alt):
-        return any(left_recursive(x, fwds, seqs) for x in p.ps)
+        return any_(left_recursive(x, fwds, seqs) for x in p.ps)
     else:
         return None
 
@@ -507,8 +513,11 @@ def ebnf_brackets(s):
 
 def non_ll_1_parts(p):
     assert not non_halting(p)
-    ps = dict((x, first(x)) for x in all_parsers(p))
-    return [k for k, v in ps.items() if len(v) != len(set(v))]
+    ps = dict((x, first(x)) for x in all_parsers(p)
+                            if isinstance(x, _Alt))
+    return [(k, v) for k, v in ps.items()
+                   if len(v) != len(set(v))]
+
 
 def all_parsers(p):
     def rec(p, fwds=[]):
@@ -533,9 +542,9 @@ def first(p):
         return first(p.ps[0])
     elif isinstance(p, _Alt):
         return sum([first(x) for x in p.ps], [])
-    elif isinstance(p, (_Map, _Fwd, _Many, _Memoize)):
+    elif isinstance(p, (_Map, _Fwd, _Many)):
         return first(p.p)
-    elif isinstance(p, (_Eof, _Pure)):
+    elif isinstance(p, (_Eof, _Pure, _Memoize)):
         return []
     else:
         raise GrammarError('cannot analyse parser %s' % ebnf_rule(p))

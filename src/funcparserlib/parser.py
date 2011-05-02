@@ -182,8 +182,10 @@ class _Add(Parser):
     '''A sequential composition of parsers.'''
 
     def __init__(self, p1, p2):
-        self.p1 = p1
-        self.p2 = p2
+        if isinstance(p1, _Add):
+            self.ps = p1.ps + [p2]
+        else:
+            self.ps = [p1, p2]
 
     def __call__(self, tokens, s):
         def magic(v1, v2):
@@ -197,15 +199,17 @@ class _Add(Parser):
                     return _Tuple(vs)
             else:
                 return _Ignored(())
-        (v1, s2) = self.p1(tokens, s)
-        (v2, s3) = self.p2(tokens, s2)
-        return (magic(v1, v2), s3)
+        vs = []
+        for p in self.ps:
+            (v, s) = p(tokens, s)
+            vs.append(v)
+        return (reduce(magic, vs), s)
 
         # Or in terms of bind and pure:
         # return self.p1.bind(lambda x: self.p2.bind(lambda y: pure(magic(x, y))))
 
     def __str__(self):
-        return '(%s , %s)' % (self.p1, self.p2)
+        return '(%s)' % ' , '.join(str(x) for x in self.ps)
 
 class _Or(Parser):
     '''A choice composition of two parsers.'''

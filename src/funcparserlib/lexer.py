@@ -44,6 +44,10 @@ class Token(object):
         return (self.type == other.type
             and self.value == other.value)
 
+
+    def __hash__(self):
+        return hash(self.type) ^ hash(self.value) ^ hash(self.pos)
+
     def __unicode__(self):
         s = u"%s '%s'" % (self.type, self.value)
         return s.strip()

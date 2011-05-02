@@ -422,19 +422,9 @@ def left_recursive(p, fwds=[], seqs=[]):
 
 def non_halting_many(p, fwds=[]):
     '''Returns a non-halting `many()` part of parser `p` or `None`.'''
-    if isinstance(p, _Map):
-        return non_halting_many(p.p, fwds)
-    elif isinstance(p, _Fwd):
-        if p in fwds:
-            return None
-        else:
-            return non_halting_many(p.p, [p] + fwds)
-    elif isinstance(p, (_Seq, _Alt)):
-        return any(non_halting_many(x, fwds) for x in p.ps)
-    elif isinstance(p, _Many):
-        return p if not makes_progress(p.p) else None
-    else:
-        return None
+    rs = [x for x in all_parsers(p) if isinstance(x, _Many) and
+                                       not makes_progress(x.p)]
+    return rs[0] if len(rs) > 0 else None
 
 def makes_progress(p, fwds=[]):
     '''Returns `True` if parser `p` must consume one or more tokens in order to
@@ -486,6 +476,49 @@ def ebnf_brackets(s):
     return (s if ' ' not in s or
                  any(s.startswith(x) for x in '{[(?')
               else '(%s)' % s)
+
+def is_ll_1(p):
+    return len(non_ll_1_parts(p)) == 0
+
+def non_ll_1_parts(p):
+    assert not non_halting(p)
+    ps = dict((x, first(x)) for x in all_parsers(p))
+    return [k for k, v in ps.items() if len(v) != len(set(v))]
+
+def all_parsers(p):
+    def rec(p, fwds=[]):
+        if isinstance(p, (_Seq, _Alt)):
+            return sum([rec(x, fwds) for x in p.ps], [p])
+        elif isinstance(p, (_Many, _Map)):
+            return [p] + rec(p.p, fwds)
+        elif isinstance(p, _Fwd):
+            if p in fwds:
+                return []
+            else:
+                return [p] + rec(p.p, [p] + fwds)
+        else:
+            return [p]
+    return list(set(rec(p)))
+
+def first(p):
+    # Perhaps parser shouldn't depend on lexer... I'm not sure
+    from funcparserlib.lexer import Token
+    if isinstance(p, _Tok):
+        return [Token(p.type, p.value)]
+    elif isinstance(p, _Eof):
+        return ['$']
+    elif isinstance(p, _Pure):
+        return ['E']
+    elif isinstance(p, _Many):
+        return first(p.p) + ['E']
+    elif isinstance(p, _Seq):
+        return first(p.ps[0])
+    elif isinstance(p, _Alt):
+        return sum([first(x) for x in p.ps], [])
+    elif isinstance(p, (_Map, _Fwd)):
+        return first(p.p)
+    else:
+        raise GrammarError('cannot analyse parser %s' % ebnf_rule(p))
 
 # Aliases for exporting
 eof = _Eof()

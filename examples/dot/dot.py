@@ -164,8 +164,8 @@ def pretty_parse_tree(x):
     return pretty_tree(x, kids, show)
 
 def main():
-    #import logging
-    #logging.basicConfig(level=logging.DEBUG)
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
     #import funcparserlib
     #funcparserlib.parser.debug = True
     try:

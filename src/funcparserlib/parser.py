@@ -42,6 +42,10 @@ import logging
 from funcparserlib.lexer import Token
 from funcparserlib.util import SyntaxError
 
+
+log = logging.getLogger('funcparserlib')
+
+
 class ParserError(SyntaxError):
     '''User-visible parsing error.'''
     pass
@@ -78,11 +82,31 @@ class Parser(object):
         parser state. Also it makes error messages more readable by specifying
         the position of the rightmost token that has been reached.
         '''
-        p = non_halting(self)
+        log.info(u'EBNF grammar:\n{0}'.format(ebnf_grammar(self)))
+
+        p = left_recursive(self)
         if p:
-            raise GrammarError("parser '%s' does not halt, please fix your "
-                               'grammar; see the FAQ for details' %
+            raise GrammarError("Parser '%s' does not halt, remove left "
+                               "recursion from your grammar" %
                                ebnf_rule(p))
+        p = non_halting_many(self)
+        if p:
+            raise GrammarError("Parser '%s' does not halt, because it "
+                               "contains maybe() or many() inside many()" %
+                               ebnf_rule(p))
+
+        for q, opts in non_ll_1_parts(self):
+            log.warning(u'The grammar has a non-LL(1) part that '
+                        u'may slow down parsing:\n\n    {0}\n\n'
+                        u'Several alternatives here may start '
+                        u'with the same token, '
+                        u'possible starting tokens are:\n\n    {1}\n\n'
+                        u'In order to get linear parsing time add memoize() '
+                        u'to the biggest common subtree of the '
+                        u'alternatives or transform your grammar to LL(1).'.format(
+                            ebnf_rule(q),
+                            u', '.join(unicode(x) for x in opts)))
+
         try:
             (tree, _) = self(tokens, State())
             return tree

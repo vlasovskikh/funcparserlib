@@ -12,6 +12,9 @@ default:
 install:
 	$(SETUP) install $(INSTALL_OPTS)
 
+develop:
+	$(SETUP) develop --user
+
 test: unittest examples doctest
 
 unittest:

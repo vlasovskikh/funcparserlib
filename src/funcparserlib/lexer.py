@@ -90,13 +90,13 @@ def make_tokenizer(specs):
                 m = spec.re.match(s, i)
                 if m is not None:
                     value = m.group()
-                    nls = value.count(u'\n')
+                    nls = value.count('\n')
                     n_line = line + nls
                     value_len = len(value)
                     if nls == 0:
                         n_pos = pos + value_len
                     else:
-                        n_pos = value_len - value.rfind(u'\n') - 1
+                        n_pos = value_len - value.rfind('\n') - 1
                     yield Token(spec.type, value,
                                 ((line, pos + 1), (n_line, n_pos)))
                     line, pos = n_line, n_pos

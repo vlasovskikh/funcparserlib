@@ -64,7 +64,7 @@ Debug messages are emitted via a `logging.Logger` object named
 __all__ = ['some', 'a', 'many', 'pure', 'finished', 'maybe', 'skip', 'oneplus',
     'forward_decl', 'SyntaxError']
 
-import logging
+import sys, logging
 from funcparserlib.util import SyntaxError
 
 log = logging.getLogger('funcparserlib')
@@ -74,33 +74,10 @@ class Parser(object):
     '''A wrapper around a parser function that defines some operators for parser
     composition.
     '''
-    def __init__(self, p):
-        'Wraps a parser function p into an object.'
-        self.define(p)
-
     def named(self, name):
-        'Specifies the name of the parser for more readable parsing log.'
+        'Specifies the name of the parser for a more readable parsing log.'
         self.name = name
         return self
-
-    def define(self, p):
-        'Defines a parser wrapped into this object.'
-        f = getattr(p, 'run', p)
-        setattr(self, '_run' if debug else 'run', f)
-        self.named(getattr(p, 'name', p.__doc__))
-        self.always_succeeds = False
-
-    def run(self, tokens, s):
-        '''Sequence(a), State -> (b, State)
-
-        Runs a parser wrapped into this object.
-        '''
-        if debug:
-            log.debug('trying %s' % self.name)
-        return self._run(tokens, s)
-
-    def _run(self, tokens, s):
-        raise NotImplementedError('you must define() a parser')
 
     def parse(self, tokens):
         '''Sequence(a) -> b
@@ -111,17 +88,24 @@ class Parser(object):
         parser state. Also it makes error messages more readable by specifying
         the position of the rightmost token that has been reached.
         '''
+        sys.setrecursionlimit(10000)
         try:
-            (tree, _) = self.run(tokens, State())
+            (tree, _) = self(tokens, State())
             return tree
         except NoParseError, e:
             max = e.state.max
             tok = tokens[max] if max < len(tokens) else '<EOF>'
             raise ParserError(u'%s: %s' % (e.msg, tok),
-                getattr(tok, 'pos', None))
+                              getattr(tok, 'pos', None))
+
+    def __call__(self, tokens, s):
+        return NotImplementedError('an abstract parser cannot be called')
+
+    def __str__(self):
+        return self.name
 
     def __add__(self, other):
-        '''Parser(a, b), Parser(a, c) -> Parser(a, _Tuple(b, c))
+        '''Parser(a, b), Parser(a, c) -> Parser(a, (b, c))
 
         A sequential composition of parsers.
 
@@ -131,27 +115,7 @@ class Parser(object):
         unless the user explicitely prevents it. See also skip and >>
         combinators.
         '''
-        def magic(v1, v2):
-            vs = [v for v in [v1, v2] if not isinstance(v, _Ignored)]
-            if len(vs) == 1:
-                return vs[0]
-            elif len(vs) == 2:
-                if isinstance(vs[0], _Tuple):
-                    return _Tuple(v1 + (v2,))
-                else:
-                    return _Tuple(vs)
-            else:
-                return _Ignored(())
-        @Parser
-        def _add(tokens, s):
-            (v1, s2) = self.run(tokens, s)
-            (v2, s3) = other.run(tokens, s2)
-            return (magic(v1, v2), s3)
-        # or in terms of bind and pure:
-        # _add = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
-        _add.name = '(%s , %s)' % (self.name, other.name)
-        _add.always_succeeds = self.always_succeeds and other.always_succeeds
-        return _add
+        return _Add(self, other)
 
     def __or__(self, other):
         '''Parser(a, b), Parser(a, c) -> Parser(a, b or c)
@@ -162,15 +126,7 @@ class Parser(object):
         statically typed langage something like Either b c could be used. See
         also + combinator.
         '''
-        @Parser
-        def _or(tokens, s):
-            try:
-                return self.run(tokens, s)
-            except NoParseError, e:
-                return other.run(tokens, State(s.pos, e.state.max))
-        _or.name = '(%s | %s)' % (self.name, other.name)
-        _or.always_succeeds = self.always_succeeds or other.always_succeeds
-        return _or
+        return _Or(self, other)
 
     def __rshift__(self, f):
         '''Parser(a, b), (b -> c) -> Parser(a, c)
@@ -182,15 +138,7 @@ class Parser(object):
         This combinator may be thought of as a functor from b -> c to Parser(a,
         b) -> Parser(a, c).
         '''
-        @Parser
-        def _shift(tokens, s):
-            (v, s2) = self.run(tokens, s)
-            return (f(v), s2)
-        # or in terms of bind and pure:
-        # _shift = self.bind(lambda x: pure(f(x)))
-        _shift.name = self.name
-        _shift.always_succeeds = self.always_succeeds
-        return _shift
+        return _Rshift(self, f)
 
     def bind(self, f):
         '''Parser(a, b), (b -> Parser(a, c)) -> Parser(a, c)
@@ -198,13 +146,83 @@ class Parser(object):
         NOTE: A monadic bind function. It is used internally to implement other
         combinators. Functions bind and pure make the Parser a Monad.
         '''
-        @Parser
-        def _bind(tokens, s):
-            (v, s2) = self.run(tokens, s)
-            return f(v).run(tokens, s2)
-        _bind.name = '(%s >>=)' % self.name
-        _bind.always_succeeds = self.always_succeeds
-        return _bind
+        return _Bind(self, f)
+
+class _Bind(Parser):
+    '''A monadic bind parser.'''
+
+    def __init__(self, p, f):
+        self.p = p
+        self.f = f
+
+    def __call__(self, tokens, s):
+        (v, s2) = self.p(tokens, s)
+        return self.f(v)(tokens, s2)
+
+    def __str__(self):
+        return '(%s >>=)' % self.p
+
+class _Rshift(Parser):
+    '''An interpreter parser.'''
+
+    def __init__(self, p, f):
+        self.p = p
+        self.f = f
+
+    def __call__(self, tokens, s):
+        (v, s2) = self.p(tokens, s)
+        return (self.f(v), s2)
+
+        # Or in terms of bind and pure:
+        # return self.p.bind(lambda x: pure(self.f(x)))
+
+    def __str__(self):
+        return str(self.p)
+
+class _Add(Parser):
+    '''A sequential composition of parsers.'''
+
+    def __init__(self, p1, p2):
+        self.p1 = p1
+        self.p2 = p2
+
+    def __call__(self, tokens, s):
+        def magic(v1, v2):
+            vs = [v for v in [v1, v2] if not isinstance(v, _Ignored)]
+            if len(vs) == 1:
+                return vs[0]
+            elif len(vs) == 2:
+                if isinstance(vs[0], _Tuple):
+                    return _Tuple(v1 + (v2,))
+                else:
+                    return _Tuple(vs)
+            else:
+                return _Ignored(())
+        (v1, s2) = self.p1(tokens, s)
+        (v2, s3) = self.p2(tokens, s2)
+        return (magic(v1, v2), s3)
+
+        # Or in terms of bind and pure:
+        # return self.p1.bind(lambda x: self.p2.bind(lambda y: pure(magic(x, y))))
+
+    def __str__(self):
+        return '(%s , %s)' % (self.p1, self.p2)
+
+class _Or(Parser):
+    '''A choice composition of two parsers.'''
+
+    def __init__(self, p1, p2):
+        self.p1 = p1
+        self.p2 = p2
+
+    def __call__(self, tokens, s):
+        try:
+            return self.p1(tokens, s)
+        except NoParseError, e:
+            return self.p2(tokens, State(s.pos, e.state.max))
+
+    def __str__(self):
+        return '(%s | %s)' % (self.p1, self.p2)
 
 class State(object):
     '''A parsing state that is maintained basically for error reporting.
@@ -249,67 +267,74 @@ class _Ignored(object):
         self.value = value
 
     def __repr__(self):
-        return '_Ignored(%s)' % repr(self.value)
+        return '_Ignored(%r)' % (self.value,)
 
-@Parser
-def finished(tokens, s):
-    '''Parser(a, None)
+class _Finished(Parser):
+    '''Throws an exception if any tokens are left in the input unparsed.'''
 
-    Throws an exception if any tokens are left in the input unparsed.
-    '''
-    if s.pos >= len(tokens):
-        return (None, s)
-    else:
-        raise NoParseError('should have reached <EOF>', s)
-finished.name = 'finished'
+    def __call__(self, tokens, s):
+        if s.pos >= len(tokens):
+            return (None, s)
+        else:
+            raise NoParseError('should have reached <EOF>', s)
 
-def many(p):
+    def __str__(self):
+        return 'finished'
+
+finished = _Finished()
+
+class _Many(Parser):
     '''Parser(a, b) -> Parser(a, [b])
 
-    Returns a parser that infinitely applies the parser p to the input sequence
-    of tokens while it successfully parsers them. The resulting parser returns a
-    list of parsed values.
+    A parser that infinitely applies the parser p to the input sequence of
+    tokens while it successfully parsers them. It returns a list of parsed
+    values.
     '''
-    @Parser
-    def _many(tokens, s):
+
+    def __init__(self, p):
+        self.p = p
+
+    def __call__(self, tokens, s):
         'Iterative implementation preventing the stack overflow.'
         res = []
         try:
             while True:
-                (v, s) = p.run(tokens, s)
+                (v, s) = self.p(tokens, s)
                 res.append(v)
         except NoParseError, e:
             return (res, e.state)
-    _many.name = '{ %s }' % p.name
-    _many.always_succeeds = True
-    if p.always_succeeds:
-        raise GrammarError('parser %s does not halt, please fix your grammar. '
-            'see FAQ for details' % _many.name)
-    return _many
 
-def some(pred):
-    '''(a -> bool) -> Parser(a, a)
+    def __str__(self):
+        return '{ %s }' % self.p
 
-    Returns a parser that parses a token if it satisfies a predicate pred.
-    '''
-    @Parser
-    def _some(tokens, s):
+many = _Many
+
+class _Some(Parser):
+    '''A parser that parses a token if it satisfies a predicate pred.'''
+
+    def __init__(self, pred):
+        '''(a -> bool) -> Parser(a, a)'''
+        self.pred = pred
+
+    def __call__(self, tokens, s):
         if s.pos >= len(tokens):
             raise NoParseError('no tokens left in the stream', s)
+        t = tokens[s.pos]
+        if self.pred(t):
+            pos = s.pos + 1
+            s2 = State(pos, max(pos, s.max))
+            if debug:
+                log.debug(u'*matched* "%s", new state = %s' % (t, s2))
+            return (t, s2)
         else:
-            t = tokens[s.pos]
-            if pred(t):
-                pos = s.pos + 1
-                s2 = State(pos, max(pos, s.max))
-                if debug:
-                    log.debug(u'*matched* "%s", new state = %s' % (t, s2))
-                return (t, s2)
-            else:
-                if debug:
-                    log.debug(u'failed "%s", state = %s' % (t, s))
-                raise NoParseError('got unexpected token', s)
-    _some.name = '(some)'
-    return _some
+            if debug:
+                log.debug(u'failed "%s", state = %s' % (t, s))
+            raise NoParseError('got unexpected token', s)
+
+    def __str__(self):
+        return '(some)'
+
+some = _Some
 
 def a(value):
     '''Eq(a) -> Parser(a, a)
@@ -319,13 +344,17 @@ def a(value):
     name = getattr(value, 'name', value)
     return some(lambda t: t == value).named('(a "%s")' % name)
 
-def pure(x):
-    @Parser
-    def _pure(_, s):
-        return (x, s)
-    _pure.name = '(pure %r)' % repr(x)
-    _pure.always_succeeds = True
-    return _pure
+class _Pure(Parser):
+    def __init__(self, x):
+        self.x = x
+
+    def __call__(self, tokens, s):
+        return (self.x, s)
+
+    def __str__(self):
+        return '(pure %s)' % (x,)
+
+pure = _Pure
 
 def maybe(p):
     '''Parser(a, b) -> Parser(a, b or None)
@@ -335,7 +364,7 @@ def maybe(p):
     NOTE: In a statically typed language, the type Maybe b could be more
     approprieate.
     '''
-    return (p | pure(None)).named('[ %s ]' % p.name)
+    return (p | pure(None)).named('[ %s ]' % p)
 
 def skip(p):
     '''Parser(a, b) -> Parser(a, _Ignored(b))
@@ -351,32 +380,30 @@ def oneplus(p):
     Returns a parser that applies the parser p one or more times.
     '''
     q = p + many(p) >> (lambda x: [x[0]] + x[1])
-    return q.named('(%s , { %s })' % (p.name, p.name))
+    return q.named('(%s , { %s })' % (p, p))
 
-def with_forward_decls(suspension):
-    '''(None -> Parser(a, b)) -> Parser(a, b)
-
-    Returns a parser that computes itself lazily as a result of the suspension
-    provided. It is needed when some parsers contain forward references to
-    parsers defined later and such references are cyclic. See examples for more
-    details.
+class _ForwardDecl(Parser):
     '''
-    @Parser
-    def f(tokens, s):
-        return suspension().run(tokens, s)
-    return f
-
-def forward_decl():
-    '''None -> Parser(?, ?)
-
-    Returns an undefined parser that can be used as a forward declaration. You
-    will be able to define() it when all the parsers it depends on are
-    available.
+    An undefined parser that can be used as a forward declaration. You will be
+    able to define() it when all the parsers it depends on are available.
     '''
-    @Parser
-    def f(tokens, s):
-        raise NotImplementedError('you must define() a forward_decl somewhere')
-    return f
+
+    def __init__(self):
+        self.p = None
+
+    def define(self, p):
+        self.p = p
+
+    def __call__(self, tokens, s):
+        if self.p:
+            return self.p(tokens, s)
+        else:
+            raise NotImplementedError('you must define() a forward_decl')
+
+    def __str__(self):
+        return str(self.p)
+
+forward_decl = _ForwardDecl
 
 if __name__ == '__main__':
     import doctest

@@ -37,7 +37,9 @@ __all__ = [
     'name_parser_vars', 'SyntaxError', 'ParserError', 'memoize',
 ]
 
-import sys
+
+import logging
+from funcparserlib.lexer import Token
 from funcparserlib.util import SyntaxError
 
 class ParserError(SyntaxError):
@@ -295,42 +297,19 @@ class _Pure(Parser):
     def ebnf(self):
         return '? pure(%s) ?' % (self.x,)
 
-# Deprecated
-class _Some(Parser):
-    '''A parser that parses a token if it satisfies a predicate `pred`.'''
-
-    def __init__(self, pred):
-        self.pred = pred
-
-    def __call__(self, tokens, s):
-        try:
-            t = tokens[s.pos]
-        except IndexError:
-            raise NoParseError('no tokens left in the stream', s)
-        if self.pred(t):
-            pos = s.pos + 1
-            s2 = State(pos, max(pos, s.max))
-            return (t, s2)
-        else:
-            raise NoParseError('got unexpected token', s)
-
-    def ebnf(self):
-        return '? some() ?'
 
 class _Tok(Parser):
-    '''A parser that parses a token if it has the specified `type` or `value`.'''
+    '''Returns a parser that parses a token equal to the specified token.'''
 
-    def __init__(self, type, value=None):
-        self.type = type
-        self.value = value
+    def __init__(self, token):
+        self.tok = token
 
     def __call__(self, tokens, s):
         try:
             t = tokens[s.pos]
         except IndexError:
             raise NoParseError('no tokens left in the stream', s)
-        if (t.type == self.type and
-                (self.value is None or t.value == self.value)):
+        if t == self.tok:
             pos = s.pos + 1
             s2 = State(pos, max(pos, s.max))
             return (t, s2)
@@ -338,7 +317,15 @@ class _Tok(Parser):
             raise NoParseError('got unexpected token', s)
 
     def ebnf(self):
-        return '"%s"' % self.value if self.value else '? %s ?' % self.type
+        try:
+            return self.tok.ebnf()
+        except AttributeError:
+            return '? %s ?' % self.tok
+
+
+def tok(type, value=None):
+    return _Tok(Token(type, value))
+
 
 class _Memoize(Parser):
     def __init__(self, p):
@@ -396,12 +383,6 @@ class _Ignored(object):
     def __repr__(self):
         return '_Ignored(%r)' % (self.value,)
 
-def a(value):
-    '''Returns a parser that parses a token that is equal to the value.'''
-    name = getattr(value, 'name', value)
-    p = some(lambda t: t == value)
-    p.ebnf = lambda: '"%s"' % name
-    return p
 
 def maybe(p):
     '''Returns a parser that retuns `None` if parsing fails.'''
@@ -485,7 +466,7 @@ def makes_progress(p, fwds=[]):
         return any(makes_progress(x, fwds) for x in p.ps)
     elif isinstance(p, _Alt):
         return all(makes_progress(x, fwds) for x in p.ps)
-    elif isinstance(p, (_Some, _Eof, _Tok)):
+    elif isinstance(p, (_Eof, _Tok)):
         return True
     else:
         return False
@@ -562,9 +543,8 @@ def first(p):
 
 # Aliases for exporting
 eof = _Eof()
+a = _Tok
 many = _Many
-tok = _Tok
-some = _Some
 pure = _Pure
 fwd = _Fwd
 memoize = _Memoize

@@ -101,7 +101,8 @@ class Parser(object):
         p = non_halting(self)
         if p:
             raise GrammarError("parser '%s' does not halt, please fix your "
-                               'grammar; see the FAQ for details' % p)
+                               'grammar; see the FAQ for details' %
+                               ebnf_rule(p))
         try:
             (tree, _) = self(tokens, State())
             return tree
@@ -309,6 +310,29 @@ class _Some(Parser):
     def ebnf(self):
         return '? some() ?'
 
+class _Tok(Parser):
+    '''A parser that parses a token if it has the specified `type` or `value`.'''
+
+    def __init__(self, type, value=None):
+        self.type = type
+        self.value = value
+
+    def __call__(self, tokens, s):
+        try:
+            t = tokens[s.pos]
+        except IndexError:
+            raise NoParseError('no tokens left in the stream', s)
+        if (t.type == self.type and
+                (self.value is None or t.value == self.value)):
+            pos = s.pos + 1
+            s2 = State(pos, max(pos, s.max))
+            return (t, s2)
+        else:
+            raise NoParseError('got unexpected token', s)
+
+    def ebnf(self):
+        return '"%s"' % self.value if self.value else '? %s ?' % self.type
+
 class State(object):
     '''A parsing state that is maintained basically for error reporting.
 
@@ -427,7 +451,7 @@ def makes_progress(p, fwds=[]):
         return any(makes_progress(x, fwds) for x in p.ps)
     elif isinstance(p, _Alt):
         return all(makes_progress(x, fwds) for x in p.ps)
-    elif isinstance(p, (_Some, _Eof)):
+    elif isinstance(p, (_Some, _Eof, _Tok)):
         return True
     else:
         return False
@@ -466,6 +490,7 @@ def ebnf_brackets(s):
 # Aliases for exporting
 eof = _Eof()
 many = _Many
+tok = _Tok
 some = _Some
 pure = _Pure
 fwd = _Fwd

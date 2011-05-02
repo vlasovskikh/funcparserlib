@@ -22,7 +22,7 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 from funcparserlib.lexer import Token
-from funcparserlib.parser import a, skip, some
+from funcparserlib.parser import a, skip, some, tok
 
 __all__ = [
     'const', 'flatten', 'unarg', 'tokval', 'mktok', 'n', 'op', 'op_', 'sometok',
@@ -38,10 +38,14 @@ unarg = lambda f: lambda args: f(*args)
 tokval = lambda tok: tok.value
 
 # Auxiliary functions for parsers
-mktok = lambda type: lambda s: a(Token(type, s)) >> tokval
+mktok = lambda type: lambda value: tok(type, value) >> tokval
 n = mktok('name')
 op = mktok('op')
 op_ = lambda s: skip(op(s))
-sometok = lambda type: some(lambda x: x.type == type) >> tokval
-sometoks = lambda types: some(lambda x: x.type in types) >> tokval
+sometok = lambda type: tok(type) >> tokval
+
+sometoks = lambda types: reduce(lambda p, type: p | tok(type)
+                                                if p else tok(type),
+                                types,
+                                None) >> tokval
 

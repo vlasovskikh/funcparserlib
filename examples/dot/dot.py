@@ -19,7 +19,7 @@ import sys, os
 from pprint import pformat
 from funcparserlib.lexer import make_tokenizer, Spec
 from funcparserlib.parser import (maybe, many, eof, skip, oneplus, fwd,
-        SyntaxError)
+        name_parser_vars, SyntaxError)
 from funcparserlib.util import pretty_tree
 from funcparserlib.contrib.common import unarg, flatten, n, op, op_, sometoks
 from funcparserlib.contrib.lexer import (make_comment, make_multiline_comment,
@@ -67,61 +67,63 @@ def tokenize(str):
     t = make_tokenizer(specs)
     return [x for x in t(str) if x.type not in useless]
 
+id = sometoks(['name', 'number', 'string']).named('id')
+make_graph_attr = lambda args: DefAttrs(u'graph', [Attr(*args)])
+make_edge = lambda x, xs, attrs: Edge([x] + xs, attrs)
+
+node_id = id # + maybe(port)
+a_list = (
+    id +
+    maybe(op_('=') + id) +
+    skip(maybe(op(',')))
+    >> unarg(Attr))
+attr_list = (
+    many(op_('[') + many(a_list) + op_(']'))
+    >> flatten)
+attr_stmt = (
+   (n('graph') | n('node') | n('edge')) +
+   attr_list
+   >> unarg(DefAttrs))
+graph_attr = id + op_('=') + id >> make_graph_attr
+node_stmt = node_id + attr_list >> unarg(Node)
+# We use a fwd() because of circular definitions like (stmt_list -> stmt ->
+# subgraph -> stmt_list)
+subgraph = fwd()
+edge_rhs = skip(op('->') | op('--')) + (subgraph | node_id)
+edge_stmt = (
+    (subgraph | node_id) +
+    oneplus(edge_rhs) +
+    attr_list
+    >> unarg(make_edge))
+stmt = (
+      attr_stmt
+    | edge_stmt
+    | subgraph
+    | graph_attr
+    | node_stmt
+)
+stmt_list = many(stmt + skip(maybe(op(';'))))
+subgraph.define(
+    skip(n('subgraph')) +
+    maybe(id) +
+    op_('{') +
+    stmt_list +
+    op_('}')
+    >> unarg(SubGraph))
+graph = (
+    maybe(n('strict')) +
+    maybe(n('graph') | n('digraph')) +
+    maybe(id) +
+    op_('{') +
+    stmt_list +
+    op_('}')
+    >> unarg(Graph))
+dotfile = graph + skip(eof)
+
+name_parser_vars(locals())
+
 def parse(seq):
     'Sequence(Token) -> object'
-    id = sometoks(['name', 'number', 'string']).named('id')
-    make_graph_attr = lambda args: DefAttrs(u'graph', [Attr(*args)])
-    make_edge = lambda x, xs, attrs: Edge([x] + xs, attrs)
-
-    node_id = id # + maybe(port)
-    a_list = (
-        id +
-        maybe(op_('=') + id) +
-        skip(maybe(op(',')))
-        >> unarg(Attr))
-    attr_list = (
-        many(op_('[') + many(a_list) + op_(']'))
-        >> flatten)
-    attr_stmt = (
-       (n('graph') | n('node') | n('edge')) +
-       attr_list
-       >> unarg(DefAttrs))
-    graph_attr = id + op_('=') + id >> make_graph_attr
-    node_stmt = node_id + attr_list >> unarg(Node)
-    # We use a fwd() because of circular definitions like (stmt_list -> stmt ->
-    # subgraph -> stmt_list)
-    subgraph = fwd()
-    edge_rhs = skip(op('->') | op('--')) + (subgraph | node_id)
-    edge_stmt = (
-        (subgraph | node_id) +
-        oneplus(edge_rhs) +
-        attr_list
-        >> unarg(make_edge))
-    stmt = (
-          attr_stmt
-        | edge_stmt
-        | subgraph
-        | graph_attr
-        | node_stmt
-    )
-    stmt_list = many(stmt + skip(maybe(op(';'))))
-    subgraph.define(
-        skip(n('subgraph')) +
-        maybe(id) +
-        op_('{') +
-        stmt_list +
-        op_('}')
-        >> unarg(SubGraph))
-    graph = (
-        maybe(n('strict')) +
-        maybe(n('graph') | n('digraph')) +
-        maybe(id) +
-        op_('{') +
-        stmt_list +
-        op_('}')
-        >> unarg(Graph))
-    dotfile = graph + skip(eof)
-
     return dotfile.parse(seq)
 
 def pretty_parse_tree(x):

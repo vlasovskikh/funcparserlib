@@ -1,2 +1,3 @@
-from funcparserlib import lexer, parser, contrib
+from funcparserlib.parser import *
+from funcparserlib.lexer import *
 

@@ -21,7 +21,7 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-'''A recurisve descent parser library based on functional combinators.
+'''A recurisve descent parsing library based on functional combinators.
 
 Basic combinators are taken from Harrison's book ["Introduction to Functional
 Programming"][1] and translated from ML into Python. See also [a Russian
@@ -29,37 +29,11 @@ translation of the book][2].
 
   [1]: http://www.cl.cam.ac.uk/teaching/Lectures/funprog-jrh-1996/
   [2]: http://code.google.com/p/funprog-ru/
-
-A parser `p` is represented by a function of type:
-
-    p :: Sequence(a), State -> (b, State)
-
-that takes as its input a sequence of tokens of arbitrary type `a` and a
-current parsing state and return a pair of a parsed token of arbitrary type
-`b` and the new parsing state.
-
-The parsing state includes the current position in the sequence being parsed and
-the position of the rightmost token that has been consumed while parsing.
-
-Parser functions are wrapped into an object of the class `Parser`. This class
-implements custom operators `+` for sequential composition of parsers, `|` for
-choice composition, `>>` for transforming the result of parsing. The method
-`Parser.parse` provides an easier way for invoking a parser hiding details
-related to a parser state:
-
-    Parser.parse :: Parser(a, b), Sequence(a) -> b
-
-Altough this module is able to deal with a sequences of any kind of objects, the
-recommended way of using it is applying a parser to a `Sequence(Token)`.
-`Token` objects are produced by a regexp-based tokenizer defined in
-`funcparserlib.lexer`. By using it this way you get more readable parsing error
-messages (as `Token` objects contain their position in the source file) and good
-separation of lexical and syntactic levels of the grammar. See examples for more
-info.
 '''
 
+
 __all__ = [
-    'some', 'a', 'many', 'fwd', 'eof', 'maybe', 'skip', 'oneplus', 'pure',
+    'a', 'tok', 'many', 'fwd', 'eof', 'maybe', 'skip', 'oneplus',
     'name_parser_vars', 'SyntaxError', 'ParserError', 'memoize',
 ]
 
@@ -70,9 +44,11 @@ class ParserError(SyntaxError):
     '''User-visible parsing error.'''
     pass
 
+
 class GrammarError(Exception):
     '''Raised when the grammar definition itself contains errors.'''
     pass
+
 
 class NoParseError(Exception):
     '''Internal no-parse exception for backtracking.'''
@@ -86,6 +62,7 @@ class NoParseError(Exception):
 
     def __str__(self):
         return self.msg.encode()
+
 
 class Parser(object):
     '''A callable parser object that defines some operators for parser
@@ -105,23 +82,11 @@ class Parser(object):
                                'grammar; see the FAQ for details' %
                                ebnf_rule(p))
         try:
-            # DEBUG:
-            ms = [m for m in all_parsers(self) if isinstance(m, _Memoize)]
-            for m in ms:
-                m.cache = {}
-                m.hits = m.misses = 0
-
             (tree, _) = self(tokens, State())
-
-            # DEBUG:
-            #for m in ms:
-            #    print >> sys.stderr, '%s: hits=%d, misses=%d' % (
-            #            m.p, m.hits, m.misses)
-            #
             return tree
         except NoParseError, e:
             max = e.state.max
-            tok = tokens[max] if max < len(tokens) else '<EOF>'
+            tok = tokens[max] if max < len(tokens) else 'eof'
             raise ParserError(u'%s: %s' % (e.msg, tok),
                               getattr(tok, 'pos', None))
 
@@ -162,6 +127,7 @@ class Parser(object):
         'The EBNF grammar expression for the parser.'
         return GrammarError('no EBNF expression for an abstract parser')
 
+
 class _Map(Parser):
     '''An interpreting parser.'''
 
@@ -175,6 +141,7 @@ class _Map(Parser):
 
     def ebnf(self):
         return str(self.p)
+
 
 class _Seq(Parser):
     '''A sequential composition of parsers.'''
@@ -207,6 +174,7 @@ class _Seq(Parser):
 
     def ebnf(self):
         return ', '.join(ebnf_brackets(str(x)) for x in self.ps)
+
 
 class _Alt(Parser):
     '''A choice composition of parsers.'''
@@ -252,6 +220,7 @@ class _Alt(Parser):
     def ebnf(self):
         return ' | '.join(ebnf_brackets(str(x)) for x in self.ps)
 
+
 class _Fwd(Parser):
     '''An undefined parser that can be used as a forward declaration.
 
@@ -277,6 +246,7 @@ class _Fwd(Parser):
     def ebnf(self):
         return str(self.p)
 
+
 class _Eof(Parser):
     '''Throws an exception if any tokens are left in the input unparsed.'''
 
@@ -284,10 +254,11 @@ class _Eof(Parser):
         if s.pos >= len(tokens):
             return (None, s)
         else:
-            raise NoParseError('<EOF> not found', s)
+            raise NoParseError('eof not found', s)
 
     def ebnf(self):
         return '? eof ?'
+
 
 class _Many(Parser):
     '''A parser that infinitely applies the parser `p` to the input sequence of
@@ -310,6 +281,7 @@ class _Many(Parser):
 
     def ebnf(self):
         return '{ %s }' % self.p
+
 
 class _Pure(Parser):
     '''A pure parser that returns its result without looking at the input.'''
@@ -413,7 +385,9 @@ class State(object):
     def __repr__(self):
         return 'State(%r, %r)' % (self.pos, self.max)
 
+
 class _Tuple(tuple): pass
+
 
 class _Ignored(object):
     def __init__(self, value):
@@ -435,6 +409,7 @@ def maybe(p):
     q.ebnf = lambda: '[ %s ]' % p
     return q
 
+
 def skip(p):
     '''Returns a parser such that its results are ignored by the combinator `+`.
 
@@ -442,9 +417,11 @@ def skip(p):
     '''
     return p >> _Ignored
 
+
 def oneplus(p):
     '''Returns a parser that applies the parser `p` one or more times.'''
     return p + many(p) >> (lambda x: [x[0]] + x[1])
+
 
 def name_parser_vars(vars):
     '''Name parsers after their variables.
@@ -459,9 +436,11 @@ def name_parser_vars(vars):
         if isinstance(v, Parser):
             v.named(k)
 
+
 def non_halting(p):
     '''Returns a non-halting part of parser `p` or `None`.'''
     return left_recursive(p) or non_halting_many(p)
+
 
 def left_recursive(p, fwds=[], seqs=[]):
     '''Returns a left-recursive part of parser `p` or `None`.'''
@@ -483,11 +462,13 @@ def left_recursive(p, fwds=[], seqs=[]):
     else:
         return None
 
-def non_halting_many(p, fwds=[]):
+
+def non_halting_many(p):
     '''Returns a non-halting `many()` part of parser `p` or `None`.'''
     rs = [x for x in all_parsers(p) if isinstance(x, _Many) and
                                        not makes_progress(x.p)]
     return rs[0] if len(rs) > 0 else None
+
 
 def makes_progress(p, fwds=[]):
     '''Returns `True` if parser `p` must consume one or more tokens in order to
@@ -508,6 +489,7 @@ def makes_progress(p, fwds=[]):
         return True
     else:
         return False
+
 
 def ebnf_grammar(p):
     'The EBNF grammar for the parser `p` as the top-level symbol.'
@@ -530,18 +512,17 @@ def ebnf_grammar(p):
     rs, ps = ebnf_rules(p, [])
     return '\n'.join(reversed(rs))
 
+
 def ebnf_rule(p):
-    'The EBNF grammar rule for the parser `p`.'
     return '%s = %s;' % (getattr(p, 'name', 'id%d' % id(p)),
                          p.ebnf())
+
 
 def ebnf_brackets(s):
     return (s if ' ' not in s or
                  any(s.startswith(x) for x in '{[(?')
               else '(%s)' % s)
 
-def is_ll_1(p):
-    return len(non_ll_1_parts(p)) == 0
 
 def non_ll_1_parts(p):
     assert not non_halting(p)
@@ -563,6 +544,7 @@ def all_parsers(p):
             return [p]
     return list(set(rec(p)))
 
+
 def first(p):
     if isinstance(p, _Tok):
         return [p]
@@ -576,6 +558,7 @@ def first(p):
         return []
     else:
         raise GrammarError('cannot analyse parser %s' % ebnf_rule(p))
+
 
 # Aliases for exporting
 eof = _Eof()

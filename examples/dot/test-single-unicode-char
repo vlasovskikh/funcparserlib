@@ -1,5 +1,5 @@
 #!/bin/sh
-exec python dot.py <<END
+exec python2 dot.py <<END
 ф
 END
 

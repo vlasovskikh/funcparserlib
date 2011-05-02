@@ -1,5 +1,5 @@
 #!/bin/sh
-exec python json.py < test-strings.json
+exec python2 json.py < test-strings.json
 END
 # "\"", "\\", "\/", "\b"
 # \f \n \r \t

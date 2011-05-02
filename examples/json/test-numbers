@@ -1,5 +1,5 @@
 #!/bin/sh
-exec python json.py <<END
+exec python2 json.py <<END
 [
     0, 1, -1, 14, -14, 65536,
     0.0, 3.14, -3.14, -123.456,

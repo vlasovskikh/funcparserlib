@@ -1,3 +1,3 @@
 #!/bin/sh
-exec python dot.py < test-unicode-names.dot
+exec python2 dot.py < test-unicode-names.dot
 

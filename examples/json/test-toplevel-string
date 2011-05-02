@@ -1,5 +1,5 @@
 #!/bin/sh
-exec python json.py <<END
+exec python2 json.py <<END
 "неправильно"
 END
 

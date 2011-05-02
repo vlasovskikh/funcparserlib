@@ -1,4 +1,4 @@
-PYTHON = /usr/bin/python
+PYTHON = /usr/bin/python2
 SETUP = $(PYTHON) setup.py
 DESTDIR = /
 PREFIX = /usr

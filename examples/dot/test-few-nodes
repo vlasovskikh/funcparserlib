@@ -1,3 +1,3 @@
 #!/bin/sh
-exec python dot.py < test-few-nodes.dot
+exec python2 dot.py < test-few-nodes.dot
 

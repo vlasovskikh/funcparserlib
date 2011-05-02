@@ -185,11 +185,12 @@ class _Seq(Parser):
                     return _Tuple(vs)
             else:
                 return _Ignored(())
-        vs = []
-        for p in self.ps:
+        (p, ps) = (self.ps[0], self.ps[1:])
+        (res, s) = p(tokens, s)
+        for p in ps:
             (v, s) = p(tokens, s)
-            vs.append(v)
-        return (reduce(magic, vs), s)
+            res = magic(res, v)
+        return (res, s)
 
     def ebnf(self):
         return ', '.join(ebnf_brackets(str(x)) for x in self.ps)

@@ -18,12 +18,12 @@ At the moment, the parser builds only a parse tree, not an abstract syntax tree
 import sys, os
 from pprint import pformat
 from funcparserlib.lexer import make_tokenizer, Spec
-from funcparserlib.parser import (maybe, many, finished, skip, oneplus,
-    forward_decl, SyntaxError)
+from funcparserlib.parser import (maybe, many, eof, skip, oneplus, fwd,
+        SyntaxError)
 from funcparserlib.util import pretty_tree
 from funcparserlib.contrib.common import unarg, flatten, n, op, op_, sometoks
 from funcparserlib.contrib.lexer import (make_comment, make_multiline_comment,
-    newline, space)
+        newline, space)
 
 try:
     from collections import namedtuple
@@ -88,9 +88,9 @@ def parse(seq):
        >> unarg(DefAttrs))
     graph_attr = id + op_('=') + id >> make_graph_attr
     node_stmt = node_id + attr_list >> unarg(Node)
-    # We use a forward_decl becaue of circular definitions like (stmt_list ->
-    # stmt -> subgraph -> stmt_list)
-    subgraph = forward_decl()
+    # We use a fwd() because of circular definitions like (stmt_list -> stmt ->
+    # subgraph -> stmt_list)
+    subgraph = fwd()
     edge_rhs = skip(op('->') | op('--')) + (subgraph | node_id)
     edge_stmt = (
         (subgraph | node_id) +
@@ -120,7 +120,7 @@ def parse(seq):
         stmt_list +
         op_('}')
         >> unarg(Graph))
-    dotfile = graph + skip(finished)
+    dotfile = graph + skip(eof)
 
     return dotfile.parse(seq)
 

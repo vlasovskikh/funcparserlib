@@ -2,7 +2,9 @@
 
 'Tests for issue #8: prevent definitions of non-halting parsers.'
 
-from funcparserlib.parser import a, many, maybe, pure, oneplus, GrammarError
+from funcparserlib.parser import (
+        a, many, fwd, maybe, pure, oneplus, GrammarError, makes_progress,
+        non_halting)
 from funcparserlib.contrib.common import const
 from nose.tools import ok_, assert_raises
 
@@ -14,22 +16,44 @@ p5 = x | many(x)
 p8 = x >> const(True)
 p9 = pure(True)
 
-def test_always_succeeds():
-    ok_(p1.always_succeeds)
-    ok_(p4.always_succeeds)
-    ok_(p5.always_succeeds)
-    ok_(p9.always_succeeds)
-    ok_(not p3.always_succeeds)
-    ok_(not p8.always_succeeds)
+def test_makes_progress():
+    ok_(not makes_progress(p1))
+    ok_(not makes_progress(p4))
+    ok_(not makes_progress(p5))
+    ok_(not makes_progress(p9))
+    ok_(makes_progress(p3))
+    ok_(makes_progress(p8))
 
-def test_non_halting():
-    assert_raises(GrammarError, lambda: many(many(x)))
-    assert_raises(GrammarError, lambda: oneplus(many(x)))
-    assert_raises(GrammarError, lambda: many(p1))
-    assert_raises(GrammarError, lambda: many(p5))
-    assert_raises(GrammarError, lambda: x + many(p4))
+def test_non_halting_many():
+    assert_raises(GrammarError, lambda: many(many(x)).parse(''))
+    assert_raises(GrammarError, lambda: oneplus(many(x)).parse(''))
+    assert_raises(GrammarError, lambda: many(p1).parse(''))
+    assert_raises(GrammarError, lambda: many(p5).parse(''))
+    assert_raises(GrammarError, lambda: (x + many(p4)).parse(''))
+
+def test_non_halting_left_recursive():
+    h1 = fwd()
+    h1.define(x + h1)
+    ok_(not non_halting(h1))
+
+    h2 = fwd()
+    h2.define(x + (h2 | x))
+    ok_(not non_halting(h2))
+
+    nh1 = fwd()
+    nh1.define(nh1 + x)
+    ok_(non_halting(nh1))
+
+    nh2 = fwd()
+    nh2.define(x | nh2)
+    ok_(non_halting(nh2))
+
+    nh3_fwd = fwd()
+    nh3_fwd.define(nh3_fwd)
+    nh3 = x + nh3_fwd + x
+    ok_(non_halting(nh3))
 
 def test_halting():
-    many(oneplus(x))
-    many(p9 + x)
+    many(oneplus(x)).parse('x')
+    many(p9 + x).parse('x')
 

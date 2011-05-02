@@ -11,8 +11,8 @@ import sys, os, re, logging
 from re import VERBOSE
 from pprint import pformat
 from funcparserlib.lexer import make_tokenizer, Spec
-from funcparserlib.parser import (maybe, many, finished, skip, forward_decl,
-    SyntaxError)
+from funcparserlib.parser import (maybe, many, eof, skip, fwd, name_parser_vars,
+        SyntaxError)
 from funcparserlib.contrib.common import const, n, op, op_, sometok
 
 ENCODING = 'utf-8'
@@ -46,62 +46,69 @@ def tokenize(str):
     t = make_tokenizer(specs)
     return [x for x in t(str) if x.type not in useless]
 
+def make_array(n):
+    if n is None:
+        return []
+    else:
+        return [n[0]] + n[1]
+
+def make_object(n):
+    return dict(make_array(n))
+
+def make_number(n):
+    try:
+        return int(n)
+    except ValueError:
+        return float(n)
+
+def unescape(s):
+    std = {
+        '"': '"', '\\': '\\', '/': '/', 'b': '\b', 'f': '\f', 'n': '\n',
+        'r': '\r', 't': '\t',
+    }
+    def sub(m):
+        if m.group('standard') is not None:
+            return std[m.group('standard')]
+        else:
+            return unichr(int(m.group('unicode'), 16))
+    return re_esc.sub(sub, s)
+
+def make_string(n):
+    return unescape(n[1:-1])
+
+# JSON Grammar
+null = n('null') >> const(None)
+true = n('true') >> const(True)
+false = n('false') >> const(False)
+number = sometok('number') >> make_number
+string = sometok('string') >> make_string
+value = fwd()
+member = string + op_(':') + value >> tuple
+object = (
+    op_('{') +
+    maybe(member + many(op_(',') + member)) +
+    op_('}')
+    >> make_object)
+array = (
+    op_('[') +
+    maybe(value + many(op_(',') + value)) +
+    op_(']')
+    >> make_array)
+value.define(
+      null
+    | true
+    | false
+    | object
+    | array
+    | number
+    | string)
+json_text = object | array
+json_file = json_text + skip(eof)
+
+name_parser_vars(locals())
+
 def parse(seq):
     'Sequence(Token) -> object'
-    def make_array(n):
-        if n is None:
-            return []
-        else:
-            return [n[0]] + n[1]
-    def make_object(n):
-        return dict(make_array(n))
-    def make_number(n):
-        try:
-            return int(n)
-        except ValueError:
-            return float(n)
-    def unescape(s):
-        std = {
-            '"': '"', '\\': '\\', '/': '/', 'b': '\b', 'f': '\f', 'n': '\n',
-            'r': '\r', 't': '\t',
-        }
-        def sub(m):
-            if m.group('standard') is not None:
-                return std[m.group('standard')]
-            else:
-                return unichr(int(m.group('unicode'), 16))
-        return re_esc.sub(sub, s)
-    def make_string(n):
-        return unescape(n[1:-1])
-
-    null = n('null') >> const(None)
-    true = n('true') >> const(True)
-    false = n('false') >> const(False)
-    number = sometok('number') >> make_number
-    string = sometok('string') >> make_string
-    value = forward_decl()
-    member = string + op_(':') + value >> tuple
-    object = (
-        op_('{') +
-        maybe(member + many(op_(',') + member)) +
-        op_('}')
-        >> make_object)
-    array = (
-        op_('[') +
-        maybe(value + many(op_(',') + value)) +
-        op_(']')
-        >> make_array)
-    value.define(
-          null
-        | true
-        | false
-        | object
-        | array
-        | number
-        | string)
-    json_text = object | array
-    json_file = json_text + skip(finished)
-
     return json_file.parse(seq)
 
 def loads(s):

@@ -56,38 +56,52 @@ recommended way of using it is applying a parser to a `Sequence(Token)`.
 messages (as `Token` objects contain their position in the source file) and good
 separation of lexical and syntactic levels of the grammar. See examples for more
 info.
-
-Debug messages are emitted via a `logging.Logger` object named
-`"funcparserlib"`.
 '''
 
-__all__ = ['some', 'a', 'many', 'pure', 'finished', 'maybe', 'skip', 'oneplus',
-    'forward_decl', 'SyntaxError']
+__all__ = [
+    'some', 'a', 'many', 'fwd', 'eof', 'maybe', 'skip', 'oneplus', 'pure',
+    'name_parser_vars', 'SyntaxError', 'ParserError',
+]
 
-import sys, logging
 from funcparserlib.util import SyntaxError
 
-log = logging.getLogger('funcparserlib')
-debug = False
+class ParserError(SyntaxError):
+    '''User-visible parsing error.'''
+    pass
+
+class GrammarError(Exception):
+    '''Raised when the grammar definition itself contains errors.'''
+    pass
+
+class NoParseError(Exception):
+    '''Internal no-parse exception for backtracking.'''
+
+    def __init__(self, msg='', state=None):
+        self.msg = msg
+        self.state = state
+
+    def __unicode__(self):
+        return self.msg
+
+    def __str__(self):
+        return self.msg.encode()
 
 class Parser(object):
-    '''A wrapper around a parser function that defines some operators for parser
-    composition.
+    '''A callable parser object that defines some operators for parser
+    composition and the `parse()` function as its external interface.
     '''
-    def named(self, name):
-        'Specifies the name of the parser for a more readable parsing log.'
-        self.name = name
-        return self
 
     def parse(self, tokens):
-        '''Sequence(a) -> b
-
-        Applies the parser to a sequence of tokens producing a parsing result.
+        '''Applies the parser to the tokens producing a parsing result.
 
         It provides a way to invoke a parser hiding details related to the
         parser state. Also it makes error messages more readable by specifying
         the position of the rightmost token that has been reached.
         '''
+        p = non_halting(self)
+        if p:
+            raise GrammarError("parser '%s' does not halt, please fix your "
+                               'grammar; see the FAQ for details' % p)
         try:
             (tree, _) = self(tokens, State())
             return tree
@@ -98,71 +112,44 @@ class Parser(object):
                               getattr(tok, 'pos', None))
 
     def __call__(self, tokens, s):
-        return NotImplementedError('an abstract parser cannot be called')
-
-    def __str__(self):
-        return self.name
+        return GrammarError('an abstract parser cannot be called')
 
     def __add__(self, other):
-        '''Parser(a, b), Parser(a, c) -> Parser(a, (b, c))
+        '''A sequential composition of parsers.
 
-        A sequential composition of parsers.
-
-        NOTE: The real type of the parsed value isn't always such as specified.
-        Here we use dynamic typing for ignoring the tokens that are of no
-        interest to the user. Also we merge parsing results into a single _Tuple
-        unless the user explicitely prevents it. See also skip and >>
+        The resulting parser merges the parsed sequence into a single `_Tuple`
+        unless the user explicitely prevents it. See also `skip()` and `>>`
         combinators.
         '''
-        return _Add(self, other)
+        return _Seq(self, other)
 
     def __or__(self, other):
-        '''Parser(a, b), Parser(a, c) -> Parser(a, b or c)
-
-        A choice composition of two parsers.
-
-        NOTE: Here we are not providing the exact type of the result. In a
-        statically typed langage something like Either b c could be used. See
-        also + combinator.
-        '''
-        return _Or(self, other)
+        '''A choice composition of two parsers.'''
+        return _Alt(self, other)
 
     def __rshift__(self, f):
-        '''Parser(a, b), (b -> c) -> Parser(a, c)
+        '''An interpreting parser.
 
-        Given a function from b to c, transforms a parser of b into a parser of
-        c. It is useful for transorming a parser value into another value for
-        making it a part of a parse tree or an AST.
-
-        This combinator may be thought of as a functor from b -> c to Parser(a,
-        b) -> Parser(a, c).
+        Given a function from `b` to `c`, transforms a parser of `b` into a
+        parser of `c`. It is useful for transorming a parser value into another
+        value for making it a part of a parse tree or an AST.
         '''
-        return _Rshift(self, f)
-
-    def bind(self, f):
-        '''Parser(a, b), (b -> Parser(a, c)) -> Parser(a, c)
-
-        NOTE: A monadic bind function. It is used internally to implement other
-        combinators. Functions bind and pure make the Parser a Monad.
-        '''
-        return _Bind(self, f)
-
-class _Bind(Parser):
-    '''A monadic bind parser.'''
-
-    def __init__(self, p, f):
-        self.p = p
-        self.f = f
-
-    def __call__(self, tokens, s):
-        (v, s2) = self.p(tokens, s)
-        return self.f(v)(tokens, s2)
+        return _Map(self, f)
 
     def __str__(self):
-        return '(%s >>=)' % self.p
+        return getattr(self, 'name', self.ebnf())
 
-class _Rshift(Parser):
-    '''An interpreter parser.'''
+    def named(self, name):
+        'Specifies the name of the parser.'
+        self.name = name
+        return self
+
+    def ebnf(self):
+        'The EBNF grammar expression for the parser.'
+        return GrammarError('no EBNF expression for an abstract parser')
+
+class _Map(Parser):
+    '''An interpreting parser.'''
 
     def __init__(self, p, f):
         self.p = p
@@ -172,17 +159,14 @@ class _Rshift(Parser):
         (v, s2) = self.p(tokens, s)
         return (self.f(v), s2)
 
-        # Or in terms of bind and pure:
-        # return self.p.bind(lambda x: pure(self.f(x)))
-
-    def __str__(self):
+    def ebnf(self):
         return str(self.p)
 
-class _Add(Parser):
+class _Seq(Parser):
     '''A sequential composition of parsers.'''
 
     def __init__(self, p1, p2):
-        if isinstance(p1, _Add):
+        if isinstance(p1, _Seq):
             self.ps = p1.ps + [p2]
         else:
             self.ps = [p1, p2]
@@ -190,9 +174,10 @@ class _Add(Parser):
     def __call__(self, tokens, s):
         def magic(v1, v2):
             vs = [v for v in [v1, v2] if not isinstance(v, _Ignored)]
-            if len(vs) == 1:
+            length = len(vs)
+            if length == 1:
                 return vs[0]
-            elif len(vs) == 2:
+            elif length == 2:
                 if isinstance(vs[0], _Tuple):
                     return _Tuple(v1 + (v2,))
                 else:
@@ -205,23 +190,19 @@ class _Add(Parser):
             vs.append(v)
         return (reduce(magic, vs), s)
 
-        # Or in terms of bind and pure:
-        # return self.p1.bind(lambda x: self.p2.bind(lambda y: pure(magic(x, y))))
+    def ebnf(self):
+        return ', '.join(ebnf_brackets(str(x)) for x in self.ps)
 
-    def __str__(self):
-        return '(%s)' % ' , '.join(str(x) for x in self.ps)
-
-class _Or(Parser):
-    '''A choice composition of two parsers.'''
+class _Alt(Parser):
+    '''A choice composition of parsers.'''
 
     def __init__(self, p1, p2):
-        if isinstance(p1, _Or):
+        if isinstance(p1, _Alt):
             self.ps = p1.ps + [p2]
         else:
             self.ps = [p1, p2]
 
     def __call__(self, tokens, s):
-        assert len(self.ps) > 0
         e = NoParseError('no error', s)
         for p in self.ps:
             try:
@@ -232,171 +213,14 @@ class _Or(Parser):
                 continue
         raise e
 
-    def __str__(self):
-        return '(%s)' % ' | '.join(str(x) for x in self.ps)
+    def ebnf(self):
+        return ' | '.join(ebnf_brackets(str(x)) for x in self.ps)
 
-class State(object):
-    '''A parsing state that is maintained basically for error reporting.
+class _Fwd(Parser):
+    '''An undefined parser that can be used as a forward declaration.
 
-    It consists of the current position pos in the sequence being parsed and
-    the position max of the rightmost token that has been consumed while
-    parsing.
-    '''
-    def __init__(self, pos=0, max=0):
-        self.pos = pos
-        self.max = max
-
-    def __unicode__(self):
-        return unicode((self.pos, self.max))
-
-    def __repr__(self):
-        return 'State(%r, %r)' % (self.pos, self.max)
-
-class ParserError(SyntaxError):
-    'User-visible parsing error.'
-    pass
-
-class GrammarError(Exception):
-    'Raised when the grammar definition itself contains errors.'
-    pass
-
-class NoParseError(Exception):
-    def __init__(self, msg='', state=None):
-        self.msg = msg
-        self.state = state
-
-    def __unicode__(self):
-        return self.msg
-
-    def __str__(self):
-        return self.msg.encode()
-
-class _Tuple(tuple): pass
-
-class _Ignored(object):
-    def __init__(self, value):
-        self.value = value
-
-    def __repr__(self):
-        return '_Ignored(%r)' % (self.value,)
-
-class _Finished(Parser):
-    '''Throws an exception if any tokens are left in the input unparsed.'''
-
-    def __call__(self, tokens, s):
-        if s.pos >= len(tokens):
-            return (None, s)
-        else:
-            raise NoParseError('should have reached <EOF>', s)
-
-    def __str__(self):
-        return 'finished'
-
-finished = _Finished()
-
-class _Many(Parser):
-    '''Parser(a, b) -> Parser(a, [b])
-
-    A parser that infinitely applies the parser p to the input sequence of
-    tokens while it successfully parsers them. It returns a list of parsed
-    values.
-    '''
-
-    def __init__(self, p):
-        self.p = p
-
-    def __call__(self, tokens, s):
-        'Iterative implementation preventing the stack overflow.'
-        res = []
-        try:
-            while True:
-                (v, s) = self.p(tokens, s)
-                res.append(v)
-        except NoParseError, e:
-            return (res, e.state)
-
-    def __str__(self):
-        return '{ %s }' % self.p
-
-many = _Many
-
-class _Some(Parser):
-    '''A parser that parses a token if it satisfies a predicate pred.'''
-
-    def __init__(self, pred):
-        '''(a -> bool) -> Parser(a, a)'''
-        self.pred = pred
-
-    def __call__(self, tokens, s):
-        if s.pos >= len(tokens):
-            raise NoParseError('no tokens left in the stream', s)
-        t = tokens[s.pos]
-        if self.pred(t):
-            pos = s.pos + 1
-            s2 = State(pos, max(pos, s.max))
-            if debug:
-                log.debug(u'*matched* "%s", new state = %s' % (t, s2))
-            return (t, s2)
-        else:
-            if debug:
-                log.debug(u'failed "%s", state = %s' % (t, s))
-            raise NoParseError('got unexpected token', s)
-
-    def __str__(self):
-        return '(some)'
-
-some = _Some
-
-def a(value):
-    '''Eq(a) -> Parser(a, a)
-
-    Returns a parser that parses a token that is equal to the value value.
-    '''
-    name = getattr(value, 'name', value)
-    return some(lambda t: t == value).named('(a "%s")' % name)
-
-class _Pure(Parser):
-    def __init__(self, x):
-        self.x = x
-
-    def __call__(self, tokens, s):
-        return (self.x, s)
-
-    def __str__(self):
-        return '(pure %s)' % (x,)
-
-pure = _Pure
-
-def maybe(p):
-    '''Parser(a, b) -> Parser(a, b or None)
-
-    Returns a parser that retuns None if parsing fails.
-
-    NOTE: In a statically typed language, the type Maybe b could be more
-    approprieate.
-    '''
-    return (p | pure(None)).named('[ %s ]' % p)
-
-def skip(p):
-    '''Parser(a, b) -> Parser(a, _Ignored(b))
-
-    Returns a parser which results are ignored by the combinator +. It is useful
-    for throwing away elements of concrete syntax (e. g. ",", ";").
-    '''
-    return p >> _Ignored
-
-def oneplus(p):
-    '''Parser(a, b) -> Parser(a, [b])
-
-    Returns a parser that applies the parser p one or more times.
-    '''
-    q = p + many(p) >> (lambda x: [x[0]] + x[1])
-    return q.named('(%s , { %s })' % (p, p))
-
-class _ForwardDecl(Parser):
-    '''
-    An undefined parser that can be used as a forward declaration. You will be
-    able to define() it when all the parsers it depends on are available.
+    You will be able to `define()` it when all the parsers it depends on are
+    available.
     '''
 
     def __init__(self):
@@ -409,10 +233,240 @@ class _ForwardDecl(Parser):
         if self.p:
             return self.p(tokens, s)
         else:
-            raise NotImplementedError('you must define() a forward_decl')
+            raise NotImplementedError('you must define() a fwd')
 
     def __str__(self):
+        return getattr(self, 'name', 'id%d' % id(self))
+
+    def ebnf(self):
         return str(self.p)
 
-forward_decl = _ForwardDecl
+class _Eof(Parser):
+    '''Throws an exception if any tokens are left in the input unparsed.'''
+
+    def __call__(self, tokens, s):
+        if s.pos >= len(tokens):
+            return (None, s)
+        else:
+            raise NoParseError('<EOF> not found', s)
+
+    def ebnf(self):
+        return '? eof ?'
+
+class _Many(Parser):
+    '''A parser that infinitely applies the parser `p` to the input sequence of
+    tokens while it successfully parsers them. It returns a list of parsed
+    values.
+    '''
+
+    def __init__(self, p):
+        self.p = p
+
+    def __call__(self, tokens, s):
+        # Iterative implementation preventing the stack overflow
+        res = []
+        try:
+            while True:
+                (v, s) = self.p(tokens, s)
+                res.append(v)
+        except NoParseError, e:
+            return (res, e.state)
+
+    def ebnf(self):
+        return '{ %s }' % self.p
+
+class _Pure(Parser):
+    '''A pure parser that returns its result without looking at the input.'''
+
+    def __init__(self, x):
+        self.x = x
+
+    def __call__(self, tokens, s):
+        return (self.x, s)
+
+    def ebnf(self):
+        return '? pure(%s) ?' % (self.x,)
+
+# Deprecated
+class _Some(Parser):
+    '''A parser that parses a token if it satisfies a predicate `pred`.'''
+
+    def __init__(self, pred):
+        self.pred = pred
+
+    def __call__(self, tokens, s):
+        try:
+            t = tokens[s.pos]
+        except IndexError:
+            raise NoParseError('no tokens left in the stream', s)
+        if self.pred(t):
+            pos = s.pos + 1
+            s2 = State(pos, max(pos, s.max))
+            return (t, s2)
+        else:
+            raise NoParseError('got unexpected token', s)
+
+    def ebnf(self):
+        return '? some() ?'
+
+class State(object):
+    '''A parsing state that is maintained basically for error reporting.
+
+    It consists of the current position `pos` in the sequence being parsed and
+    the position `max` of the rightmost token that has been consumed while
+    parsing.
+    '''
+    def __init__(self, pos=0, max=0):
+        self.pos = pos
+        self.max = max
+
+    def __unicode__(self):
+        return unicode((self.pos, self.max))
+
+    def __repr__(self):
+        return 'State(%r, %r)' % (self.pos, self.max)
+
+class _Tuple(tuple): pass
+
+class _Ignored(object):
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return '_Ignored(%r)' % (self.value,)
+
+def a(value):
+    '''Returns a parser that parses a token that is equal to the value.'''
+    name = getattr(value, 'name', value)
+    p = some(lambda t: t == value)
+    p.ebnf = lambda: '"%s"' % name
+    return p
+
+def maybe(p):
+    '''Returns a parser that retuns `None` if parsing fails.'''
+    q = p | pure(None)
+    q.ebnf = lambda: '[ %s ]' % p
+    return q
+
+def skip(p):
+    '''Returns a parser such that its results are ignored by the combinator `+`.
+
+    It is useful for throwing away elements of concrete syntax (e. g. ",", ";").
+    '''
+    return p >> _Ignored
+
+def oneplus(p):
+    '''Returns a parser that applies the parser `p` one or more times.'''
+    return p + many(p) >> (lambda x: [x[0]] + x[1])
+
+def name_parser_vars(vars):
+    '''Name parsers after their variables.
+
+    Named parsers are nice for debugging and error reporting.
+
+    The typical usage is to define all the parsers of the grammar in the same
+    scope and run `name_parser_vars(locals())` to name them all instead of calling
+    `Parser.named()` manually for each parser.
+    '''
+    for k, v in vars.items():
+        if isinstance(v, Parser):
+            v.named(k)
+
+def non_halting(p):
+    '''Returns a non-halting part of parser `p` or `None`.'''
+    return left_recursive(p) or non_halting_many(p)
+
+def left_recursive(p, fwds=[], seqs=[]):
+    '''Returns a left-recursive part of parser `p` or `None`.'''
+    if isinstance(p, (_Map, _Many)):
+        return left_recursive(p.p, fwds, seqs)
+    elif isinstance(p, _Fwd):
+        if p in fwds:
+            return p
+        else:
+            return left_recursive(p.p, [p] + fwds, seqs)
+    elif isinstance(p, _Seq):
+        if p in seqs:
+            return None
+        else:
+            return (left_recursive(p.ps[0], fwds, seqs) or
+                    any(left_recursive(x, [], [p] + seqs) for x in p.ps[1:]))
+    elif isinstance(p, _Alt):
+        return any(left_recursive(x, fwds, seqs) for x in p.ps)
+    else:
+        return None
+
+def non_halting_many(p, fwds=[]):
+    '''Returns a non-halting `many()` part of parser `p` or `None`.'''
+    if isinstance(p, _Map):
+        return non_halting_many(p.p, fwds)
+    elif isinstance(p, _Fwd):
+        if p in fwds:
+            return None
+        else:
+            return non_halting_many(p.p, [p] + fwds)
+    elif isinstance(p, (_Seq, _Alt)):
+        return any(non_halting_many(x, fwds) for x in p.ps)
+    elif isinstance(p, _Many):
+        return p if not makes_progress(p.p) else None
+    else:
+        return None
+
+def makes_progress(p, fwds=[]):
+    '''Returns `True` if parser `p` must consume one or more tokens in order to
+    succeed.
+    '''
+    if isinstance(p, _Map):
+        return makes_progress(p.p, fwds)
+    elif isinstance(p, _Fwd):
+        if p in fwds:
+            return False
+        else:
+            return makes_progress(p.p, [p] + fwds)
+    elif isinstance(p, _Seq):
+        return any(makes_progress(x, fwds) for x in p.ps)
+    elif isinstance(p, _Alt):
+        return all(makes_progress(x, fwds) for x in p.ps)
+    elif isinstance(p, (_Some, _Eof)):
+        return True
+    else:
+        return False
+
+def ebnf_grammar(p):
+    'The EBNF grammar for the parser `p` as the top-level symbol.'
+    def ebnf_rules(p, ps):
+        if p in ps:
+            return [], ps
+        ps = [p] + ps
+        if isinstance(p, (_Map, _Fwd, _Many)):
+            rs, ps = ebnf_rules(p.p, ps)
+        elif isinstance(p, (_Seq, _Alt)):
+            rs = []
+            for x in reversed(p.ps):
+                new_rs, ps = ebnf_rules(x, ps)
+                rs.extend(new_rs)
+        else:
+            rs = []
+        if hasattr(p, 'name'):
+            rs.append(ebnf_rule(p))
+        return rs, ps
+    rs, ps = ebnf_rules(p, [])
+    return '\n'.join(reversed(rs))
+
+def ebnf_rule(p):
+    'The EBNF grammar rule for the parser `p`.'
+    return '%s = %s;' % (getattr(p, 'name', 'id%d' % id(p)),
+                         p.ebnf())
+
+def ebnf_brackets(s):
+    return (s if ' ' not in s or
+                 any(s.startswith(x) for x in '{[(?')
+              else '(%s)' % s)
+
+# Aliases for exporting
+eof = _Eof()
+many = _Many
+some = _Some
+pure = _Pure
+fwd = _Fwd
 

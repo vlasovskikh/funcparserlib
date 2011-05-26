@@ -53,6 +53,18 @@ def test_non_halting_left_recursive():
     nh3 = x + nh3_fwd + x
     ok_(non_halting(nh3))
 
+    nh4 = fwd()
+    nh4.define(maybe(x) + nh4 + x)
+    ok_(non_halting(nh4))
+
+    nh5 = fwd()
+    nh5.define(many(x) + maybe(x) + nh5 + x)
+    ok_(non_halting(nh5))
+
+    h3 = fwd()
+    h3.define(maybe(x) + many(x) + x + h3)
+    ok_(not non_halting(h3))
+
 def test_halting():
     many(oneplus(x)).parse('x')
     many(p9 + x).parse('x')

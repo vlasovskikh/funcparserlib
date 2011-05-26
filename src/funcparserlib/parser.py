@@ -451,6 +451,18 @@ def non_halting(p):
     return left_recursive(p) or non_halting_many(p)
 
 
+def takewhile_included(pred, seq):
+    last = False
+    for x in seq:
+        if pred(x):
+            yield x
+        elif not last:
+            last = True
+            yield x
+        else:
+            return
+
+
 def left_recursive(p, fwds=[], seqs=[]):
     '''Returns a left-recursive part of parser `p` or `None`.'''
     def any_(xs):
@@ -470,8 +482,11 @@ def left_recursive(p, fwds=[], seqs=[]):
         if p in seqs:
             return None
         else:
-            return (left_recursive(p.ps[0], fwds, seqs) or
-                    any_(left_recursive(x, [], [p] + seqs) for x in p.ps[1:]))
+            left = list(takewhile_included(lambda x: not makes_progress(x),
+                                            p.ps))
+            right = p.ps[len(left):]
+            return (any_(left_recursive(x, fwds, seqs) for x in left) or
+                    any_(left_recursive(x, [], [p] + seqs) for x in right))
     elif isinstance(p, _Alt):
         return any_(left_recursive(x, fwds, seqs) for x in p.ps)
     else:

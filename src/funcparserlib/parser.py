@@ -580,14 +580,28 @@ def all_parsers(p):
 
 def first(p):
     if isinstance(p, _Tok):
-        return [p]
+        return [p.tok]
     elif isinstance(p, _Seq):
-        return first(p.ps[0])
+        res = []
+        last_none = False
+        for x in p.ps:
+            toks = first(x)
+            res.extend(t for t in toks if t is not None)
+            last_none = None in toks
+            if not last_none:
+                break
+        if last_none:
+            res.append(None)
+        return res
     elif isinstance(p, _Alt):
         return sum([first(x) for x in p.ps], [])
-    elif isinstance(p, (_Map, _Fwd, _Many)):
+    elif isinstance(p, (_Map, _Fwd)):
         return first(p.p)
-    elif isinstance(p, (_Eof, _Pure, _Memoize)):
+    elif isinstance(p, _Many):
+        return first(p.p) + [None]
+    elif isinstance(p, _Pure):
+        return [None]
+    elif isinstance(p, (_Eof, _Memoize)):
         return []
     else:
         raise GrammarError('cannot analyse parser %s' % ebnf_rule(p))

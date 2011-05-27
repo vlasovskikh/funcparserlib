@@ -454,13 +454,13 @@ def non_halting(p):
 def takewhile_included(pred, seq):
     last = False
     for x in seq:
-        if pred(x):
-            yield x
-        elif not last:
-            last = True
+        if last:
+            return
+        elif pred(x):
             yield x
         else:
-            return
+            last = True
+            yield x
 
 
 def left_recursive(p, fwds=[], seqs=[]):

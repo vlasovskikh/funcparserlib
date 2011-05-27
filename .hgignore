@@ -3,6 +3,7 @@ MANIFEST
 build
 dist
 tmp
+tags
 .idea
 funcparserlib.egg-info
 examples/dot/*.png

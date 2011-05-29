@@ -1,3 +1,0 @@
-#!/bin/sh
-exec python2 dot.py < test-simple-cycle.dot
-

@@ -1,9 +1,0 @@
-#!/bin/sh
-exec python2 dot.py <<END
-graph g1 {
-    n1;
-    n2;
-    n3,
-}
-END
-

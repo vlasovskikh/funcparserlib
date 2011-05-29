@@ -68,6 +68,11 @@ class Token(object):
     def name(self):
         return self.value
 
+    def ebnf(self):
+        return (u"'%s'" % (self.value,)
+                if self.value is not None
+                else u'? %s ?' % (self.type,))
+
 class Spec(object):
     def __init__(self, type, regexp, flags=0):
         self.type = type

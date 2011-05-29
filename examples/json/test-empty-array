@@ -1,5 +1,0 @@
-#!/bin/sh
-exec python json.py <<END
-[]
-END
-

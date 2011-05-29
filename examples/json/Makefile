@@ -1,5 +1,5 @@
-.PHONY = test
+all: test
 
 test:
-	../run-tests
+	nosetests -v
 

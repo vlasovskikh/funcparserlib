@@ -1,9 +1,0 @@
-#!/bin/sh
-exec python dot.py <<END
-/* комм 1 */
-graph /* комм 4 */ g1 {
-    // комм 2 /* комм 3 */
-}
-// комм 5
-END
-

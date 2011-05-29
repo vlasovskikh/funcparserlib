@@ -1,3 +1,0 @@
-#!/bin/sh
-exec python dot.py < /dev/null
-

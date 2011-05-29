@@ -1,6 +1,0 @@
-Graph [id=g1, strict=False, type=digraph]
-`-- stmts
-    `-- Node [id=n1]
-        `-- attrs
-            |-- Attr [name=attr1, value=None]
-            `-- Attr [name=attr2, value=value2]

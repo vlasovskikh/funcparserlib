@@ -1,5 +1,0 @@
-#!/bin/sh
-exec python dot.py <<END
-graph g1 {}
-END
-

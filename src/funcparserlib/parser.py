@@ -107,6 +107,8 @@ class Parser(object):
                             ebnf_rule(q),
                             u', '.join(unicode(x) for x in opts)))
 
+        clear_caches(self)
+
         try:
             (tree, _) = self(tokens, State())
             return tree
@@ -381,6 +383,12 @@ class _Memoize(Parser):
 
     def ebnf(self):
         return str(self.p)
+
+
+def clear_caches(p):
+    for x in all_parsers(p):
+        if isinstance(x, _Memoize):
+            x.cache = {}
 
 
 class State(object):

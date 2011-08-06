@@ -48,6 +48,12 @@ from funcparserlib.util import SyntaxError
 log = logging.getLogger('funcparserlib')
 
 
+if not hasattr(logging, 'statistics'):
+    logging.statistics = {}
+stats = logging.statistics.setdefault('funcparserlib',
+                                      {'memoize': {}})
+
+
 class ParserError(SyntaxError):
     """User-visible parsing error."""
     pass
@@ -239,7 +245,7 @@ class _Alt(Parser):
             for tok, p in self.toks:
                 if t == tok:
                     return p(tokens, s)
-            raise NoParseError('got unexpected token', s)
+            raise _NoParseError('got unexpected token', s)
         else:
             e = _NoParseError('no error', s)
             for p in self.ps:
@@ -365,8 +371,7 @@ class _Memoize(Parser):
     def __init__(self, p):
         self.p = p
         self.cache = {}
-        self.hits = 0
-        self.misses = 0
+        self.stats = stats['memoize'][self] = {'hits': 0, 'misses': 0}
 
     def __getattr__(self, name):
         return getattr(self.p, name)
@@ -375,14 +380,11 @@ class _Memoize(Parser):
         cache = self.cache
         try:
             res = cache[s.pos]
-            self.hits += 1
+            self.stats['hits'] += 1
         except KeyError:
             res = self.p(tokens, s)
             cache[s.pos] = res
-            self.misses += 1
-        # DEBUG:
-        #print >> sys.stderr, '%s: hits=%d, misses=%d' % (
-        #        self.p, self.hits, self.misses)
+            self.stats['misses'] += 1
         return res
 
     def ebnf(self):

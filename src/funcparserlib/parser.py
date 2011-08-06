@@ -228,11 +228,12 @@ class _Alt(Parser):
         if self.toks is None:
             self.toks = []
             try:
-                qss = [first(p) for p in self.ps]
-                if all(len(qs) == 1 for qs in qss):
-                    qs = [x[0] for x in qss]
-                    self.toks = [(q.tok, p)
-                                 for p, q in zip(self.ps, qs)]
+                tss = [first(p) for p in self.ps]
+                if all(_MEMOIZE not in ts and
+                       len(ts) == len(set(ts)) for ts in tss):
+                    self.toks = [(t, p)
+                                 for p, ts in zip(self.ps, tss)
+                                 for t in ts]
             except GrammarError:
                 pass
         # If there is only 1 possible token for each of the alternatives, then
@@ -244,6 +245,9 @@ class _Alt(Parser):
                 raise _NoParseError('no tokens left in the stream', s)
             for tok, p in self.toks:
                 if t == tok:
+                    return p(tokens, s)
+            for tok, p in self.toks:
+                if tok ==_EPSYLON:
                     return p(tokens, s)
             raise _NoParseError('got unexpected token', s)
         else:
@@ -568,8 +572,10 @@ def ebnf_brackets(s):
 
 def non_ll_1_parts(p):
     assert not non_halting(p)
-    ps = dict((x, first(x)) for x in all_parsers(p)
-                            if isinstance(x, _Alt))
+    ps = dict((x, [t for t in first(x)
+                     if t != _MEMOIZE])
+              for x in all_parsers(p)
+              if isinstance(x, _Alt))
     return [(k, v) for k, v in ps.items()
                    if len(v) != len(set(v))]
 
@@ -590,31 +596,41 @@ def all_parsers(p):
     return list(set(rec(p)))
 
 
+def _symbol(s):
+    return u'symbol', s
+
+
+_EPSYLON = _symbol(u'epsylon')
+_MEMOIZE = _symbol(u'memoize')
+
+
 def first(p):
     if isinstance(p, _Tok):
         return [p.tok]
     elif isinstance(p, _Seq):
         res = []
-        last_none = False
+        last_epsylon = False
         for x in p.ps:
             toks = first(x)
-            res.extend(t for t in toks if t is not None)
-            last_none = None in toks
-            if not last_none:
+            res.extend(t for t in toks if t != _EPSYLON)
+            last_epsylon = _EPSYLON in toks
+            if not last_epsylon:
                 break
-        if last_none:
-            res.append(None)
+        if last_epsylon:
+            res.append(_EPSYLON)
         return res
     elif isinstance(p, _Alt):
         return sum([first(x) for x in p.ps], [])
     elif isinstance(p, (_Map, _Fwd)):
         return first(p.p)
     elif isinstance(p, _Many):
-        return first(p.p) + [None]
+        return first(p.p) + [_EPSYLON]
     elif isinstance(p, _Pure):
-        return [None]
-    elif isinstance(p, (_Eof, _Memoize)):
+        return [_EPSYLON]
+    elif isinstance(p, _Eof):
         return []
+    elif isinstance(p, _Memoize):
+        return [_MEMOIZE]
     else:
         raise GrammarError('cannot analyse parser %s' % ebnf_rule(p))
 

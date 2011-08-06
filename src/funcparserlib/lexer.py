@@ -54,8 +54,9 @@ class Token(object):
         return hash(self.type) ^ hash(self.value) ^ hash(self.pos)
 
     def __unicode__(self):
-        s = u"%s '%s'" % (self.type, self.value)
-        return s.strip()
+        return (u"%s '%s'" % (self.type, self.value)
+                if self.value is not None
+                else self.type)
 
     def __str__(self):
         return unicode(self).encode()

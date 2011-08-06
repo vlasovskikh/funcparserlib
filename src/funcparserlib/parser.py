@@ -38,6 +38,7 @@ __all__ = [
 ]
 
 
+from warnings import warn
 import logging
 from funcparserlib.lexer import Token
 from funcparserlib.util import SyntaxError
@@ -96,18 +97,18 @@ class Parser(object):
                                ebnf_rule(p))
 
         for q, opts in non_ll_1_parts(self):
-            log.warning(u'The grammar has a non-LL(1) part that '
-                        u'may slow down parsing:\n\n    {0}\n\n'
-                        u'Several alternatives here may start '
-                        u'with the same token, '
-                        u'possible starting tokens are:\n\n    {1}\n\n'
-                        u'In order to get linear parsing time add memoize() '
-                        u'to the biggest common subtree of the '
-                        u'alternatives or transform your grammar to LL(1).'.format(
-                            ebnf_rule(q),
-                            u', '.join(unicode(x) for x in opts)))
+            warn(u'The grammar has a non-LL(1) part that '
+                 u'may slow down parsing:\n\n    %s\n\n'
+                 u'Several alternatives here may start '
+                 u'with the same token, '
+                 u'possible starting tokens are:\n\n    %s\n\n'
+                 u'In order to get linear parsing time add memoize() '
+                 u'to the biggest common subtree of the '
+                 u'alternatives or transform your grammar to LL(1).' %
+                 (ebnf_rule(q), u', '.join(unicode(x) for x in opts)),
+                 stacklevel=2)
 
-        clear_caches(self)
+        _clear_caches(self)
 
         try:
             (tree, _) = self(tokens, State())
@@ -143,7 +144,7 @@ class Parser(object):
         '''
         return _Map(self, f)
 
-    def __str__(self):
+    def __unicode__(self):
         return getattr(self, 'name', self.ebnf())
 
     def named(self, name):
@@ -164,11 +165,11 @@ class _Map(Parser):
         self.f = f
 
     def __call__(self, tokens, s):
-        (v, s2) = self.p(tokens, s)
-        return (self.f(v), s2)
+        v, s2 = self.p(tokens, s)
+        return self.f(v), s2
 
     def ebnf(self):
-        return str(self.p)
+        return unicode(self.p)
 
 
 class _Seq(Parser):
@@ -193,15 +194,15 @@ class _Seq(Parser):
                     return _Tuple(vs)
             else:
                 return _Ignored(())
-        (p, ps) = (self.ps[0], self.ps[1:])
-        (res, s) = p(tokens, s)
+        p, ps = self.ps[0], self.ps[1:]
+        res, s = p(tokens, s)
         for p in ps:
-            (v, s) = p(tokens, s)
+            v, s = p(tokens, s)
             res = magic(res, v)
-        return (res, s)
+        return res, s
 
     def ebnf(self):
-        return ', '.join(ebnf_brackets(str(x)) for x in self.ps)
+        return u', '.join(ebnf_brackets(unicode(x)) for x in self.ps)
 
 
 class _Alt(Parser):
@@ -225,9 +226,8 @@ class _Alt(Parser):
                                  for p, q in zip(self.ps, qs)]
             except GrammarError:
                 pass
-
         # If there is only 1 possible token for each of the alternatives, then
-        # optimize parser lookup
+        # optimize the parser lookup
         if self.toks:
             try:
                 t = tokens[s.pos]
@@ -250,7 +250,7 @@ class _Alt(Parser):
             raise e
 
     def ebnf(self):
-        return ' | '.join(ebnf_brackets(str(x)) for x in self.ps)
+        return u' | '.join(ebnf_brackets(unicode(x)) for x in self.ps)
 
 
 class _Fwd(Parser):
@@ -272,11 +272,11 @@ class _Fwd(Parser):
         else:
             raise NotImplementedError('you must define() a fwd')
 
-    def __str__(self):
-        return getattr(self, 'name', 'id%d' % id(self))
+    def __unicode__(self):
+        return getattr(self, 'name', u'id%d' % id(self))
 
     def ebnf(self):
-        return str(self.p)
+        return unicode(self.p)
 
 
 class _Eof(Parser):
@@ -284,12 +284,12 @@ class _Eof(Parser):
 
     def __call__(self, tokens, s):
         if s.pos >= len(tokens):
-            return (None, s)
+            return None, s
         else:
             raise NoParseError('eof not found', s)
 
     def ebnf(self):
-        return '? eof ?'
+        return u'? eof ?'
 
 
 class _Many(Parser):
@@ -306,13 +306,13 @@ class _Many(Parser):
         res = []
         try:
             while True:
-                (v, s) = self.p(tokens, s)
+                v, s = self.p(tokens, s)
                 res.append(v)
         except NoParseError, e:
             return (res, e.state)
 
     def ebnf(self):
-        return '{ %s }' % self.p
+        return u'{ %s }' % self.p
 
 
 class _Pure(Parser):
@@ -322,10 +322,10 @@ class _Pure(Parser):
         self.x = x
 
     def __call__(self, tokens, s):
-        return (self.x, s)
+        return self.x, s
 
     def ebnf(self):
-        return '? pure(%s) ?' % (self.x,)
+        return u'? pure(%s) ?' % (self.x,)
 
 
 class _Tok(Parser):
@@ -350,7 +350,7 @@ class _Tok(Parser):
         try:
             return self.tok.ebnf()
         except AttributeError:
-            return '? %s ?' % self.tok
+            return u'? %s ?' % self.tok
 
 
 def tok(type, value=None):
@@ -382,10 +382,10 @@ class _Memoize(Parser):
         return res
 
     def ebnf(self):
-        return str(self.p)
+        return unicode(self.p)
 
 
-def clear_caches(p):
+def _clear_caches(p):
     for x in all_parsers(p):
         if isinstance(x, _Memoize):
             x.cache = {}
@@ -423,7 +423,7 @@ class _Ignored(object):
 def maybe(p):
     '''Returns a parser that retuns `None` if parsing fails.'''
     q = p | pure(None)
-    q.ebnf = lambda: '[ %s ]' % p
+    q.ebnf = lambda: u'[ %s ]' % p
     return q
 
 
@@ -548,18 +548,18 @@ def ebnf_grammar(p):
             rs.append(ebnf_rule(p))
         return rs, ps
     rs, ps = ebnf_rules(p, [])
-    return '\n'.join(reversed(rs))
+    return u'\n'.join(reversed(rs))
 
 
 def ebnf_rule(p):
-    return '%s = %s;' % (getattr(p, 'name', 'id%d' % id(p)),
-                         p.ebnf())
+    return u'%s = %s;' % (getattr(p, 'name', u'id%d' % id(p)),
+                          p.ebnf())
 
 
 def ebnf_brackets(s):
-    return (s if ' ' not in s or
-                 any(s.startswith(x) for x in '{[(?')
-              else '(%s)' % s)
+    return (s if u' ' not in s or
+                 any(s.startswith(x) for x in u'{[(?')
+              else u'(%s)' % s)
 
 
 def non_ll_1_parts(p):

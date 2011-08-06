@@ -58,8 +58,8 @@ class GrammarError(Exception):
     pass
 
 
-class NoParseError(Exception):
-    '''Internal no-parse exception for backtracking.'''
+class _NoParseError(Exception):
+    """Internal no-parse exception for backtracking."""
 
     def __init__(self, msg='', state=None):
         self.msg = msg
@@ -113,9 +113,10 @@ class Parser(object):
         _clear_caches(self)
 
         try:
-            (tree, _) = self(tokens, State())
+            tree, _ = self(tokens, _State())
+            log.debug('stats: %r' % stats)
             return tree
-        except NoParseError, e:
+        except _NoParseError, e:
             max = e.state.max
             tok = tokens[max] if max < len(tokens) else 'eof'
             raise ParserError(u'%s: %s' % (e.msg, tok),
@@ -234,20 +235,19 @@ class _Alt(Parser):
             try:
                 t = tokens[s.pos]
             except IndexError:
-                raise NoParseError('no tokens left in the stream', s)
-
+                raise _NoParseError('no tokens left in the stream', s)
             for tok, p in self.toks:
                 if t == tok:
                     return p(tokens, s)
             raise NoParseError('got unexpected token', s)
         else:
-            e = NoParseError('no error', s)
+            e = _NoParseError('no error', s)
             for p in self.ps:
                 try:
                     return p(tokens, s)
-                except NoParseError, npe:
+                except _NoParseError, npe:
                     e = npe
-                    s = State(s.pos, e.state.max)
+                    s = _State(s.pos, e.state.max)
                     continue
             raise e
 
@@ -288,7 +288,7 @@ class _Eof(Parser):
         if s.pos >= len(tokens):
             return None, s
         else:
-            raise NoParseError('eof not found', s)
+            raise _NoParseError('eof not found', s)
 
     def ebnf(self):
         return u'? eof ?'
@@ -312,8 +312,8 @@ class _Many(Parser):
             while True:
                 v, s = self.p(tokens, s)
                 res.append(v)
-        except NoParseError, e:
-            return (res, e.state)
+        except _NoParseError, e:
+            return res, e.state
 
     def ebnf(self):
         return u'{ %s }' % self.p
@@ -342,13 +342,13 @@ class _Tok(Parser):
         try:
             t = tokens[s.pos]
         except IndexError:
-            raise NoParseError('no tokens left in the stream', s)
+            raise _NoParseError('no tokens left in the stream', s)
         if t == self.tok:
             pos = s.pos + 1
-            s2 = State(pos, max(pos, s.max))
-            return (t, s2)
+            s2 = _State(pos, max(pos, s.max))
+            return t, s2
         else:
-            raise NoParseError('got unexpected token', s)
+            raise _NoParseError('got unexpected token', s)
 
     def ebnf(self):
         try:
@@ -395,13 +395,13 @@ def _clear_caches(p):
             x.cache = {}
 
 
-class State(object):
-    '''A parsing state that is maintained basically for error reporting.
+class _State(object):
+    """Parsing state that is maintained mainly for error reporting.
 
     It consists of the current position `pos` in the sequence being parsed and
     the position `max` of the rightmost token that has been consumed while
     parsing.
-    '''
+    """
     def __init__(self, pos=0, max=0):
         self.pos = pos
         self.max = max
@@ -410,7 +410,7 @@ class State(object):
         return unicode((self.pos, self.max))
 
     def __repr__(self):
-        return 'State(%r, %r)' % (self.pos, self.max)
+        return '_State(%r, %r)' % (self.pos, self.max)
 
 
 class _Tuple(tuple): pass

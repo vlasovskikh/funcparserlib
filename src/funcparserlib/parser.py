@@ -21,7 +21,7 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-'''A recurisve descent parsing library based on functional combinators.
+"""A recurisve descent parsing library based on functional combinators.
 
 Basic combinators are taken from Harrison's book ["Introduction to Functional
 Programming"][1] and translated from ML into Python. See also [a Russian
@@ -29,7 +29,8 @@ translation of the book][2].
 
   [1]: http://www.cl.cam.ac.uk/teaching/Lectures/funprog-jrh-1996/
   [2]: http://code.google.com/p/funprog-ru/
-'''
+
+"""
 
 
 __all__ = [
@@ -48,12 +49,12 @@ log = logging.getLogger('funcparserlib')
 
 
 class ParserError(SyntaxError):
-    '''User-visible parsing error.'''
+    """User-visible parsing error."""
     pass
 
 
 class GrammarError(Exception):
-    '''Raised when the grammar definition itself contains errors.'''
+    """Raised when the grammar definition itself contains errors."""
     pass
 
 
@@ -72,19 +73,20 @@ class NoParseError(Exception):
 
 
 class Parser(object):
-    '''A callable parser object that defines some operators for parser
-    composition and the `parse()` function as its external interface.
-    '''
+    """Base class for various parsers.
+
+    It defines some operators for parser composition and the `parse()` function
+    as its external interface.
+    """
 
     def parse(self, tokens):
-        '''Applies the parser to the tokens producing a parsing result.
+        """Apply the parser to the tokens and produce the parsing result.
 
         It provides a way to invoke a parser hiding details related to the
         parser state. Also it makes error messages more readable by specifying
         the position of the rightmost token that has been reached.
-        '''
-        log.info(u'EBNF grammar:\n{0}'.format(ebnf_grammar(self)))
 
+        """
         p = left_recursive(self)
         if p:
             raise GrammarError("Parser '%s' does not halt, remove left "
@@ -123,42 +125,42 @@ class Parser(object):
         return GrammarError('an abstract parser cannot be called')
 
     def __add__(self, other):
-        '''A sequential composition of parsers.
+        """Return a sequential composition of parsers.
 
         The resulting parser merges the parsed sequence into a single `_Tuple`
         unless the user explicitely prevents it. See also `skip()` and `>>`
         combinators.
-        '''
+        """
         return _Seq(self, other)
 
     def __or__(self, other):
-        '''A choice composition of two parsers.'''
+        """Return a choice composition of two parsers."""
         return _Alt(self, other)
 
     def __rshift__(self, f):
-        '''An interpreting parser.
+        """Return an interpreting parser.
 
         Given a function from `b` to `c`, transforms a parser of `b` into a
         parser of `c`. It is useful for transorming a parser value into another
         value for making it a part of a parse tree or an AST.
-        '''
+        """
         return _Map(self, f)
 
     def __unicode__(self):
         return getattr(self, 'name', self.ebnf())
 
     def named(self, name):
-        'Specifies the name of the parser.'
+        """Specify the name of the parser."""
         self.name = name
         return self
 
     def ebnf(self):
-        'The EBNF grammar expression for the parser.'
+        """Get the EBNF grammar expression for the parser."""
         return GrammarError('no EBNF expression for an abstract parser')
 
 
 class _Map(Parser):
-    '''An interpreting parser.'''
+    """Interpreting parser."""
 
     def __init__(self, p, f):
         self.p = p
@@ -173,7 +175,7 @@ class _Map(Parser):
 
 
 class _Seq(Parser):
-    '''A sequential composition of parsers.'''
+    """Sequential composition of parsers."""
 
     def __init__(self, p1, p2):
         if isinstance(p1, _Seq):
@@ -206,7 +208,7 @@ class _Seq(Parser):
 
 
 class _Alt(Parser):
-    '''A choice composition of parsers.'''
+    """Choice composition of parsers."""
 
     def __init__(self, p1, p2):
         if isinstance(p1, _Alt):
@@ -254,11 +256,11 @@ class _Alt(Parser):
 
 
 class _Fwd(Parser):
-    '''An undefined parser that can be used as a forward declaration.
+    """Undefined parser that can be used as a forward declaration.
 
     You will be able to `define()` it when all the parsers it depends on are
     available.
-    '''
+    """
 
     def __init__(self):
         self.p = None
@@ -280,7 +282,7 @@ class _Fwd(Parser):
 
 
 class _Eof(Parser):
-    '''Throws an exception if any tokens are left in the input unparsed.'''
+    """Throws an exception if any tokens are left in the input unparsed."""
 
     def __call__(self, tokens, s):
         if s.pos >= len(tokens):
@@ -293,10 +295,12 @@ class _Eof(Parser):
 
 
 class _Many(Parser):
-    '''A parser that infinitely applies the parser `p` to the input sequence of
+    """Repeated application of a parser.
+
+    A parser that infinitely applies the parser `p` to the input sequence of
     tokens while it successfully parsers them. It returns a list of parsed
     values.
-    '''
+    """
 
     def __init__(self, p):
         self.p = p
@@ -316,7 +320,7 @@ class _Many(Parser):
 
 
 class _Pure(Parser):
-    '''A pure parser that returns its result without looking at the input.'''
+    """Pure parser that returns its result without looking at the input."""
 
     def __init__(self, x):
         self.x = x
@@ -329,7 +333,7 @@ class _Pure(Parser):
 
 
 class _Tok(Parser):
-    '''Returns a parser that parses a token equal to the specified token.'''
+    """Parses a token equal to the specified token."""
 
     def __init__(self, token):
         self.tok = token
@@ -421,41 +425,41 @@ class _Ignored(object):
 
 
 def maybe(p):
-    '''Returns a parser that retuns `None` if parsing fails.'''
+    """Return a parser that retuns `None` if parsing fails."""
     q = p | pure(None)
     q.ebnf = lambda: u'[ %s ]' % p
     return q
 
 
 def skip(p):
-    '''Returns a parser such that its results are ignored by the combinator `+`.
+    """Return a parser such that its results are ignored by the combinator `+`.
 
     It is useful for throwing away elements of concrete syntax (e. g. ",", ";").
-    '''
+    """
     return p >> _Ignored
 
 
 def oneplus(p):
-    '''Returns a parser that applies the parser `p` one or more times.'''
+    """Return a parser that applies the parser `p` one or more times."""
     return p + many(p) >> (lambda x: [x[0]] + x[1])
 
 
 def name_parser_vars(vars):
-    '''Name parsers after their variables.
+    """Name parsers after their variables.
 
     Named parsers are nice for debugging and error reporting.
 
     The typical usage is to define all the parsers of the grammar in the same
     scope and run `name_parser_vars(locals())` to name them all instead of calling
     `Parser.named()` manually for each parser.
-    '''
+    """
     for k, v in vars.items():
         if isinstance(v, Parser):
             v.named(k)
 
 
 def non_halting(p):
-    '''Returns a non-halting part of parser `p` or `None`.'''
+    """Return a non-halting part of parser `p` or `None`."""
     return left_recursive(p) or non_halting_many(p)
 
 
@@ -472,7 +476,7 @@ def takewhile_included(pred, seq):
 
 
 def left_recursive(p, fwds=[], seqs=[]):
-    '''Returns a left-recursive part of parser `p` or `None`.'''
+    """Return a left-recursive part of parser `p` or `None`."""
     def any_(xs):
         for x in xs:
             if x:
@@ -502,16 +506,14 @@ def left_recursive(p, fwds=[], seqs=[]):
 
 
 def non_halting_many(p):
-    '''Returns a non-halting `many()` part of parser `p` or `None`.'''
+    """Return a non-halting `many()` part of parser `p` or `None`."""
     rs = [x for x in all_parsers(p) if isinstance(x, _Many) and
                                        not makes_progress(x.p)]
     return rs[0] if len(rs) > 0 else None
 
 
 def makes_progress(p, fwds=[]):
-    '''Returns `True` if parser `p` must consume one or more tokens in order to
-    succeed.
-    '''
+    """Assert that the parser must consume some tokens in order to succeed."""
     if isinstance(p, (_Map, _Memoize)):
         return makes_progress(p.p, fwds)
     elif isinstance(p, _Fwd):
@@ -530,7 +532,7 @@ def makes_progress(p, fwds=[]):
 
 
 def ebnf_grammar(p):
-    'The EBNF grammar for the parser `p` as the top-level symbol.'
+    """The EBNF grammar for the parser `p` as the top-level symbol."""
     def ebnf_rules(p, ps):
         if p in ps:
             return [], ps

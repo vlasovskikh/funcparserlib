@@ -30,6 +30,9 @@ class LexerError(Exception):
         self.place = place
         self.str = str
 
+    def __str__(self):
+        return unicode(self).encode()
+
     def __unicode__(self):
         s = 'cannot tokenize data'
         return '%s: %d,%d: "%s"' % (s, self.place[0], self.place[1], self.str)
@@ -88,10 +91,10 @@ def make_tokenizer(specs):
                     n_pos = pos + len(value)
                 else:
                     n_pos = len(value) - value.rfind(u'\n') - 1
-                return Token(type, value, (line, pos), (n_line, n_pos))
+                return Token(type, value, (line, pos + 1), (n_line, n_pos))
         else:
             errline = str.splitlines()[line - 1]
-            raise LexerError((line, pos), errline)
+            raise LexerError((line, pos + 1), errline)
     def f(str):
         length = len(str)
         line, pos = 1, 0

@@ -121,7 +121,7 @@ class Parser(object):
                 tok = tokens[max]
             else:
                 tok = '<EOF>'
-            raise NoParseError(u'%s: %s' % (e.msg, tok))
+            raise NoParseError(u'%s: %s' % (e.msg, tok), e.state)
 
     def __add__(self, other):
         '''Parser(a, b), Parser(a, c) -> Parser(a, _Tuple(b, c))

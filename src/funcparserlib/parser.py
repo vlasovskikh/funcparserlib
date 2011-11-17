@@ -323,7 +323,7 @@ class _Many(Parser):
                 v, s = self.p(tokens, s)
                 res.append(v)
         except _NoParseError, e:
-            return res, e.state
+            return res, _State(s.pos, e.state.max)
 
     def ebnf(self):
         return u'{ %s }' % self.p

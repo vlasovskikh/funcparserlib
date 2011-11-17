@@ -29,7 +29,7 @@ class LexerError(Exception):
     def __init__(self, place, str):
         self.place = place
         self.str = str
-        
+
     def __unicode__(self):
         s = 'cannot tokenize data'
         return '%s: %d,%d: "%s"' % (s, self.place[0], self.place[1], self.str)

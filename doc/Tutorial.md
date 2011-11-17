@@ -1023,7 +1023,7 @@ Finally, test it:
     >>> expr.parse(tokenize('(2 + 3) * 4'))
     20
     >>> expr.parse(tokenize('3.1415926 * (2 + 7.18281828e-1)'))
-    8.5397340755592719
+    8.539734075559272
 
 
 ### The `finished` Combinator

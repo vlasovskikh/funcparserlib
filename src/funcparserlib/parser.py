@@ -270,7 +270,7 @@ def many(p):
                 (v, s) = p.run(tokens, s)
                 res.append(v)
         except NoParseError, e:
-            return (res, e.state)
+            return (res, State(s.pos, e.state.max))
     _many.name = '{ %s }' % p.name
     return _many
 

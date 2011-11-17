@@ -12,7 +12,7 @@ default:
 install:
 	$(SETUP) install $(INSTALL_OPTS)
 
-test: examples doctest
+test: unittest examples doctest
 
 doctest:
 	make -C doc
@@ -20,6 +20,9 @@ doctest:
 examples:
 	make -C examples/dot test && \
 	make -C examples/json test
+
+unittest:
+	nosetests -v
 
 clean:
 	$(SETUP) clean

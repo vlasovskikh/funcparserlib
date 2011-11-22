@@ -19,7 +19,7 @@ The `funcparserlib` Tutorial
     </a>
   </dd>
   <dt>Library Version:</dt>
-  <dd>0.3.5</dd>
+  <dd>0.4dev</dd>
 </dl>
 
 
@@ -47,36 +47,35 @@ your comments to [the issues list][funcparserlib-issues] on Google Code.
 Contents
 --------
 
-1. Intro
-2. Diving In
-3. Lexing with `tokenize`
-4. The Library Basics
-    1. Parser Combinators
-    2. The `some` Combinator
-    3. The `>>` Combinator
-    4. The `+` Combinator
-5. Getting First Numbers
-    1. The `a` Combinator
-    2. Pythonic Uncurrying
-6. Making a Choice
-    1. The `|` Combinator
-    2. Conflicting Alternatives
-    3. The Fear of Left-Recursion
-    4. The `many` Combinator
-7. Ordering Calculations
-    1. Operator Precedence
-    2. The `with_forward_decls` Combinator
-8. Polishing the Code
-    1. The `skip` Combinator
-    2. The `finished` Combinator
-    3. The `maybe` Combinator
-9. Advanced Topics
-    1. Parser Type Classes
-    2. Papers on Funcional Parsers
+1. [Intro](#intro)
+2. [Diving In](#diving-in)
+3. [Lexing with `tokenize`](#lexing-with-tokenize)
+4. [The Library Basics](#library-basics)
+    1. [Parser Combinators](#parser-combinators)
+    2. [The `some` Combinator](#some-combinator)
+    3. [The `>>` Combinator](#rshift-combinator)
+    4. [The `+` Combinator](#add-combinator)
+5. [Getting First Numbers](#getting-first-numbers)
+    1. [The `a` Combinator](#a-combinator)
+    2. [Pythonic Uncurrying](#pythonic-uncurrying)
+6. [Making a Choice](#making-choice)
+    1. [The `|` Combinator](#or-combinator)
+    2. [Conflicting Alternatives](#conflicting-alternatives)
+    3. [The Fear of Left-Recursion](#fear-of-left-recursion)
+    4. [The `many` Combinator](#many-combinator)
+7. [Ordering Calculations](#ordering-calculations)
+    1. [Operator Precedence](#operator-precedence)
+    2. [The `with_forward_decls` Combinator](#with-forward-decls-combinator)
+8. [Polishing the Code](#polishing-code)
+    1. [The `skip` Combinator](#skip-combinator)
+    2. [The `finished` Combinator](#finished-combinator)
+    3. [The `maybe` Combinator](#maybe-combinator)
+9. [Advanced Topics](#advanced-topics)
+    1. [Parser Type Classes](#parser-type-classes)
+    2. [Papers on Funcional Parsers](#papers-on-functional-parsers)
 
 
-Intro
------
+<h2 id="intro">Intro</h2>
 
 In this tutorial, we will write _an expression calculator_ that uses syntax
 similar to Python or Haskell expressions. Writing a calculator is a common
@@ -102,8 +101,7 @@ Here are some expressions we want to be able to parse and calculate:
     3.1415926 * (2 + 7.18281828e-1)
 
 
-Diving In
----------
+<h2 id="diving-in">Diving In</h2>
 
 Here is a complete expression calculator program.
 
@@ -112,6 +110,8 @@ some feeling of its structure.
 
 In the end of this tutorial you will fully understand this code and will be able
 to write parsers for your own needs.
+
+    :::python
 
     >>> from StringIO import StringIO
     >>> from tokenize import generate_tokens
@@ -201,6 +201,8 @@ to write parsers for your own needs.
 
 A couple of tests:
 
+    :::python
+
     >>> assert parse(tokenize('')) is None
     >>> assert parse(tokenize('1')) == 1
     >>> assert parse(tokenize('2 + 3')) == 5
@@ -208,14 +210,15 @@ A couple of tests:
 
 OK, now let's forget about all this stuff:
 
+    :::python
+
     >>> del StringIO, generate_tokens, operator, token
     >>> del Token, tokenize, parse
 
 and start from scratch!
 
 
-Lexing with `tokenize`
-----------------------
+<h2 id="lexing-with-tokenize">Lexing with <code>tokenize</code></h2>
 
 We start with lexing in order to be able to define parsers in terms of tokens,
 not just characters. This section is auxiliary and it is completely unrelated to
@@ -224,14 +227,20 @@ this section and start with &ldquo;The Library Basics&rdquo;.
 
 We will need to `generate_tokens` using the standard `tokenize` module:
 
+    :::python
+
     >>> from tokenize import generate_tokens
 
 Import some standard library stuff:
+
+    :::python
 
     >>> from StringIO import StringIO
     >>> from pprint import pformat
 
 This is an output from the tokenizer:
+
+    :::python
 
     >>> ts = list(generate_tokens(StringIO('3 * (4 + 5)').readline))
     >>> print pformat(ts)
@@ -254,9 +263,13 @@ and allow access to the fields of the token by name.
 
 Import a standard module containing the code-to-name map for tokens:
 
+    :::python
+
     >>> import token
 
 Define the wrapper class:
+
+    :::python
 
     >>> class Token(object):
     ...     def __init__(self, code, value, start=(0, 0), stop=(0, 0), line=''):
@@ -284,6 +297,8 @@ Define the wrapper class:
 Functions `__repr__` and `__eq__` will be used later. Let's see what it will
 look like:
 
+    :::python
+
     >>> print '\n'.join(unicode(Token(*t)) for t in ts)
     1,0-1,1 NUMBER '3'
     1,2-1,3 OP '*'
@@ -297,6 +312,8 @@ look like:
 So we are basically done with lexing. The last thing left is to write _the_
 lexer function:
 
+    :::python
+
     >>> def tokenize(s):
     ...     'str -> [Token]'
     ...     return list(Token(*t)
@@ -306,8 +323,7 @@ lexer function:
 Here we just have added filtering newline symbols.
 
 
-The Library Basics
-------------------
+<h2 id="library-basics">The Library Basics</h2>
 
 `funcparserlib` is a library for recursive descent parsing using parser
 combinators. The parsers made with its help are LL(*) parsers. It means that
@@ -318,7 +334,7 @@ method compared to LL(k) or LR(k) algorithms. So the primary domain for
 languages).
 
 
-### Parser Combinators
+<h3 id="parser-combinators">Parser Combinators</h3>
 
 _A parser_ is basically a function `f` of type (we will use a Haskell-ish
 notation for types):
@@ -362,9 +378,11 @@ sources][parser-py] of `funcparserlib`! There are only approximately 300 lines
 of documented code there. And you are already familiar with the basic idea.
 
 
-### The `some` Combinator
+<h3 id="some-combinator">The <code>some</code> Combinator</h3>
 
 Initial imports:
+
+    :::python
 
     >>> from funcparserlib.parser import some, a, many, skip, finished, maybe
 
@@ -379,6 +397,8 @@ So our grammar consists of expressions, that consist of numbers or nested
 expressions. All the expressions we have seen so far are binary.
 
 Let's start with just numbers. Number is some token of type `'NUMBER'`:
+
+    :::python
 
     >>> number = some(lambda tok: tok.type == 'NUMBER')
 
@@ -401,21 +421,25 @@ will be returned by the parser.
 
 And this is how it works:
 
+    :::python
+
     >>> number.parse(tokenize('5'))
     Token(2, '5', (1, 0), (1, 1), '5')
 
 and how it reports errors:
 
+    :::python
+
     >>> number.parse(tokenize('a'))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 1,0-1,1 NAME 'a'
+    ParserError: got unexpected token: 1,0-1,1 NAME 'a'
 
 Notice that the lexer and the `Token` wrapper class help us identify the
 position in which the error occured.
 
 
-### The `>>` Combinator
+<h3 id="rshift-combinator">The <code>&gt;&gt;</code> Combinator</h3>
 
 Using `some`, we have got a parsed `Token`. But we need numbers, not `Token`s, to
 calculate an expression! So the result of the `number` parser is not
@@ -434,6 +458,8 @@ parser is a functor where `>>` is its `fmap`).
 
 Let's write a function that maps a `Token` to an `int` or a `float`:
 
+    :::python
+
     >>> def make_number(tok):
     ...     'Token -> int or float'
     ...     try:
@@ -442,6 +468,8 @@ Let's write a function that maps a `Token` to an `int` or a `float`:
     ...         return float(tok.value)
 
 OK, but we can spilt this one into two more primitive useful functions:
+
+    :::python
 
     >>> def tokval(tok):
     ...     'Token -> str'
@@ -455,12 +483,16 @@ OK, but we can spilt this one into two more primitive useful functions:
 
 Let's use these functions in our `number` parser:
 
+    :::python
+
     >>> number = (
     ...     some(lambda tok: tok.type == 'NUMBER')
     ...     >> tokval
     ...     >> make_number)
 
 Now we got exactly what we needed:
+
+    :::python
 
     >>> number.parse(tokenize('5'))
     5
@@ -474,7 +506,7 @@ the set of parsers is closed under the application of `>>` to a parser and a
 function of type `a -> b`.
 
 
-### The `+` Combinator
+<h3 id="add-combinator">The <code>+</code> Combinator</h3>
 
 Having just numbers is boring. We need some operations on them. Let's start with
 the only one operator `**` (because `+` could be confusing in this context) and
@@ -499,6 +531,8 @@ results. It accumulates all the parsed values preventing the nesting of tuples.
 We can &ldquo;turn off&rdquo; the `_Tuple` to see what will happen by
 explicitely casing every value parsed by a composed parser to `tuple`:
 
+    :::python
+
     >>> p = (number + number >> tuple) + number >> tuple
     >>> p.parse(tokenize('1 2 3'))
     ((1, 2), 3)
@@ -509,6 +543,8 @@ it is pretty inconsistent (but it is OK for you, Lisp hackers).
 
 So the magic does the following:
 
+    :::python
+
     >>> p = number + number + number
     >>> p.parse(tokenize('1 2 3'))
     (1, 2, 3)
@@ -518,9 +554,13 @@ Now it's OK for everyone (except for very statically typed persons).
 OK, let's write a parser for the power operator expression. We have already got
 a number parser. Now we need an operator parser. How about this one:
 
+    :::python
+
     >>> pow = some(lambda tok: tok.type == 'OP' and tok.value == '**') >> tokval
 
 It will work, but let's abstract away from the operator name:
+
+    :::python
 
     >>> def op(s):
     ...     'str -> Parser(Token, str)'
@@ -529,13 +569,13 @@ It will work, but let's abstract away from the operator name:
     ...         >> tokval)
 
 
-Getting First Numbers
----------------------
+<h2 id="getting-first-numbers">Getting First Numbers</h2>
 
-
-### The `a` Combinator
+<h3 id="a-combinator">The <code>a</code> Combinator</h3>
 
 Continuing with the `op`, we can define it using `lambda`:
+
+    :::python
 
     >>> op = (lambda s:
     ...     some(lambda tok: tok.type == 'OP' and tok.value == s)
@@ -553,6 +593,8 @@ parses a token only if it is equal to that value. Let's call this combinator `a`
 
 The definition of the combinator is straightforward:
 
+    :::python
+
     a = lambda x: some(lambda y: x == y)
 
 It's quite useful in practice, so `funcparserlib` already contains such a
@@ -560,10 +602,14 @@ combinator. You can just import it from there (as we have already done earlier).
 
 Let's rewrite `op` using `a`:
 
+    :::python
+
     >>> op = lambda s: a(Token(token.OP, s)) >> tokval
     >>> pow = op('**')
 
 and test it:
+
+    :::python
 
     >>> pow.parse(tokenize('**'))
     '**'
@@ -572,19 +618,27 @@ Oops, we got just a string `'**'`, but we wanted a function `**` (for Lisp
 hackers: it would be nice to just `(eval (quote **))`). We have already seen
 this problem before. Let's just transform the parser using `>>`:
 
+    :::python
+
     >>> import operator
     >>> pow = op('**') >> (lambda x: operator.pow)
 
 OK, but the `x` isn't used here, so the classic function `const` comes to our
 minds (for combinatorically inclined: it is just `K`):
 
+    :::python
+
     >>> const = lambda x: lambda _: x
 
 The revisited version of `pow` is:
 
+    :::python
+
     >>> pow = op('**') >> const(operator.pow)
 
 Let's test it again:
+
+    :::python
 
     >>> f = pow.parse(tokenize('**'))
     >>> f(2, 12)
@@ -592,10 +646,12 @@ Let's test it again:
     >>> del f
 
 
-### Pythonic Uncurrying
+<h3 id="pythonic-uncurrying">Pythonic Uncurrying</h3>
 
 OK, it's time to put it all together. Let's define the `eval_expr` function,
 that will map the result of parsing an expression to the resulting value:
+
+    :::python
 
     >>> def eval_expr(x):
     ...     return x[1](x[0], x[2])
@@ -603,9 +659,13 @@ that will map the result of parsing an expression to the resulting value:
 Then define a simple expression parser (we don't recur on the subparts of the
 expression yet):
 
+    :::python
+
     >>> expr = number + pow + number >> eval_expr
 
 Test it:
+
+    :::python
 
     >>> expr.parse(tokenize('2 ** 12'))
     4096
@@ -622,9 +682,13 @@ Let's make the arguments positional and provide a wrapper for calling
 turn any function of `n` arguments into a function of a single `n`-tuple (for
 functionally inclined: we can uncurry it):
 
+    :::python
+
     >>> unarg = lambda f: lambda x: f(*x)
 
 So the new `eval_expr` is:
+
+    :::python
 
     >>> eval_expr = unarg(lambda a, f, b: f(a, b))
 
@@ -632,16 +696,16 @@ Yes, it is cleaner now than it was before.
 
 Redefine `expr` and test it:
 
+    :::python
+
     >>> expr = number + pow + number >> eval_expr
     >>> expr.parse(tokenize('2 ** 12'))
     4096
 
 
-Making a Choice
----------------
+<h2 id="making-choice">Making a Choice</h2>
 
-
-### The `|` Combinator
+<h3 id="or-combinator">The <code>|</code> Combinator</h3>
 
 So far so good. Now we need to support more than one operation. We already know
 how define a new operation. But how do we choose between, say, `**` and `-`
@@ -660,13 +724,19 @@ Haskell hackers: dynamic typing again, there should be `Either b c` here):
 
 Let's see how it works by defining one more operator:
 
+    :::python
+
     >>> sub = op('-') >> const(operator.sub)
 
 and then using the choice combinator in `expr`:
 
+    :::python
+
     >>> expr = number + (pow | sub) + number >> eval_expr
 
 Test it:
+
+    :::python
 
     >>> expr.parse(tokenize('2 ** 8'))
     256
@@ -675,13 +745,17 @@ Test it:
 
 and what if none of the alternatives matches:
 
+    :::python
+
     >>> expr.parse(tokenize('2 + 2'))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 1,2-1,3 OP '+'
+    ParserError: got unexpected token: 1,2-1,3 OP '+'
 
 Let's cover all the basic arithmetic binary operators using one more bit of
 abstraction:
+
+    :::python
 
     >>> makeop = lambda s, f: op(s) >> const(f)
 
@@ -696,6 +770,8 @@ abstraction:
 
 Test it:
 
+    :::python
+
     >>> expr.parse(tokenize('2 + 2'))
     4
     >>> expr.parse(tokenize('2 * 2'))
@@ -704,7 +780,7 @@ Test it:
 Yay! We can do elementary school arithmetics!
 
 
-### Conflicting Alternatives
+<h3 id="conflicting-alternatives">Conflicting Alternatives</h3>
 
 OK, we have got a parser for expressions containing a binary operation, so we
 can write a toplevel parser of single numbers _and_ expressions of numbers:
@@ -712,6 +788,8 @@ can write a toplevel parser of single numbers _and_ expressions of numbers:
     >>> toplevel = number | expr
 
 Test it:
+
+    :::python
 
     >>> toplevel.parse(tokenize('5'))
     5
@@ -725,11 +803,15 @@ parsing. The first alternative of `toplevel` parses a subtree of some next
 alternative (because `number` is a subpart of `expr`).  We should be careful and
 compose parsers using `|` so that they don't conflict with each other:
 
+    :::python
+
     >>> toplevel = expr | number
 
 Remember that the longest token sequence should be parsed first!
 
 Let's test it:
+
+    :::python
 
     >>> toplevel.parse(tokenize('5'))
     5
@@ -737,7 +819,7 @@ Let's test it:
     5
 
 
-### The Fear of Left-Recursion
+<h3 id="fear-of-left-recursion">The Fear of Left-Recursion</h3>
 
 We have defined the `toplevel` parser, that can parse expressions of numbers or
 just numbers. But what about expressions of expressions of numbers, etc.? We
@@ -756,11 +838,15 @@ How to avoid left-recursion on `expr` here? Let's start thinking in terms of
 EBNF (Extended Backus-Naur Form) that is used widely in grammar definitions. Our
 parser corresponds to these EBNF productions:
 
+    :::ebnf
+
     <expr>     ::= <rec-expr> | <number> ;
     <rec-expr> ::= <expr> , <operator> , <expr> ;
 
 Left-recursion is still there of course. But we can rewrite them this way using
 EBNF repetition syntax:
+
+    :::ebnf
 
     <expr> ::= <number> , { <operator> , <number> }
 
@@ -771,7 +857,7 @@ modify it a little to make it non-left-recursive.
 
 Remember that the left-recursion must be avoided!
 
-### The `many` Combinator
+<h3 id="many-combinator">The <code>many</code> Combinator</h3>
 
 The new definition of `<expr>` doesn't have left-recurison any more, but it
 assumes a new parser combinator for doing things many times as supposed by the
@@ -786,6 +872,8 @@ parsed tokens. Here is its type:
 
 It works like this:
 
+    :::python
+
     >>> many(number).parse(tokenize('1'))
     [1]
     >>> many(number).parse(tokenize('1 2 3'))
@@ -798,15 +886,21 @@ It works like this:
 With `many`, we can avoid left-recursion and translate the `<expr>` production
 of EBNF directly into the parser of `funcparserlib`:
 
+    :::python
+
     >>> expr = number + many(operator + number)
 
 Let's test it:
+
+    :::python
 
     >>> expr.parse(tokenize('2 + 3'))
     (2, [(<built-in function add>, 3)])
 
 It seems that we forgot to map parsing results to numbers again.  Let's fix
 this:
+
+    :::python
 
     >>> def eval_expr(z, list):
     ...     return reduce(lambda s, (f, x): f(s, x), list, z)
@@ -823,9 +917,13 @@ abstracted in the code above.
 
 Now let's refine `expr` with `eval_expr`:
 
+    :::python
+
     >>> expr = number + many(operator + number) >> unarg(eval_expr)
 
 and test it:
+
+    :::python
 
     >>> expr.parse(tokenize('2 * 3 + 4'))
     10
@@ -834,19 +932,21 @@ and test it:
 
 Cool, we just have calculated the factorial of 4!
 
+    :::python
+
     >>> expr.parse(tokenize('2 ** 32 - 1')) == 4294967295
     True
 
 and this is the largest `unsigned int` possible on 32-bit computers.
 
 
-Ordering Calculations
----------------------
+<h2 id="ordering-calculations">Ordering Calculations</h2>
 
-
-### Operator Precedence
+<h3 id="operator-precedence">Operator Precedence</h3>
 
 And how about this one:
+
+    :::python
 
     >>> expr.parse(tokenize('2 + 3 * 4'))
     20
@@ -861,6 +961,8 @@ second one.
 
 According to this quite popular approach, our modified grammar will look like
 this:
+
+    :::python
 
     >>> f = unarg(eval_expr)
 
@@ -880,6 +982,8 @@ tree into an AST because we write an interpreter that evaluates parse tree nodes
 
 Let's test our new `expr`:
 
+    :::python
+
     >>> expr.parse(tokenize('1'))
     1
     >>> expr.parse(tokenize('2 + 3 * 4'))
@@ -888,9 +992,12 @@ Let's test our new `expr`:
     3
 
 
-### The `with_forward_decls` Combinator
+<h3 id="with-forward-decls-combinator">The <code>with_forward_decls</code>
+Combinator</h3>
 
 Initial deletions:
+
+    :::python
 
     >>> del expr
 
@@ -898,6 +1005,8 @@ The last thing we want to see in our expressions is parentheses. That's an easy
 one. Let's just add one more nesting level of operators. Parentheses have the
 highest precedence, so they should be nested in `factor`. We can write the new
 nested parser `primary`:
+
+    :::python
 
     >>> primary = number | ((op('(') + expr + op(')')) >> (lambda x: x[1]))
     Traceback (most recent call last):
@@ -921,6 +1030,8 @@ Such a combinator is provided by `funcparserlib`. It is called
 
 Import it:
 
+    :::python
+
     >>> from funcparserlib.parser import with_forward_decls
 
 Another way to define mutually recursive parsers is via the `forward_decl`
@@ -931,10 +1042,14 @@ sources for details. But let's use `with_forward_decls` here.
 Finally, we can write a definition of `primary` that has a forward declaration
 of `expr`:
 
+    :::python
+
     >>> primary = with_forward_decls(lambda:
     ...     number | ((op('(') + expr + op(')')) >> (lambda x: x[1])))
 
 or equivalently using Python decorators syntax:
+
+    :::python
 
     >>> @with_forward_decls
     ... def primary():
@@ -942,11 +1057,15 @@ or equivalently using Python decorators syntax:
 
 and redefine the dependent parsers:
 
+    :::python
+
     >>> factor = primary + many(pow + primary) >> f
     >>> term = factor + many(mul_op + factor) >> f
     >>> expr = term + many(add_op + term) >> f
 
 Let's test it:
+
+    :::python
 
     >>> expr.parse(tokenize('2 + 3 * 4'))
     14
@@ -964,15 +1083,16 @@ for negative numbers. Its implementation is left as an exercise for the reader
 and implement `-` as a function `negate`).
 
 
-Polishing the Code
-------------------
+<h2 id="polishing-code">Polishing the Code</h2>
 
 Let's cover some minor issues we mentioned in the previous section.
 
 
-### The `skip` Combinator
+<h3 id="skip-combinator">The <code>skip</code> Combinator</h3>
 
 First of all, the parentheses parser we have defined is quite ugly:
+
+    :::python
 
     primary = with_forward_decls(lambda:
         number | ((op('(') + expr + op(')')) >> (lambda x: x[1])))
@@ -985,6 +1105,8 @@ skipped, so the return value is just the `number` or the `expr`.&rdquo;
 The `skip` combinator will help us to write exactly that. It has the following
 type (warning: dynamic typing magic is back again):
 
+    :::python
+
     skip :: Parser(a, b) -> Parser(a, _Ignored(b))
 
 A magic `_Ignored(b)` value is a trivial container for values of `b` that is
@@ -993,6 +1115,8 @@ completely ignored by the `+` combinator during concatenation of its magic
 
 Look at the examples:
 
+    :::python
+
     >>> (number + number).parse(tokenize('2 3'))
     (2, 3)
     >>> (skip(number) + number).parse(tokenize('2 3'))
@@ -1000,12 +1124,14 @@ Look at the examples:
     >>> (skip(number) + number).parse(tokenize('+ 2 3'))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 1,0-1,1 OP '+'
+    ParserError: got unexpected token: 1,0-1,1 OP '+'
 
 Note, that `skip` still requires its argument parser to succeed.
 
 So let's rewrite the `primary` parser using `op_` (for Haskell hackers: notice
 a naming analogy with functions like `sequence_`):
+
+    :::python
 
     >>> op_ = lambda s: skip(op(s))
 
@@ -1014,33 +1140,43 @@ a naming analogy with functions like `sequence_`):
 
 and redefine the dependent parsers:
 
+    :::python
+
     >>> factor = primary + many(pow + primary) >> f
     >>> term = factor + many(mul_op + factor) >> f
     >>> expr = term + many(add_op + term) >> f
 
 Finally, test it:
 
+    :::python
+
     >>> expr.parse(tokenize('(2 + 3) * 4'))
     20
     >>> expr.parse(tokenize('3.1415926 * (2 + 7.18281828e-1)'))
-    8.539734075559272
+    8.5397340755592719
 
 
-### The `finished` Combinator
+<h3 id="finished-combinator">The <code>finished</code> Combinator</h3>
 
 It seems that we have almost finished with our calculator. Let's fix some more
 subtle problems. Suppose the user typed the following string:
+
+    :::python
 
     '2 + 3 * 4 foo'
 
 It seems like a syntax error: `'foo'` is clearly not a part of our expression
 grammar. Let's test it:
 
+    :::python
+
     >>> expr.parse(tokenize('2 + 3 foo'))
     5
 
 No, it _is_ a part of our grammar somehow. Let's look at the sequence of tokens
 in this example:
+
+    :::python
 
     >>> print '\n'.join(map(unicode, tokenize('2 + 3 foo')))
     1,0-1,1 NUMBER '2'
@@ -1068,21 +1204,27 @@ to check that nothing is left in the stream.
 
 Checking the `ENDMARKER` is easy:
 
+    :::python
+
     >>> endmark = a(Token(token.ENDMARKER, ''))
     >>> toplevel = expr + skip(endmark)
 
 Test it:
 
+    :::python
+
     >>> toplevel.parse(tokenize('2 + 3 foo'))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 1,6-1,9 NAME 'foo'
+    ParserError: got unexpected token: 1,6-1,9 NAME 'foo'
     >>> toplevel.parse(tokenize('2 + 3'))
     5
 
 Now we need to check that nothing is left in the sequence after the `ENDMARKER`.
 In the context of a parser _function_ it is easy again. We have to check the
 lengh of the input sequence. Let's call it `finished`:
+
+    :::python
 
     @Parser
     def finished(tokens, s):
@@ -1104,11 +1246,15 @@ parsers again.
 
 Let's rewrite `toplevel` again:
 
+    :::python
+
     >>> toplevel = expr + skip(endmark + finished)
     >>> toplevel.parse(tokenize('2 + 3'))
     5
 
 Test is using a hand crafted illegal sequence of tokens:
+
+    :::python
 
     >>> toplevel.parse([
     ...     Token(token.NUMBER, '5'),
@@ -1116,22 +1262,26 @@ Test is using a hand crafted illegal sequence of tokens:
     ...     Token(token.ENDMARKER, '')])
     Traceback (most recent call last):
         ...
-    NoParseError: should have reached <EOF>: 0,0-0,0 ENDMARKER ''
+    ParserError: should have reached <EOF>: 0,0-0,0 ENDMARKER ''
 
 
-### The `maybe` Combinator
+<h3 id="maybe-combinator">The <code>maybe</code> Combinator</h3>
 
 And what about the empty input:
+
+    :::python
 
     >>> toplevel.parse(tokenize(''))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 1,0-1,0 ENDMARKER ''
+    ParserError: got unexpected token: 1,0-1,0 ENDMARKER ''
 
 In a calculator (as in any shell) the empty string should be considered as a
 no-op command. The result should be nothing, not an error message.
 
 Let's allow the empty input in `toplevel`:
+
+    :::python
 
     >>> end = skip(endmark + finished)
     >>> toplevel = (end >> const(None)) | (expr + end)
@@ -1140,6 +1290,8 @@ Why `>> const(None)`, not just `end`? Because `skip` returns a value of type
 `_Ignored(a)` and we need just `None`.
 
 Test it:
+
+    :::python
 
     >>> toplevel.parse(tokenize('2 + 3'))
     5
@@ -1151,6 +1303,8 @@ want to say just this: &ldquo;`toplevel` consists of an optional `expr`, plus
 the `end` of the input.&rdquo; This reminds us of optional production brackets
 `[` `]` in EBNF. In an EBNF grammar, we can write:
 
+    :::ebnf
+
     <toplevel> ::= [ <expr> ] , <end>
 
 Why not just add the equivalent `maybe` combinator to our tools? `funcparserlib`
@@ -1161,6 +1315,8 @@ But let's try to come up with its definition ourselves!
 We could write the following `_maybe` combinator, that returns a parser
 returning either the result of the given parser or `None` if the parser fails:
 
+    :::python
+
     >>> _maybe = lambda x: x | (some(const(True)) >> const(None))
 
 The first alternative is the parser that is to be made optional and the second
@@ -1169,12 +1325,14 @@ one is the parser that always succeeds (it isn't so, see below) and returns
 
 Test it:
 
+    :::python
+
     >>> _maybe(op('(')).parse(tokenize('()'))
     '('
     >>> (_maybe(op('(')) + number).parse(tokenize('5'))
     Traceback (most recent call last):
         ...
-    NoParseError: got unexpected token: 2,0-2,0 ENDMARKER ''
+    ParserError: got unexpected token: 2,0-2,0 ENDMARKER ''
 
 Oops, it doesn't work! The reason is that `some(const(True))` always consumes
 one token despite the fact that the predicate `const(True)` doesn't require a
@@ -1187,16 +1345,22 @@ functionally inclined: a parser is a pointed functor). Here is its type:
 `pure` itself is not so useful in practice. But the real `maybe` combinator from
 `funcparserlib` is defined in terms if `pure`:
 
+    :::python
+
     maybe = lambda x: x | pure(None)
 
 We will just import `maybe` from `funcparserlib` (we have already done this in
 the beginning). Here is its type (for Haskell hackers: yes, it should return
 `Maybe b`):
 
+    :::python
+
     maybe :: Parser(a, b) -> Parser(a, b or None)
 
 Given `maybe`, let's rewrite `toplevel` once again. But this time we are about
 to define an interface function for parsing as we did for lexing:
+
+    :::python
 
     >>> def parse(tokens):
     ...     'Sequence(Token) -> int or float or None'
@@ -1210,6 +1374,8 @@ to define an interface function for parsing as we did for lexing:
 
 Let's test it:
 
+    :::python
+
     >>> parse(tokenize('2 + 3'))
     5
     >>> parse(tokenize('')) is None
@@ -1222,11 +1388,10 @@ Go make yourself a cup of tea and revisit the full source code in the
 
 And don't forget to write some comments [here][funcparserlib-issues]!
 
-Advanced Topics
----------------
 
+<h2 id="advanced-topics">Advanced Topics</h2>
 
-### Parser Type Classes
+<h3 id="parser-type-classes">Parser Type Classes</h3>
 
 Parsers can be thought as instances of type classes. Parsers are monads
 (therefore, applicative pointed functors). The monadic nature of parsers is used
@@ -1236,6 +1401,8 @@ composition.
 
 Haskell hackers may have extra fun by considering the following pseudo-Haskell
 instances for parsers:
+
+    :::haskell
 
     instance Functor (Parser a) where
         fmap f x = x >> f
@@ -1266,7 +1433,7 @@ instances for parsers:
   [parser-py]:  http://code.google.com/p/funcparserlib/source/browse/src/funcparserlib/parser.py
 
 
-### Papers on Functional Parsers
+<h3 id="papers-on-functional-parsers">Papers on Functional Parsers</h3>
 
 TODO: There are lots of them. Write a review.
 

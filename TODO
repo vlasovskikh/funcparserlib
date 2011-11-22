@@ -1,0 +1,54 @@
+TODO
+====
+
+* NEW Write an article for the #fprog\_ru
+
+* NEW Prepare a 0.9 release
+
+* NEW Move the website to http://funcparserlib.pirx.ru/
+
+* NEW Write classic API docs
+
+* NEW Write normal guides: short and sweet (using nested brackets, Lisp S-Exprs
+  and JSON)
+
+* NEW Rewrite tests from the examples as `nose` unittests
+
+* NEW Make non-halting error messages easier to understand
+
+* NEW Convert the documenation into the Sphinx format
+
+* NEW Make standard imports more compact, like this:
+
+        from funcparserlib import tok, many, maybe, fwd
+
+* NEW LL(1) optimization possibly has bugs. Ensure that `_Alt` is optimized
+  correctly. `left_recursive` may have bugs as well
+
+* NEW Clean up all the `tok()`-related stuff in `funcparserlib.parser`
+
+* ACCEPTED Measure the performance, make the new version better than 0.3.4
+
+* ACCEPTED Try to accelerate parsing LL(1) or LL(k) parts of the grammar
+  (predictive parsing, parallel computations, only linear performance
+  improvements though)
+
+* ACCEPTED Try to write a LL(k) grammar detection function (a _non_-LL(k)
+  detection function with counter-examples will be nicer to have)
+
+* WONTFIX Try to write a full predictive LL(k) parser generator for LL(k)
+  grammars
+
+    Resolution: It's impractical as the current algorithm is already O(n) for
+    such grammars. And a purely LL(k) grammar is a rare one.
+
+* FIXED Add the primitive `tok(type[, value])` instead of `some` which is slower
+  and not acceptable for the grammar class analysis
+
+* WONTFIX Try to optimize the lexer by joining all the spec regexps together into a
+  giant regexp
+
+    Resolution: It became slower than it had been before.
+
+<!-- vim: set ft=markdown: -->
+

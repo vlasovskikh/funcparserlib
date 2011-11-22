@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from nose.tools import eq_, raises
-from funcparserlib.parser import NoParseError
-from funcparserlib.lexer import LexerError
+from funcparserlib.parser import SyntaxError
 from dot import parse, tokenize, Graph, Edge, SubGraph, DefAttrs, Attr, Node
 
 def t(data, exptected=None):
@@ -102,7 +101,7 @@ def test_few_nodes():
         Node(id=u'n2', attrs=[]),
         Node(id=u'n3', attrs=[])]))
 
-@raises(NoParseError)
+@raises(SyntaxError)
 def test_illegal_comma():
     t(u'''
         graph g1 {
@@ -112,7 +111,7 @@ def test_illegal_comma():
         }
     ''')
 
-@raises(NoParseError)
+@raises(SyntaxError)
 def test_null():
     t(u'')
 
@@ -132,7 +131,7 @@ def test_simple_cycle():
         Edge(nodes=[u'n3', u'n1'], attrs=[
             Attr(name=u'w', value=u'7')])]))
 
-@raises(LexerError)
+@raises(SyntaxError)
 def test_single_unicode_char():
     t(u'ф')
 

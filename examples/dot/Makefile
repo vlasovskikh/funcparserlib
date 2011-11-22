@@ -1,4 +1,4 @@
-all: test
+.PHONY = test
 
 test:
 	nosetests -v

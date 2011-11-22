@@ -2,8 +2,8 @@
 
 import re
 from nose.tools import eq_, ok_
-from funcparserlib.lexer import make_tokenizer, LexerError, Token
-from funcparserlib.parser import a, many, some, skip, finished, NoParseError
+from funcparserlib.lexer import make_tokenizer, Spec, LexerError, Token
+from funcparserlib.parser import a, many, tok, skip, eof, ParserError
 
 # Issue 31
 def test_many_backtracking():
@@ -15,25 +15,24 @@ def test_many_backtracking():
 # Issue 14
 def test_error_info():
     tokenize = make_tokenizer([
-        ('keyword', (r'(is|end)',)),
-        ('id',      (r'[a-z]+',)),
-        ('space',   (r'[ \t]+',)),
-        ('nl',      (r'[\n\r]+',)),
+        Spec('keyword', r'(is|end)'),
+        Spec('id',      r'[a-z]+'),
+        Spec('space',   r'[ \t]+'),
+        Spec('nl',      r'[\n\r]+'),
     ])
     try:
         list(tokenize(u'f is ф'))
     except LexerError, e:
-        eq_(unicode(e), u'cannot tokenize data: 1,6: "f is \u0444"')
+        eq_(unicode(e), u'1,6-1,6: cannot tokenize data: "f is \u0444"')
     else:
         ok_(False, 'must raise LexerError')
 
-    sometok = lambda type: some(lambda t: t.type == type)
-    keyword = lambda s: a(Token('keyword', s))
+    keyword = lambda s: tok('keyword', s)
 
-    id = sometok('id')
+    id = tok('id')
     is_ = keyword('is')
     end = keyword('end')
-    nl = sometok('nl')
+    nl = tok('nl')
 
     equality = id + skip(is_) + id >> tuple
     expr = equality + skip(nl)
@@ -46,14 +45,13 @@ end"""
     toks = [x for x in tokenize(msg) if x.type != 'space']
     try:
         file.parse(toks)
-    except NoParseError, e:
-        eq_(e.msg, u"got unexpected token: 2,11-2,14: id 'spam'")
-        eq_(e.state.pos, 4)
-        eq_(e.state.max, 7)
+    except ParserError, e:
+        msg, pos, i = e.args
+        eq_(msg, u"got unexpected token: id 'spam'")
+        eq_(pos, ((2, 11), (2, 14)))
         # May raise KeyError
-        t = toks[e.state.max]
+        t = toks[i]
         eq_(t, Token('id', 'spam'))
-        eq_((t.start, t.end), ((2, 11), (2, 14)))
     else:
-        ok_(False, 'must raise NoParseError')
+        ok_(False, 'must raise ParserError')
 

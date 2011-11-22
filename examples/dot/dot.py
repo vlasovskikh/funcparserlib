@@ -16,12 +16,15 @@ At the moment, the parser builds only a parse tree, not an abstract syntax tree
 '''
 
 import sys, os
-from re import MULTILINE
 from pprint import pformat
+from funcparserlib.lexer import make_tokenizer, Spec
+from funcparserlib.parser import (maybe, many, eof, skip, oneplus, fwd,
+        name_parser_vars, memoize, SyntaxError)
 from funcparserlib.util import pretty_tree
-from funcparserlib.lexer import make_tokenizer, Token, LexerError
-from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-    oneplus, forward_decl, NoParseError)
+from funcparserlib.contrib.common import unarg, flatten, n, op, op_, sometoks
+from funcparserlib.contrib.lexer import (make_comment, make_multiline_comment,
+        newline, space)
+
 try:
     from collections import namedtuple
 except ImportError:
@@ -51,81 +54,76 @@ DefAttrs = namedtuple('DefAttrs', 'object attrs')
 def tokenize(str):
     'str -> Sequence(Token)'
     specs = [
-        ('Comment', (r'/\*(.|[\r\n])*?\*/', MULTILINE)),
-        ('Comment', (r'//.*',)),
-        ('NL',      (r'[\r\n]+',)),
-        ('Space',   (r'[ \t\r\n]+',)),
-        ('Name',    (r'[A-Za-z\200-\377_][A-Za-z\200-\377_0-9]*',)),
-        ('Op',      (r'[{};,=\[\]]|(->)|(--)',)),
-        ('Number',  (r'-?(\.[0-9]+)|([0-9]+(\.[0-9]*)?)',)),
-        ('String',  (r'"[^"]*"',)), # '\"' escapes are ignored
+        make_multiline_comment(r'/\*', r'\*/'),
+        make_comment(r'//'),
+        newline,
+        space,
+        Spec('name',    r'[A-Za-z\200-\377_][A-Za-z\200-\377_0-9]*'),
+        Spec('op',      r'[{};,=\[\]]|(->)|(--)'),
+        Spec('number',  r'-?(\.[0-9]+)|([0-9]+(\.[0-9]*)?)'),
+        Spec('string',  r'"[^"]*"'), # '\"' escapes are ignored
     ]
-    useless = ['Comment', 'NL', 'Space']
+    useless = ['comment', 'newline', 'space']
     t = make_tokenizer(specs)
     return [x for x in t(str) if x.type not in useless]
 
+id = sometoks(['name', 'number', 'string'])
+make_graph_attr = lambda args: DefAttrs(u'graph', [Attr(*args)])
+make_edge = lambda x, xs, attrs: Edge([x] + xs, attrs)
+
+node_id = memoize(id) # + maybe(port)
+a_list = (
+    id +
+    maybe(op_('=') + id) +
+    skip(maybe(op(',')))
+    >> unarg(Attr))
+attr_list = (
+    many(op_('[') + many(a_list) + op_(']'))
+    >> flatten)
+attr_stmt = (
+   (n('graph') | n('node') | n('edge')) +
+   attr_list
+   >> unarg(DefAttrs))
+graph_attr = id + op_('=') + id >> make_graph_attr
+node_stmt = node_id + attr_list >> unarg(Node)
+# We use a fwd() because of circular definitions like (stmt_list -> stmt ->
+# subgraph -> stmt_list)
+subgraph = fwd()
+edge_rhs = skip(op('->') | op('--')) + (subgraph | node_id)
+edge_stmt = (
+    (subgraph | node_id) +
+    oneplus(edge_rhs) +
+    attr_list
+    >> unarg(make_edge))
+stmt = (
+      attr_stmt
+    | edge_stmt
+    | subgraph
+    | graph_attr
+    | node_stmt
+)
+stmt_list = many(stmt + skip(maybe(op(';'))))
+subgraph.define(memoize(
+    skip(n('subgraph')) +
+    maybe(id) +
+    op_('{') +
+    stmt_list +
+    op_('}')
+    >> unarg(SubGraph)))
+graph = (
+    maybe(n('strict')) +
+    maybe(n('graph') | n('digraph')) +
+    maybe(id) +
+    op_('{') +
+    stmt_list +
+    op_('}')
+    >> unarg(Graph))
+dotfile = graph + skip(eof)
+
+name_parser_vars(locals())
+
 def parse(seq):
     'Sequence(Token) -> object'
-    unarg = lambda f: lambda args: f(*args)
-    tokval = lambda x: x.value
-    flatten = lambda list: sum(list, [])
-    n = lambda s: a(Token('Name', s)) >> tokval
-    op = lambda s: a(Token('Op', s)) >> tokval
-    op_ = lambda s: skip(op(s))
-    id = some(lambda t:
-        t.type in ['Name', 'Number', 'String']).named('id') >> tokval
-    make_graph_attr = lambda args: DefAttrs(u'graph', [Attr(*args)])
-    make_edge = lambda x, xs, attrs: Edge([x] + xs, attrs)
-
-    node_id = id # + maybe(port)
-    a_list = (
-        id +
-        maybe(op_('=') + id) +
-        skip(maybe(op(',')))
-        >> unarg(Attr))
-    attr_list = (
-        many(op_('[') + many(a_list) + op_(']'))
-        >> flatten)
-    attr_stmt = (
-       (n('graph') | n('node') | n('edge')) +
-       attr_list
-       >> unarg(DefAttrs))
-    graph_attr = id + op_('=') + id >> make_graph_attr
-    node_stmt = node_id + attr_list >> unarg(Node)
-    # We use a forward_decl becaue of circular definitions like (stmt_list ->
-    # stmt -> subgraph -> stmt_list)
-    subgraph = forward_decl()
-    edge_rhs = skip(op('->') | op('--')) + (subgraph | node_id)
-    edge_stmt = (
-        (subgraph | node_id) +
-        oneplus(edge_rhs) +
-        attr_list
-        >> unarg(make_edge))
-    stmt = (
-          attr_stmt
-        | edge_stmt
-        | subgraph
-        | graph_attr
-        | node_stmt
-    )
-    stmt_list = many(stmt + skip(maybe(op(';'))))
-    subgraph.define(
-        skip(n('subgraph')) +
-        maybe(id) +
-        op_('{') +
-        stmt_list +
-        op_('}')
-        >> unarg(SubGraph))
-    graph = (
-        maybe(n('strict')) +
-        maybe(n('graph') | n('digraph')) +
-        maybe(id) +
-        op_('{') +
-        stmt_list +
-        op_('}')
-        >> unarg(Graph))
-    dotfile = graph + skip(finished)
-
     return dotfile.parse(seq)
 
 def pretty_parse_tree(x):
@@ -166,8 +164,8 @@ def pretty_parse_tree(x):
     return pretty_tree(x, kids, show)
 
 def main():
-    #import logging
-    #logging.basicConfig(level=logging.DEBUG)
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
     #import funcparserlib
     #funcparserlib.parser.debug = True
     try:
@@ -176,7 +174,7 @@ def main():
         tree = parse(tokenize(input))
         #print pformat(tree)
         print pretty_parse_tree(tree).encode(ENCODING)
-    except (NoParseError, LexerError), e:
+    except SyntaxError, e:
         msg = (u'syntax error: %s' % e).encode(ENCODING)
         print >> sys.stderr, msg
         sys.exit(1)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2008/2009 Andrey Vlasovskikh
+# Copyright (c) 2008/2011 Andrey Vlasovskikh
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -20,6 +20,24 @@
 # CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+class SyntaxError(Exception):
+    'The base class for funcparserlib errors.'
+    def __init__(self, msg, pos, index=None):
+        Exception.__init__(self, msg, pos, index)
+
+    @property
+    def pos(self):
+        'SyntaxError -> ((int, int), (int, int)) or None'
+        return self.args[1]
+
+    def __unicode__(self):
+        pos = self.args[1]
+        s = u'%s: ' % pos_to_str(pos) if pos is not None else ''
+        return u'%s%s' % (s, self.args[0])
+
+    def __str__(self):
+        return unicode(self).encode()
 
 def pretty_tree(x, kids, show):
     '''(a, (a -> list(a)), (a -> str)) -> str
@@ -44,4 +62,11 @@ def pretty_tree(x, kids, show):
             lines = [rec(x, next_indent, sym) for x, sym in zip(xs, syms)]
             return '\n'.join([line] + lines)
     return rec(x, '', ROOT)
+
+def pos_to_str(pos):
+    '((int, int), (int, int)) -> str'
+    start, end = pos
+    sl, sp = start
+    el, ep = end
+    return '%d,%d-%d,%d' % (sl, sp, el, ep)
 

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from nose.tools import eq_, raises
-from funcparserlib.parser import NoParseError
-from funcparserlib.lexer import LexerError
+from funcparserlib.parser import SyntaxError
 import json
 
 def t(data, expected=None):
@@ -48,7 +47,7 @@ def test_many_object():
         u'spam': u'eggs',
     })
 
-@raises(NoParseError)
+@raises(SyntaxError)
 def test_null():
     t(u'')
 
@@ -82,7 +81,7 @@ def test_strings():
         [u'вот функция идентичности:\nλx.x\nили так:\n\u03bbx.x'],
     ])
 
-@raises(LexerError)
+@raises(SyntaxError)
 def test_toplevel_string():
     t(u'неправильно')
 

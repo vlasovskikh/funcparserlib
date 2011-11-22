@@ -1,10 +1,10 @@
-PYTHON = /usr/bin/python
+PYTHON = /usr/bin/python2
 SETUP = $(PYTHON) setup.py
 DESTDIR = /
 PREFIX = /usr
 INSTALL_OPTS = --root "$(DESTDIR)" --prefix "$(PREFIX)"
 
-.PHONY: default install test doctest unittest examples clean
+.PHONY: default install test unittest doctest examples clean
 
 default:
 	$(SETUP) build
@@ -12,7 +12,13 @@ default:
 install:
 	$(SETUP) install $(INSTALL_OPTS)
 
+develop:
+	$(SETUP) develop --user
+
 test: unittest examples doctest
+
+unittest:
+	nosetests -v
 
 doctest:
 	make -C doc
@@ -20,9 +26,6 @@ doctest:
 examples:
 	make -C examples/dot test && \
 	make -C examples/json test
-
-unittest:
-	nosetests -v
 
 clean:
 	$(SETUP) clean

@@ -26,16 +26,14 @@ __all__ = ['make_tokenizer', 'Token', 'LexerError']
 import re
 
 class LexerError(Exception):
-    def __init__(self, place, str):
+    def __init__(self, place, msg):
         self.place = place
-        self.str = str
+        self.msg = msg
 
     def __str__(self):
-        return unicode(self).encode()
-
-    def __unicode__(self):
-        s = 'cannot tokenize data'
-        return '%s: %d,%d: "%s"' % (s, self.place[0], self.place[1], self.str)
+        s = u'cannot tokenize data'
+        line, pos = self.place
+        return u'%s: %d,%d: "%s"' % (s, line, pos, self.msg)
 
 class Token(object):
     def __init__(self, type, value, start=None, end=None):
@@ -45,12 +43,11 @@ class Token(object):
         self.end = end
 
     def __repr__(self):
-        return 'Token(%r, %r)' % (self.type, self.value)
+        return u'Token(%r, %r)' % (self.type, self.value)
 
     def __eq__(self, other):
         # FIXME: Case sensitivity is assumed here
-        return (self.type == other.type
-            and self.value == other.value)
+        return self.type == other.type and self.value == other.value
 
     def _pos_str(self):
         if self.start is None or self.end is None:
@@ -58,10 +55,10 @@ class Token(object):
         else:
             sl, sp = self.start
             el, ep = self.end
-            return '%d,%d-%d,%d:' % (sl, sp, el, ep)
+            return u'%d,%d-%d,%d:' % (sl, sp, el, ep)
 
-    def __unicode__(self):
-        s = "%s %s '%s'" % (self._pos_str(), self.type, self.value)
+    def __str__(self):
+        s = u"%s %s '%s'" % (self._pos_str(), self.type, self.value)
         return s.strip()
 
     @property
@@ -69,18 +66,18 @@ class Token(object):
         return self.value
 
     def pformat(self):
-        return "%s %s '%s'" % (self._pos_str().ljust(20),
-            self.type.ljust(14), self.value)
+        return u"%s %s '%s'" % (self._pos_str().ljust(20),
+                                self.type.ljust(14),
+                                self.value)
 
 def make_tokenizer(specs):
     '[(str, (str, int?))] -> (str -> Iterable(Token))'
-    # TODO: Revisit the token spec, e.g. introduce a class for it in order to
-    # set options via named arguments of the constructor
     def compile_spec(spec):
         name, args = spec
         return name, re.compile(*args)
     compiled = [compile_spec(s) for s in specs]
-    def match_specs(specs, str, i, (line, pos)):
+    def match_specs(specs, str, i, position):
+        line, pos = position
         for type, regexp in specs:
             m = regexp.match(str, i)
             if m is not None:
@@ -105,7 +102,6 @@ def make_tokenizer(specs):
             line, pos = t.end
             i = i + len(t.value)
     return f
-
 
 # This is an example of a token spec. See also [this article][1] for a
 # discussion of searching for multiline comments using regexps (including `*?`).

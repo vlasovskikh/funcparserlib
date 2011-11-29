@@ -2,6 +2,11 @@
 
 from distutils.core import setup
 
+try:
+    from distutils.command.build_py import build_py_2to3 as build_py
+except ImportError:
+    from distutils.command.build_py import build_py
+
 setup(
     name='funcparserlib',
     version='0.3.5',
@@ -12,5 +17,6 @@ setup(
     description='Recursive descent parsing library based on functional '
         'combinators',
     license='MIT',
-    url='http://code.google.com/p/funcparserlib/')
+    url='http://code.google.com/p/funcparserlib/',
+    cmdclass={'build_py': build_py})
 

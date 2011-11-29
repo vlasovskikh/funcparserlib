@@ -12,20 +12,20 @@ default:
 install:
 	$(SETUP) install $(INSTALL_OPTS)
 
-test: unittest examples doctest
+test: unittest examples
 
 doctest:
 	make -C doc
 
 examples:
-	make -C examples/dot test && \
-	make -C examples/json test
+	$(PYTHON) -m unittest discover examples
 
 unittest:
-	nosetests -v
+	$(PYTHON) -m unittest discover tests
 
 clean:
 	$(SETUP) clean
 	rm -fr build dist MANIFEST
 	find -name '*.pyc' | xargs rm -f
+	find -name __pycache__ | xargs rm -fr
 

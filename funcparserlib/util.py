@@ -21,13 +21,15 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
 def pretty_tree(x, kids, show):
-    '''(a, (a -> list(a)), (a -> str)) -> str
+    """(a, (a -> list(a)), (a -> str)) -> str
 
     Returns a pseudographic tree representation of x similar to the tree command
     in Unix.
-    '''
+    """
     (MID, END, CONT, LAST, ROOT) = (u'|-- ', u'`-- ', u'|   ', u'    ', u'')
+
     def rec(x, indent, sym):
         line = indent + sym + show(x)
         xs = kids(x)
@@ -35,13 +37,13 @@ def pretty_tree(x, kids, show):
             return line
         else:
             if sym == MID:
-                next_indent = indent + (CONT)
+                next_indent = indent + CONT
             elif sym == ROOT:
-                next_indent = indent + (ROOT)
+                next_indent = indent + ROOT
             else:
-                next_indent = indent + (LAST)
+                next_indent = indent + LAST
             syms = [MID] * (len(xs) - 1) + [END]
             lines = [rec(x, next_indent, sym) for x, sym in zip(xs, syms)]
             return u'\n'.join([line] + lines)
-    return rec(x, u'', ROOT)
 
+    return rec(x, u'', ROOT)

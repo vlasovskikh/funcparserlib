@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import re
 import unittest
 from funcparserlib.lexer import make_tokenizer, LexerError, Token
-from funcparserlib.parser import a, many, some, skip, finished, NoParseError
+from funcparserlib.parser import a, many, some, skip, NoParseError
 
 
 class ParsingTest(unittest.TestCase):
@@ -13,21 +12,21 @@ class ParsingTest(unittest.TestCase):
         y = a(u'y')
         expr = many(x + y) + x + x
         self.assertEqual(expr.parse(u'xyxyxx'),
-                          ([(u'x', u'y'), (u'x', u'y')], u'x', u'x'))
+                         ([(u'x', u'y'), (u'x', u'y')], u'x', u'x'))
 
     # Issue 14
     def test_error_info(self):
         tokenize = make_tokenizer([
             (u'keyword', (ur'(is|end)',)),
-            (u'id',      (ur'[a-z]+',)),
-            (u'space',   (ur'[ \t]+',)),
-            (u'nl',      (ur'[\n\r]+',)),
+            (u'id', (ur'[a-z]+',)),
+            (u'space', (ur'[ \t]+',)),
+            (u'nl', (ur'[\n\r]+',)),
         ])
         try:
             list(tokenize(u'f is ф'))
         except LexerError, e:
             self.assertEqual(unicode(e),
-                              u'cannot tokenize data: 1,6: "f is \u0444"')
+                             u'cannot tokenize data: 1,6: "f is \u0444"')
         else:
             self.fail(u'must raise LexerError')
 
@@ -52,7 +51,7 @@ end"""
             file.parse(toks)
         except NoParseError, e:
             self.assertEqual(e.msg,
-                              u"got unexpected token: 2,11-2,14: id 'spam'")
+                             u"got unexpected token: 2,11-2,14: id 'spam'")
             self.assertEqual(e.state.pos, 4)
             self.assertEqual(e.state.max, 7)
             # May raise KeyError
@@ -61,4 +60,3 @@ end"""
             self.assertEqual((t.start, t.end), ((2, 11), (2, 14)))
         else:
             self.fail(u'must raise NoParseError')
-

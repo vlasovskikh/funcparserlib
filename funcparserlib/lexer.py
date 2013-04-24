@@ -25,6 +25,7 @@ __all__ = ['make_tokenizer', 'Token', 'LexerError']
 
 import re
 
+
 class LexerError(Exception):
     def __init__(self, place, msg):
         self.place = place
@@ -34,6 +35,7 @@ class LexerError(Exception):
         s = u'cannot tokenize data'
         line, pos = self.place
         return u'%s: %d,%d: "%s"' % (s, line, pos, self.msg)
+
 
 class Token(object):
     def __init__(self, type, value, start=None, end=None):
@@ -70,12 +72,16 @@ class Token(object):
                                 self.type.ljust(14),
                                 self.value)
 
+
 def make_tokenizer(specs):
-    '[(str, (str, int?))] -> (str -> Iterable(Token))'
+    """[(str, (str, int?))] -> (str -> Iterable(Token))"""
+
     def compile_spec(spec):
         name, args = spec
         return name, re.compile(*args)
+
     compiled = [compile_spec(s) for s in specs]
+
     def match_specs(specs, str, i, position):
         line, pos = position
         for type, regexp in specs:
@@ -92,6 +98,7 @@ def make_tokenizer(specs):
         else:
             errline = str.splitlines()[line - 1]
             raise LexerError((line, pos + 1), errline)
+
     def f(str):
         length = len(str)
         line, pos = 1, 0
@@ -100,7 +107,8 @@ def make_tokenizer(specs):
             t = match_specs(compiled, str, i, (line, pos))
             yield t
             line, pos = t.end
-            i = i + len(t.value)
+            i += len(t.value)
+
     return f
 
 # This is an example of a token spec. See also [this article][1] for a
@@ -111,16 +119,15 @@ _example_token_specs = [
     ('COMMENT', (r'\(\*(.|[\r\n])*?\*\)', re.MULTILINE)),
     ('COMMENT', (r'\{(.|[\r\n])*?\}', re.MULTILINE)),
     ('COMMENT', (r'//.*',)),
-    ('NL',      (r'[\r\n]+',)),
-    ('SPACE',   (r'[ \t\r\n]+',)),
-    ('NAME',    (r'[A-Za-z_][A-Za-z_0-9]*',)),
-    ('REAL',    (r'[0-9]+\.[0-9]*([Ee][+\-]?[0-9]+)*',)),
-    ('INT',     (r'[0-9]+',)),
-    ('INT',     (r'\$[0-9A-Fa-f]+',)),
-    ('OP',      (r'(\.\.)|(<>)|(<=)|(>=)|(:=)|[;,=\(\):\[\]\.+\-<>\*/@\^]',)),
-    ('STRING',  (r"'([^']|(''))*'",)),
-    ('CHAR',    (r'#[0-9]+',)),
-    ('CHAR',    (r'#\$[0-9A-Fa-f]+',)),
+    ('NL', (r'[\r\n]+',)),
+    ('SPACE', (r'[ \t\r\n]+',)),
+    ('NAME', (r'[A-Za-z_][A-Za-z_0-9]*',)),
+    ('REAL', (r'[0-9]+\.[0-9]*([Ee][+\-]?[0-9]+)*',)),
+    ('INT', (r'[0-9]+',)),
+    ('INT', (r'\$[0-9A-Fa-f]+',)),
+    ('OP', (r'(\.\.)|(<>)|(<=)|(>=)|(:=)|[;,=\(\):\[\]\.+\-<>\*/@\^]',)),
+    ('STRING', (r"'([^']|(''))*'",)),
+    ('CHAR', (r'#[0-9]+',)),
+    ('CHAR', (r'#\$[0-9A-Fa-f]+',)),
 ]
 #tokenize = make_tokenizer(_example_token_specs)
-

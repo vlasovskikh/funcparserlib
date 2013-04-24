@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-r'''A DOT language parser using funcparserlib.
+r"""A DOT language parser using funcparserlib.
 
 The parser is based on [the DOT grammar][1]. It is pretty complete with a few
 not supported things:
@@ -13,24 +13,26 @@ At the moment, the parser builds only a parse tree, not an abstract syntax tree
 (AST) or an API for dealing with DOT.
 
   [1]: http://www.graphviz.org/doc/info/lang.html
-'''
+"""
 
-import sys, os
+import sys
+import os
 from re import MULTILINE
-from pprint import pformat
 from funcparserlib.util import pretty_tree
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-    oneplus, forward_decl, NoParseError)
+                                  oneplus, forward_decl, NoParseError)
+
 try:
     from collections import namedtuple
 except ImportError:
     # Basic implementation of namedtuple for 2.1 < Python < 2.6
     def namedtuple(name, fields):
-        'Only space-delimited fields are supported.'
+        """Only space-delimited fields are supported."""
+
         def prop(i, name):
-            return (name, property(lambda self: self[i]))
-        names = dict((i, f) for i, f in enumerate(fields.split(u' ')))
+            return name, property(lambda self: self[i])
+
         def new(cls, *args, **kwargs):
             args = list(args)
             n = len(args)
@@ -38,6 +40,8 @@ except ImportError:
                 name = names[i - n]
                 args.append(kwargs[name])
             return tuple.__new__(cls, args)
+
+        names = dict((i, f) for i, f in enumerate(fields.split(u' ')))
         methods = dict(prop(i, f) for i, f in enumerate(fields.split(u' ')))
         methods.update({
             '__new__': new,
@@ -56,32 +60,34 @@ Attr = namedtuple('Attr', 'name value')
 Edge = namedtuple('Edge', 'nodes attrs')
 DefAttrs = namedtuple('DefAttrs', 'object attrs')
 
+
 def tokenize(str):
-    'str -> Sequence(Token)'
+    """str -> Sequence(Token)"""
     specs = [
         (u'Comment', (ur'/\*(.|[\r\n])*?\*/', MULTILINE)),
         (u'Comment', (ur'//.*',)),
-        (u'NL',      (ur'[\r\n]+',)),
-        (u'Space',   (ur'[ \t\r\n]+',)),
-        (u'Name',    (ur'[A-Za-z\200-\377_][A-Za-z\200-\377_0-9]*',)),
-        (u'Op',      (ur'[{};,=\[\]]|(->)|(--)',)),
-        (u'Number',  (ur'-?(\.[0-9]+)|([0-9]+(\.[0-9]*)?)',)),
-        (u'String',  (ur'"[^"]*"',)), # '\"' escapes are ignored
+        (u'NL', (ur'[\r\n]+',)),
+        (u'Space', (ur'[ \t\r\n]+',)),
+        (u'Name', (ur'[A-Za-z\200-\377_][A-Za-z\200-\377_0-9]*',)),
+        (u'Op', (ur'[{};,=\[\]]|(->)|(--)',)),
+        (u'Number', (ur'-?(\.[0-9]+)|([0-9]+(\.[0-9]*)?)',)),
+        (u'String', (ur'"[^"]*"',)), # '\"' escapes are ignored
     ]
     useless = [u'Comment', u'NL', u'Space']
     t = make_tokenizer(specs)
     return [x for x in t(str) if x.type not in useless]
 
+
 def parse(seq):
-    'Sequence(Token) -> object'
+    """Sequence(Token) -> object"""
     unarg = lambda f: lambda args: f(*args)
     tokval = lambda x: x.value
     flatten = lambda list: sum(list, [])
     n = lambda s: a(Token(u'Name', s)) >> tokval
     op = lambda s: a(Token(u'Op', s)) >> tokval
     op_ = lambda s: skip(op(s))
-    id = some(lambda t:
-        t.type in [u'Name', u'Number', u'String']).named(u'id') >> tokval
+    id_types = [u'Name', u'Number', u'String']
+    id = some(lambda t: t.type in id_types).named(u'id') >> tokval
     make_graph_attr = lambda args: DefAttrs(u'graph', [Attr(*args)])
     make_edge = lambda x, xs, attrs: Edge([x] + xs, attrs)
 
@@ -95,9 +101,9 @@ def parse(seq):
         many(op_(u'[') + many(a_list) + op_(u']'))
         >> flatten)
     attr_stmt = (
-       (n(u'graph') | n(u'node') | n(u'edge')) +
-       attr_list
-       >> unarg(DefAttrs))
+        (n(u'graph') | n(u'node') | n(u'edge')) +
+        attr_list
+        >> unarg(DefAttrs))
     graph_attr = id + op_(u'=') + id >> make_graph_attr
     node_stmt = node_id + attr_list >> unarg(Node)
     # We use a forward_decl becaue of circular definitions like (stmt_list ->
@@ -110,7 +116,7 @@ def parse(seq):
         attr_list
         >> unarg(make_edge))
     stmt = (
-          attr_stmt
+        attr_stmt
         | edge_stmt
         | subgraph
         | graph_attr
@@ -136,24 +142,27 @@ def parse(seq):
 
     return dotfile.parse(seq)
 
+
 def pretty_parse_tree(x):
-    'object -> str'
+    """object -> str"""
     Pair = namedtuple(u'Pair', u'first second')
     p = lambda x, y: Pair(x, y)
+
     def kids(x):
-        'object -> list(object)'
+        """object -> list(object)"""
         if isinstance(x, (Graph, SubGraph)):
             return [p(u'stmts', x.stmts)]
         elif isinstance(x, (Node, DefAttrs)):
             return [p(u'attrs', x.attrs)]
         elif isinstance(x, Edge):
             return [p(u'nodes', x.nodes), p(u'attrs', x.attrs)]
-        elif isinstance (x, Pair):
+        elif isinstance(x, Pair):
             return x.second
         else:
             return []
+
     def show(x):
-        'object -> str'
+        """object -> str"""
         if isinstance(x, Pair):
             return x.first
         elif isinstance(x, Graph):
@@ -171,7 +180,9 @@ def pretty_parse_tree(x):
             return u'Node [id=%s]' % (x.id,)
         else:
             return unicode(x)
+
     return pretty_tree(x, kids, show)
+
 
 def main():
     #import logging
@@ -189,6 +200,6 @@ def main():
         print >> sys.stderr, msg
         sys.exit(1)
 
+
 if __name__ == '__main__':
     main()
-

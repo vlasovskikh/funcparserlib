@@ -5,6 +5,7 @@ from funcparserlib.parser import NoParseError
 from funcparserlib.lexer import LexerError
 import json
 
+
 class JsonTest(unittest.TestCase):
     def t(self, data, expected=None):
         self.assertEqual(json.loads(data), expected)
@@ -94,4 +95,3 @@ class JsonTest(unittest.TestCase):
             pass
         else:
             self.fail('must raise LexerError')
-

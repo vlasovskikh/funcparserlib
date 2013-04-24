@@ -4,7 +4,7 @@ DESTDIR = /
 PREFIX = /usr
 INSTALL_OPTS = --root "$(DESTDIR)" --prefix "$(PREFIX)"
 
-.PHONY: default install test doctest unittest examples clean
+.PHONY: default install test doctest unittest clean
 
 default:
 	$(SETUP) build
@@ -12,20 +12,17 @@ default:
 install:
 	$(SETUP) install $(INSTALL_OPTS)
 
-test: unittest examples
+test: unittest
 
 doctest:
 	make -C doc
 
-examples:
-	$(PYTHON) -m unittest discover examples
-
 unittest:
-	$(PYTHON) -m unittest discover tests
+	$(PYTHON) -m unittest discover funcparserlib.tests
 
 clean:
 	$(SETUP) clean
 	rm -fr build dist MANIFEST
-	find -name '*.pyc' | xargs rm -f
-	find -name __pycache__ | xargs rm -fr
+	find . -name '*.pyc' | xargs rm -f
+	find . -name __pycache__ | xargs rm -fr
 

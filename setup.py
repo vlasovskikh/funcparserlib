@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from distutils.core import setup
-
-try:
-    from distutils.command.build_py import build_py_2to3 as build_py
-except ImportError:
-    from distutils.command.build_py import build_py
+from setuptools import setup
 
 setup(
     name='funcparserlib',
@@ -18,5 +13,4 @@ setup(
         'combinators',
     license='MIT',
     url='http://code.google.com/p/funcparserlib/',
-    cmdclass={'build_py': build_py})
-
+    use_2to3=True)

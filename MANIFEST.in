@@ -1,5 +1,2 @@
 recursive-include doc *
-recursive-include examples *
-recursive-include tests *
 include LICENSE CHANGES MANIFEST.in requires.txt
-

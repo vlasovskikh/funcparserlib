@@ -30,9 +30,17 @@ except ImportError:
         'Only space-delimited fields are supported.'
         def prop(i, name):
             return (name, property(lambda self: self[i]))
+        names = dict((i, f) for i, f in enumerate(fields.split(u' ')))
+        def new(cls, *args, **kwargs):
+            args = list(args)
+            n = len(args)
+            for i in range(n, len(names)):
+                name = names[i - n]
+                args.append(kwargs[name])
+            return tuple.__new__(cls, args)
         methods = dict(prop(i, f) for i, f in enumerate(fields.split(u' ')))
         methods.update({
-            '__new__': lambda cls, *args: tuple.__new__(cls, args),
+            '__new__': new,
             '__repr__': lambda self: u'%s(%s)' % (
                 name,
                 u', '.join(u'%s=%r' % (

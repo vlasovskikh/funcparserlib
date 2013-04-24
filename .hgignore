@@ -7,6 +7,7 @@ tmp
 funcparserlib.egg-info
 examples/dot/*.png
 .idea
+.tox
 *.pyc
 *.swp
 

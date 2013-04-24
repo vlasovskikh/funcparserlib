@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup
+import sys
+
+extra = {}
+if sys.version_info >= (3,):
+    extra['use_2to3'] = True
+
 
 setup(
     name='funcparserlib',
@@ -12,4 +18,4 @@ setup(
         'combinators',
     license='MIT',
     url='http://code.google.com/p/funcparserlib/',
-    use_2to3=True)
+    **extra)

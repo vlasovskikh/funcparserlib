@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2008/2009 Andrey Vlasovskikh
+# Copyright (c) 2008/2013 Andrey Vlasovskikh
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the

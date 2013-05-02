@@ -3,6 +3,15 @@ The Changelog
 
 This is a changelog of [funcparserlib][1].
 
+0.3.6, 2013-05-02
+-----------------
+
+A maintenance release.
+
+* Python 3 compatibility
+* #31 Fixed `many()` that consumed too many tokens in some cases
+* #14 More info available in exception objects
+
 
 0.3.5, 2011-01-13
 -----------------

@@ -7,10 +7,20 @@ A recurisve descent parsing library based on functional combinators.
 Installation
 ------------
 
-The `funcparserlib` library is installed as usually via `distutils`. The
-default installation command under the superuser is:
+The `funcparserlib` library is installed via the standard Python installation
+tools `pip` and `distribute`:
 
-    # python setup.py install
+    $ pip install funcparserlib
+
+You can also download the source code manually and install it using:
+
+    $ python setup.py install
+
+It is also possible to run tests via `unittest`, `nosetests` or `tox`:
+
+    $ python -m unittest discover funcparserlib.tests
+    $ nosetests funcparserlib.tests
+    $ tox
 
 
 Documentation

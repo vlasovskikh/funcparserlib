@@ -19,7 +19,7 @@ Parsing Stages Illustrated
     </a>
   </dd>
   <dt>Library Version:</dt>
-  <dd>0.3.5</dd>
+  <dd>0.3.6</dd>
 </dl>
 
 Given some language, for example, the [GraphViz DOT][dot] graph language (see

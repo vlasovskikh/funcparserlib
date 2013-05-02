@@ -10,7 +10,7 @@ if sys.version_info >= (3,):
 
 setup(
     name='funcparserlib',
-    version='0.3.5',
+    version='0.3.6',
     packages=['funcparserlib', 'funcparserlib.tests'],
     author='Andrey Vlasovskikh',
     author_email='andrey.vlasovskikh@gmail.com',

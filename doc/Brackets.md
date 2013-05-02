@@ -19,7 +19,7 @@ Nested Brackets Mini-HOWTO
     </a>
   </dd>
   <dt>Library Version:</dt>
-  <dd>0.3.5</dd>
+  <dd>0.3.6</dd>
 </dl>
 
 

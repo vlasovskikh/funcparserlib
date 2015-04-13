@@ -368,7 +368,7 @@ def oneplus(p):
 
     Returns a parser that applies the parser p one or more times.
     """
-    q = p + many(p) >> (lambda x: [x[0]] + x[1])
+    q = p + many(p) >> (lambda x:([x[0]] if len(x) == 2 else [x[:-1]]) + x[-1])
     return q.named(u'(%s , { %s })' % (p.name, p.name))
 
 

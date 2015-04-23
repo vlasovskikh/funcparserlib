@@ -1,7 +1,6 @@
 The Changelog
 =============
 
-This is a changelog of [funcparserlib][1].
 
 0.3.6, 2013-05-02
 -----------------
@@ -96,6 +95,3 @@ Added `with_forward_decls`, internal improvements.
 ---------------
 
 Initial release.
-
-  [1]: http://code.google.com/p/funcparserlib/
-

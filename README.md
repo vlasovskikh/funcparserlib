@@ -36,25 +36,20 @@ There are no dependencies on other libraries.
 Documentation
 -------------
 
-The comprehensive [funcparserlib Tutorial][1] is available as `./doc/Tutorial.md`.
+The comprehensive [funcparserlib Tutorial](doc/Tutorial.md) is available.
 
 A short intro to `funcparserlib` can be found in the [Nested Brackets
-Mini-HOWTO][2], see `./doc/Brackets.md`.
+Mini-HOWTO](doc/Brackets.md).
 
 See also comments inside the modules `funcparserlib.parser` and
 `funcparserlib.lexer` or generate the API docs from the modules using `pydoc`.
 
-There a couple of examples available in `./examples` directory:
+There a couple of examples available in the funcparserlib/tests directory:
 
-* GraphViz DOT parser
-* JSON paser
+* [GraphViz DOT parser](funcparserlib/tests/dot.py)
+* [JSON paser](funcparserlib/tests/json.py)
 
-See also [the changelog][3] and [FAQ][4].
-
-  [1]: Tutorial
-  [2]: Brackets
-  [3]: Changes
-  [4]: FAQ
+See also [the changelog](CHANGES) and [FAQ](doc/FAQ.md).
 
 
 Performance and Code Size

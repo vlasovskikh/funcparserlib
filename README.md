@@ -23,6 +23,56 @@ So the primary domain for `funcparserlib` is **parsing little languages** or **e
 The library itself is very small. Its source code is only 0.5 KLOC, with lots of comments included. It features the longest parsed prefix error reporting, as well as a tiny lexer generator for token position tracking.
 
 
+Show Me the Code
+----------------
+
+This is an excerpt from a JSON parser ([RFC
+4627](http://tools.ietf.org/html/rfc4627)) written using `funcparserlib`. This
+full example as well as others can be found [here](funcparserlib/tests/json.py).
+
+```python
+def parse(seq):
+    'Sequence(Token) -> object'
+    ...
+    n = lambda s: a(Token('Name', s)) >> tokval
+    def make_array(n):
+        if n is None:
+            return []
+        else:
+            return [n[0]] + n[1]
+    ...
+    null = n('null') >> const(None)
+    true = n('true') >> const(True)
+    false = n('false') >> const(False)
+    number = toktype('Number') >> make_number
+    string = toktype('String') >> make_string
+    value = forward_decl()
+    member = string + op_(':') + value >> tuple
+    object = (
+        op_('{') +
+        maybe(member + many(op_(',') + member)) +
+        op_('}')
+        >> make_object)
+    array = (
+        op_('[') +
+        maybe(value + many(op_(',') + value)) +
+        op_(']')
+        >> make_array)
+    value.define(
+          null
+        | true
+        | false
+        | object
+        | array
+        | number
+        | string)
+    json_text = object | array
+    json_file = json_text + skip(finished)
+
+    return json_file.parse(seq)
+```
+
+
 Installation
 ------------
 
@@ -68,56 +118,6 @@ Despite being an LL(`*`) parser, `funcparserlib` has a reasonable performance. F
 | **Library Code** | 0 KLOC   | 0 KLOC   | 0.5 KLOC | 5.3 KLOC | 3.7 KLOC |
 
 `funcparserlib` and `pyparsing` both have the smallest user code size (that is a common feature of parsing libraries compared to _ad hoc_ parsers). The library code of `funcparserlib` is 7 times smaller (and much more cleaner) than `pyparsing`. The `json-ply` uses a LALR parser `ply` (similar to Yacc) and performs like `funcparserlib`. `cjson` is a C library, hence the incredible performance :)
-
-
-Show Me the Code
-----------------
-
-This is an excerpt from a JSON parser ([RFC
-4627](http://tools.ietf.org/html/rfc4627)). This full example as well as others
-can be found [here](funcparserlib/tests/json.py).
-
-```python
-def parse(seq):
-    'Sequence(Token) -> object'
-    ...
-    n = lambda s: a(Token('Name', s)) >> tokval
-    def make_array(n):
-        if n is None:
-            return []
-        else:
-            return [n[0]] + n[1]
-    ...
-    null = n('null') >> const(None)
-    true = n('true') >> const(True)
-    false = n('false') >> const(False)
-    number = toktype('Number') >> make_number
-    string = toktype('String') >> make_string
-    value = forward_decl()
-    member = string + op_(':') + value >> tuple
-    object = (
-        op_('{') +
-        maybe(member + many(op_(',') + member)) +
-        op_('}')
-        >> make_object)
-    array = (
-        op_('[') +
-        maybe(value + many(op_(',') + value)) +
-        op_(']')
-        >> make_array)
-    value.define(
-          null
-        | true
-        | false
-        | object
-        | array
-        | number
-        | string)
-    json_text = object | array
-    json_file = json_text + skip(finished)
-
-    return json_file.parse(seq)
-```
 
 
 Similar Projects

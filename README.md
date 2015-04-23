@@ -16,7 +16,7 @@ _Parser combinators_ are just higher-order functions that take parsers as their 
   * Tend to make the code quite compact
   * Resemble the readable notation of xBNF grammars
 
-Parsers made with `funcparserlib` are pure-Python LL(`*`) parsers. It means that it's very easy to write them without thinking about look-aheads and all that hardcore parsing stuff. But the recursive descent parsing is a rather slow method compared to LL(k) or LR(k) algorithms.
+Parsers made with `funcparserlib` are pure-Python LL(\*) parsers. It means that it's very easy to write them without thinking about look-aheads and all that hardcore parsing stuff. But the recursive descent parsing is a rather slow method compared to LL(k) or LR(k) algorithms.
 
 So the primary domain for `funcparserlib` is **parsing little languages** or **external DSLs** (domain specific languages).
 

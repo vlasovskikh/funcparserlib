@@ -1,2 +1,2 @@
 recursive-include doc *
-include LICENSE CHANGES MANIFEST.in requires.txt
+include LICENSE CHANGES.md MANIFEST.in

@@ -1,9 +1,7 @@
 funcparserlib
 =============
 
-A recurisve descent parsing library for Python based on functional combinators.
-
-[![](https://drone.io/bitbucket.org/vlasovskikh/funcparserlib/status.png)](https://drone.io/bitbucket.org/vlasovskikh/funcparserlib/latest)
+Recurisve descent parsing library for Python based on functional combinators.
 
 
 Description

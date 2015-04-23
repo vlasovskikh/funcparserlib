@@ -36,10 +36,10 @@ There are no dependencies on other libraries.
 Documentation
 -------------
 
-The comprehensive [funcparserlib Tutorial](doc/Tutorial.md) is available.
-
 A short intro to `funcparserlib` can be found in the [Nested Brackets
 Mini-HOWTO](doc/Brackets.md).
+
+The comprehensive [funcparserlib Tutorial](doc/Tutorial.md) is also available.
 
 See also comments inside the modules `funcparserlib.parser` and
 `funcparserlib.lexer` or generate the API docs from the modules using `pydoc`.
@@ -73,7 +73,9 @@ Despite being an LL(`*`) parser, `funcparserlib` has a reasonable performance. F
 Show Me the Code
 ----------------
 
-This is an excerpt from a JSON parser ([RFC 4627](http://tools.ietf.org/html/rfc4627)). This full example as well as others can be found in `./examples` directory.
+This is an excerpt from a JSON parser ([RFC
+4627](http://tools.ietf.org/html/rfc4627)). This full example as well as others
+can be found [here](funcparserlib/tests/json.py).
 
 ```python
 def parse(seq):

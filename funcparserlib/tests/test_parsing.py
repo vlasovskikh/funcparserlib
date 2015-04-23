@@ -2,10 +2,17 @@
 
 import unittest
 from funcparserlib.lexer import make_tokenizer, LexerError, Token
-from funcparserlib.parser import a, many, some, skip, NoParseError
+from funcparserlib.parser import a, many, some, skip, NoParseError, oneplus
 
 
 class ParsingTest(unittest.TestCase):
+    def test_oneplus(self):
+        x = a(u'x')
+        y = a(u'y')
+        expr = oneplus(x + y)
+        self.assertEqual(expr.parse(u'xyxyxy'),
+                         ([(u'x', u'y'), (u'x', u'y'), (u'x', u'y')]))
+
     # Issue 31
     def test_many_backtracking(self):
         x = a(u'x')

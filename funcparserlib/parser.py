@@ -368,8 +368,14 @@ def oneplus(p):
 
     Returns a parser that applies the parser p one or more times.
     """
-    q = p + many(p) >> (lambda x: [x[0]] + x[1])
-    return q.named(u'(%s , { %s })' % (p.name, p.name))
+    @Parser
+    def _oneplus(tokens, s):
+        (v1, s2) = p.run(tokens, s)
+        (v2, s3) = many(p).run(tokens, s2)
+        return [v1] + v2, s3
+
+    _oneplus.name = u'(%s , { %s })' % (p.name, p.name)
+    return _oneplus
 
 
 def with_forward_decls(suspension):

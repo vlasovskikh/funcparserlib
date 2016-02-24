@@ -95,7 +95,7 @@ See also comments inside the modules `funcparserlib.parser` and
 There a couple of examples available in the funcparserlib/tests directory:
 
 * [GraphViz DOT parser](funcparserlib/tests/dot.py)
-* [JSON paser](funcparserlib/tests/json.py)
+* [JSON parser](funcparserlib/tests/json.py)
 
 See also [the changelog](CHANGES.md) and [FAQ](doc/FAQ.md).
 

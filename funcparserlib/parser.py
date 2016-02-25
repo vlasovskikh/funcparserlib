@@ -89,11 +89,13 @@ class Parser(object):
 
     def define(self, p):
         """Defines a parser wrapped into this object."""
-        f = getattr(p, 'run', p)
+        lazy_getter = (
+            lambda *args, **kwargs: getattr(p, 'run', p)(*args, **kwargs)
+        )
         if debug:
-            setattr(self, '_run', f)
+            setattr(self, '_run', lazy_getter)
         else:
-            setattr(self, 'run', f)
+            setattr(self, 'run', lazy_getter)
         self.named(getattr(p, 'name', p.__doc__))
 
     def run(self, tokens, s):

@@ -1,0 +1,14 @@
+venv/*
+build/*
+dist/*
+
+*.egg-info/*
+.*
+!.gitignore
+
+# eclipse ide related stuff
+.project
+.pydevproject
+.settings/*
+*.pyc
+*.py~

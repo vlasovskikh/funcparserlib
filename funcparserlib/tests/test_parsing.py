@@ -67,3 +67,10 @@ end"""
             self.assertEqual((t.start, t.end), ((2, 11), (2, 14)))
         else:
             self.fail(u'must raise NoParseError')
+
+    def test_tokenize_generator(self):
+        tokenize = make_tokenizer([
+            (u'x', (ur'x',)),
+        ])
+
+        some(lambda t: t.type == "x").parse(tokenize("x"))

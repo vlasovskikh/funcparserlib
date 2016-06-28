@@ -103,11 +103,13 @@ def make_tokenizer(specs):
         length = len(str)
         line, pos = 1, 0
         i = 0
+        r = []
         while i < length:
             t = match_specs(compiled, str, i, (line, pos))
-            yield t
+            r.append(t)
             line, pos = t.end
             i += len(t.value)
+        return r
 
     return f
 

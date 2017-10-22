@@ -172,14 +172,14 @@ Draw a textual parse tree:
 
 Test it:
 
-    >>> print ptree(nested.parse('{{{}{}}{}}'))
+    >>> print(ptree(nested.parse('{{{}{}}{}}')))
     {}
     |-- {}
     |   |-- {}
     |   `-- {}
     `-- {}
 
-    >>> print ptree(nested.parse('{{{{}}{}}{{}}{}{{}{}}}'))
+    >>> print(ptree(nested.parse('{{{{}}{}}{{}}{}{{}{}}}')))
     {}
     |-- {}
     |   |-- {}

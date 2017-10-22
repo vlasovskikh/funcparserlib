@@ -234,7 +234,7 @@ Import some standard library stuff:
 This is an output from the tokenizer:
 
     >>> ts = list(generate_tokens(StringIO('3 * (4 + 5)').readline))
-    >>> print pformat(ts)
+    >>> print(pformat(ts))
     [(2, '3', (1, 0), (1, 1), '3 * (4 + 5)'),
      (51, '*', (1, 2), (1, 3), '3 * (4 + 5)'),
      (51, '(', (1, 4), (1, 5), '3 * (4 + 5)'),
@@ -284,7 +284,7 @@ Define the wrapper class:
 Functions `__repr__` and `__eq__` will be used later. Let's see what it will
 look like:
 
-    >>> print '\n'.join(unicode(Token(*t)) for t in ts)
+    >>> print('\n'.join(str(Token(*t)) for t in ts))
     1,0-1,1 NUMBER '3'
     1,2-1,3 OP '*'
     1,4-1,5 OP '('
@@ -1042,7 +1042,7 @@ grammar. Let's test it:
 No, it _is_ a part of our grammar somehow. Let's look at the sequence of tokens
 in this example:
 
-    >>> print '\n'.join(map(unicode, tokenize('2 + 3 foo')))
+    >>> print('\n'.join(map(str, tokenize('2 + 3 foo'))))
     1,0-1,1 NUMBER '2'
     1,2-1,3 OP '+'
     1,4-1,5 NUMBER '3'

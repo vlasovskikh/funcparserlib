@@ -56,7 +56,7 @@ Then you can:
 
         >>> toks = dotparser.tokenize(s)
 
-        >>> print '\n'.join(unicode(tok) for tok in toks)
+        >>> print('\n'.join(str(tok) for tok in toks))
         1,0-1,7: Name 'digraph'
         1,8-1,10: Name 'g1'
         1,11-1,12: Op '{'
@@ -93,7 +93,7 @@ Then you can:
         >>> tree = dotparser.parse(toks)
 
         >>> from textwrap import fill
-        >>> print fill(repr(tree), 70)
+        >>> print(fill(repr(tree), 70))
         Graph(strict=None, type='digraph', id='g1', stmts=[Edge(nodes=['n1',
         'n2', SubGraph(id='n3', stmts=[Edge(nodes=['nn1', 'nn2', 'nn3'],
         attrs=[]), Edge(nodes=['nn3', 'nn1'], attrs=[])])], attrs=[]),
@@ -101,7 +101,7 @@ Then you can:
 
 5. Pretty-print the parse tree:
 
-        >>> print dotparser.pretty_parse_tree(tree)
+        >>> print(dotparser.pretty_parse_tree(tree))
         Graph [id=g1, strict=False, type=digraph]
         `-- stmts
             |-- Edge

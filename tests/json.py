@@ -7,45 +7,48 @@ The parser is based on [the JSON grammar][1].
   [1]: http://tools.ietf.org/html/rfc4627
 """
 
+from __future__ import print_function, unicode_literals
+
 import sys
 import os
 import re
 import logging
+import six
 from re import VERBOSE
 from pprint import pformat
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
                                   forward_decl, NoParseError)
 
-ENCODING = u'UTF-8'
+ENCODING = 'UTF-8'
 regexps = {
-    u'escaped': ur'''
+    'escaped': r'''
         \\                                  # Escape
           ((?P<standard>["\\/bfnrt])        # Standard escapes
         | (u(?P<unicode>[0-9A-Fa-f]{4})))   # uXXXX
         ''',
-    u'unescaped': ur'''
+    'unescaped': r'''
         [^"\\]                              # Unescaped: avoid ["\\]
         ''',
 }
-re_esc = re.compile(regexps[u'escaped'], VERBOSE)
+re_esc = re.compile(regexps['escaped'], VERBOSE)
 
 
 def tokenize(str):
     """str -> Sequence(Token)"""
     specs = [
-        (u'Space', (ur'[ \t\r\n]+',)),
-        (u'String', (ur'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
-        (u'Number', (ur'''
+        ('Space', (r'[ \t\r\n]+',)),
+        ('String', (r'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
+        ('Number', (r'''
             -?                  # Minus
             (0|([1-9][0-9]*))   # Int
             (\.[0-9]+)?         # Frac
             ([Ee][+-][0-9]+)?   # Exp
             ''', VERBOSE)),
-        (u'Op', (ur'[{}\[\]\-,:]',)),
-        (u'Name', (ur'[A-Za-z_][A-Za-z_0-9]*',)),
+        ('Op', (r'[{}\[\]\-,:]',)),
+        ('Name', (r'[A-Za-z_][A-Za-z_0-9]*',)),
     ]
-    useless = [u'Space']
+    useless = ['Space']
     t = make_tokenizer(specs)
     return [x for x in t(str) if x.type not in useless]
 
@@ -55,9 +58,9 @@ def parse(seq):
     const = lambda x: lambda _: x
     tokval = lambda x: x.value
     toktype = lambda t: some(lambda x: x.type == t) >> tokval
-    op = lambda s: a(Token(u'Op', s)) >> tokval
+    op = lambda s: a(Token('Op', s)) >> tokval
     op_ = lambda s: skip(op(s))
-    n = lambda s: a(Token(u'Name', s)) >> tokval
+    n = lambda s: a(Token('Name', s)) >> tokval
 
     def make_array(n):
         if n is None:
@@ -76,37 +79,37 @@ def parse(seq):
 
     def unescape(s):
         std = {
-            u'"': u'"', u'\\': u'\\', u'/': u'/', u'b': u'\b', u'f': u'\f',
-            u'n': u'\n', u'r': u'\r', u't': u'\t',
+            '"': '"', '\\': '\\', '/': '/', 'b': '\b', 'f': '\f',
+            'n': '\n', 'r': '\r', 't': '\t',
         }
 
         def sub(m):
-            if m.group(u'standard') is not None:
-                return std[m.group(u'standard')]
+            if m.group('standard') is not None:
+                return std[m.group('standard')]
             else:
-                return unichr(int(m.group(u'unicode'), 16))
+                return six.unichr(int(m.group('unicode'), 16))
 
         return re_esc.sub(sub, s)
 
     def make_string(n):
         return unescape(n[1:-1])
 
-    null = n(u'null') >> const(None)
-    true = n(u'true') >> const(True)
-    false = n(u'false') >> const(False)
-    number = toktype(u'Number') >> make_number
-    string = toktype(u'String') >> make_string
+    null = n('null') >> const(None)
+    true = n('true') >> const(True)
+    false = n('false') >> const(False)
+    number = toktype('Number') >> make_number
+    string = toktype('String') >> make_string
     value = forward_decl()
-    member = string + op_(u':') + value >> tuple
+    member = string + op_(':') + value >> tuple
     object = (
-        op_(u'{') +
-        maybe(member + many(op_(u',') + member)) +
-        op_(u'}')
+        op_('{') +
+        maybe(member + many(op_(',') + member)) +
+        op_('}')
         >> make_object)
     array = (
-        op_(u'[') +
-        maybe(value + many(op_(u',') + value)) +
-        op_(u']')
+        op_('[') +
+        maybe(value + many(op_(',') + value)) +
+        op_(']')
         >> make_array)
     value.define(
         null
@@ -133,10 +136,10 @@ def main():
         stdin = os.fdopen(sys.stdin.fileno(), 'rb')
         input = stdin.read().decode(ENCODING)
         tree = loads(input)
-        print pformat(tree)
-    except (NoParseError, LexerError), e:
-        msg = (u'syntax error: %s' % e).encode(ENCODING)
-        print >> sys.stderr, msg
+        print(pformat(tree))
+    except (NoParseError, LexerError) as e:
+        msg = ('syntax error: %s' % e).encode(ENCODING)
+        print(msg, file=sys.stderr)
         sys.exit(1)
 
 

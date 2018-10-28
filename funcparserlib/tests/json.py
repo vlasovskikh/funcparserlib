@@ -4,7 +4,7 @@ r"""A JSON parser using funcparserlib.
 
 The parser is based on [the JSON grammar][1].
 
-  [1]: http://tools.ietf.org/html/rfc4627
+  [1]: https://tools.ietf.org/html/rfc4627
 """
 
 import sys

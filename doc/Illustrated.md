@@ -8,14 +8,14 @@ Parsing Stages Illustrated
   </dd>
   <dt>License:</dt>
   <dd>
-    <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/">
       Creative Commons Attribution-Noncommercial-Share Alike 3.0
     </a>
   </dd>
   <dt>Library Homepage:</dt>
   <dd>
-    <a href="http://code.google.com/p/funcparserlib/">
-      http://code.google.com/p/funcparserlib/
+    <a href="https://github.com/vlasovskikh/funcparserlib">
+      https://github.com/vlasovskikh/funcparserlib
     </a>
   </dd>
   <dt>Library Version:</dt>
@@ -135,8 +135,8 @@ Then you can:
 See [the source code][dot-py] of the DOT parser and the docs at [the funcparserlib
 homepage][funcparserlib] for details.
 
-  [dot]: http://www.graphviz.org/
-  [dot-grammar]: http://www.graphviz.org/doc/info/lang.html
-  [funcparserlib]: http://code.google.com/p/funcparserlib/
-  [dot-py]: http://code.google.com/p/funcparserlib/source/browse/examples/dot/dot.py
+  [dot]: https://www.graphviz.org/
+  [dot-grammar]: https://www.graphviz.org/doc/info/lang.html
+  [funcparserlib]: https://github.com/vlasovskikh/funcparserlib
+  [dot-py]: https://github.com/vlasovskikh/funcparserlib
 

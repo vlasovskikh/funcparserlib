@@ -25,7 +25,7 @@ Show Me the Code
 ----------------
 
 This is an excerpt from a JSON parser ([RFC
-4627](http://tools.ietf.org/html/rfc4627)) written using `funcparserlib`. This
+4627](https://tools.ietf.org/html/rfc4627)) written using `funcparserlib`. This
 full example as well as others can be found [here](funcparserlib/tests/json.py).
 
 ```python
@@ -121,8 +121,8 @@ Despite being an LL(`*`) parser, `funcparserlib` has a reasonable performance. F
 Similar Projects
 ----------------
 
-  * [LEPL](http://code.google.com/p/lepl/). A recursive descent parsing library that uses two-way generators for backtracking. Its source code is rather large: 17 KLOC
-  * [pyparsing](http://pyparsing.wikispaces.com/). A recursive descent parsing library. Probably the most popular Python parsing library. Nevertheless its source code is quite dirty (though 4 KLOC only)
+  * [LEPL](https://code.google.com/p/lepl/). A recursive descent parsing library that uses two-way generators for backtracking. Its source code is rather large: 17 KLOC
+  * [pyparsing](https://github.com/pyparsing/pyparsing/). A recursive descent parsing library. Probably the most popular Python parsing library. Nevertheless its source code is quite dirty (though 4 KLOC only)
   * [Monadic Parsing in Python](http://sandersn.com/blog/index.php?title=monadic_parsing_in_python_part_3&more=1&c=1&tb=1&pb=1). A series of blog entries on monadic parsing
   * [Pysec (aka Parsec in Python)](http://www.valuedlessons.com/2008/02/pysec-monadic-combinatoric-parsing-in.html). A blog entry on monadic parsing, with nice syntax for Python
 

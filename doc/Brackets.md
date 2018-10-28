@@ -216,4 +216,3 @@ Test it:
     3
 
 <!-- vim: set ft=markdown tw=80: -->
-

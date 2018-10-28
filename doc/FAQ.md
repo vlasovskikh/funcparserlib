@@ -59,4 +59,3 @@ infinite loop, while others cannot. Just apply the statements we have made
 above to these parsers to figure out why.
 
   [1]: http://code.google.com/p/funcparserlib/
-

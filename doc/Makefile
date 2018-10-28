@@ -5,4 +5,3 @@ test-tutorial:
 
 test-brackets:
 	python -c 'import doctest; doctest.testfile("Brackets.md")'
-

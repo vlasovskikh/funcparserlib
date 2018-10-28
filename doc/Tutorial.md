@@ -1232,7 +1232,7 @@ Parsers can be thought as instances of type classes. Parsers are monads
 (therefore, applicative pointed functors). The monadic nature of parsers is used
 in the implementation of some combinators, see [the source code][parser-py].
 Also parsers form two monoids under sequential composition and choice
-composition. 
+composition.
 
 Haskell hackers may have extra fun by considering the following pseudo-Haskell
 instances for parsers:
@@ -1271,4 +1271,3 @@ instances for parsers:
 TODO: There are lots of them. Write a review.
 
 <!-- vim:set ft=markdown: -->
-

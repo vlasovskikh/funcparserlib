@@ -139,4 +139,3 @@ homepage][funcparserlib] for details.
   [dot-grammar]: https://www.graphviz.org/doc/info/lang.html
   [funcparserlib]: https://github.com/vlasovskikh/funcparserlib
   [dot-py]: https://github.com/vlasovskikh/funcparserlib
-

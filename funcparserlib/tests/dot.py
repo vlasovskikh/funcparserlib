@@ -12,7 +12,7 @@ not supported things:
 At the moment, the parser builds only a parse tree, not an abstract syntax tree
 (AST) or an API for dealing with DOT.
 
-  [1]: http://www.graphviz.org/doc/info/lang.html
+  [1]: https://www.graphviz.org/doc/info/lang.html
 """
 
 import sys

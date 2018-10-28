@@ -17,7 +17,7 @@ setup(
     description='Recursive descent parsing library based on functional '
         'combinators',
     license='MIT',
-    url='http://code.google.com/p/funcparserlib/',
+    url='https://github.com/vlasovskikh/funcparserlib',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers'

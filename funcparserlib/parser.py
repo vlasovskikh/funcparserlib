@@ -27,8 +27,8 @@ Basic combinators are taken from Harrison's book ["Introduction to Functional
 Programming"][1] and translated from ML into Python. See also [a Russian
 translation of the book][2].
 
-  [1]: http://www.cl.cam.ac.uk/teaching/Lectures/funprog-jrh-1996/
-  [2]: http://code.google.com/p/funprog-ru/
+  [1]: https://www.cl.cam.ac.uk/teaching/Lectures/funprog-jrh-1996/
+  [2]: https://github.com/funprog-ru/
 
 A parser `p` is represented by a function of type:
 

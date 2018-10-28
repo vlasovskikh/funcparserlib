@@ -8,14 +8,14 @@ Nested Brackets Mini-HOWTO
   </dd>
   <dt>License:</dt>
   <dd>
-    <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/">
       Creative Commons Attribution-Noncommercial-Share Alike 3.0
     </a>
   </dd>
   <dt>Library Homepage:</dt>
   <dd>
-    <a href="http://code.google.com/p/funcparserlib/">
-      http://code.google.com/p/funcparserlib/
+    <a href="https://github.com/vlasovskikh/funcparserlib">
+      https://github.com/vlasovskikh/funcparserlib
     </a>
   </dd>
   <dt>Library Version:</dt>
@@ -32,7 +32,7 @@ so we need a parser. For more complex examples see [The funcparserlib
 Tutorial][tutorial] or
 other examples at [the funcparserlib homepage][funcparserlib].
 
-  [funcparserlib]: http://code.google.com/p/funcparserlib/
+  [funcparserlib]: https://github.com/vlasovskikh/funcparserlib
   [tutorial]: http://archlinux.folding-maps.org/2009/funcparserlib/Tutorial
 
 Here is the EBNF grammar of our curly brackets language:

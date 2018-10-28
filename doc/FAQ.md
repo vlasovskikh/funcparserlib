@@ -58,5 +58,5 @@ while `p3`, `p7`, and `p8` are is not. Parsers `p2`, `p6`, and `p7` may enter an
 infinite loop, while others cannot. Just apply the statements we have made
 above to these parsers to figure out why.
 
-  [1]: http://code.google.com/p/funcparserlib/
+  [1]: https://github.com/vlasovskikh/funcparserlib
 

@@ -8,14 +8,14 @@ The `funcparserlib` Tutorial
   </dd>
   <dt>License:</dt>
   <dd>
-    <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/">
       Creative Commons Attribution-Noncommercial-Share Alike 3.0
     </a>
   </dd>
   <dt>Library Homepage:</dt>
   <dd>
-    <a href="http://code.google.com/p/funcparserlib/">
-      http://code.google.com/p/funcparserlib/
+    <a href="https://github.com/vlasovskikh/funcparserlib">
+      https://github.com/vlasovskikh/funcparserlib
     </a>
   </dd>
   <dt>Library Version:</dt>
@@ -1255,15 +1255,15 @@ instances for parsers:
         mappend x y = x | y
 
 
-  [doctest]: http://docs.python.org/library/doctest.html
-  [tokenize]: http://docs.python.org/library/tokenize.html
-  [funcparserlib]: http://code.google.com/p/funcparserlib/
-  [funcparserlib-issues]: http://code.google.com/p/funcparserlib/issues/list
-  [dot-parser]: http://code.google.com/p/funcparserlib/source/browse/examples/dot/dot.py
-  [json-parser]: http://code.google.com/p/funcparserlib/source/browse/examples/json/json.py
+  [doctest]: https://docs.python.org/library/doctest.html
+  [tokenize]: https://docs.python.org/library/tokenize.html
+  [funcparserlib]: https://github.com/vlasovskikh/funcparserlib
+  [funcparserlib-issues]: https://github.com/vlasovskikh/funcparserlib/issues
+  [dot-parser]: https://github.com/vlasovskikh/funcparserlib/blob/master/funcparserlib/tests/dot.py
+  [json-parser]: https://github.com/vlasovskikh/funcparserlib/blob/master/funcparserlib/tests/json.py
   [nested]: http://archlinux.folding-maps.org/2009/funcparserlib/Brackets
-  [sequences]: http://www.python.org/dev/peps/pep-3119/#sequences
-  [parser-py]:  http://code.google.com/p/funcparserlib/source/browse/src/funcparserlib/parser.py
+  [sequences]: https://www.python.org/dev/peps/pep-3119/#sequences
+  [parser-py]:  https://github.com/vlasovskikh/funcparserlib/blob/master/funcparserlib/parser.py
 
 
 ### Papers on Functional Parsers

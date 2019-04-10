@@ -49,7 +49,10 @@ class Token(object):
 
     def __eq__(self, other):
         # FIXME: Case sensitivity is assumed here
-        return self.type == other.type and self.value == other.value
+        if other is None:
+            return False
+        else:
+            return self.type == other.type and self.value == other.value
 
     def _pos_str(self):
         if self.start is None or self.end is None:

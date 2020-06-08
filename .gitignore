@@ -1,8 +1,10 @@
 *.egg-info/
 *.pyc
+*.swp
 .eggs/
 .idea/
 .tox/
 __pycache__/
 build/
+dist/
 venv/

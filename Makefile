@@ -1,27 +1,24 @@
-PYTHON = /usr/bin/python
-SETUP = $(PYTHON) setup.py
-DESTDIR = /
-PREFIX = /usr
-INSTALL_OPTS = --root "$(DESTDIR)" --prefix "$(PREFIX)"
+.PHONY: default install test doctest unittest clean poetry-install tox
 
-.PHONY: default install test doctest unittest clean
+default: poetry-install
+	poetry build
 
-default:
-	$(SETUP) build
-
-install:
-	$(SETUP) install $(INSTALL_OPTS)
+poetry-install:
+	poetry install
 
 test: unittest
 
-doctest:
+doctest: poetry-install
 	make -C doc
 
-unittest:
-	$(PYTHON) -m unittest discover funcparserlib.tests
+unittest: poetry-install
+	poetry run python -m unittest discover
+
+tox:
+	poetry run python -m pip install tox
+	poetry run tox
 
 clean:
-	$(SETUP) clean
-	rm -fr build dist MANIFEST
+	rm -fr build dist *.egg-info .tox
 	find . -name '*.pyc' | xargs rm -f
 	find . -name __pycache__ | xargs rm -fr

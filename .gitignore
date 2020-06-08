@@ -1,5 +1,8 @@
 *.egg-info/
 *.pyc
 .eggs/
+.idea/
 .tox/
 __pycache__/
+build/
+venv/

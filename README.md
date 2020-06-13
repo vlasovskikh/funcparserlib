@@ -1,7 +1,7 @@
 funcparserlib
 =============
 
-Recurisve descent parsing library for Python based on functional combinators.
+Recursive descent parsing library for Python based on functional combinators.
 
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/funcparserlib)
 
@@ -9,30 +9,38 @@ Recurisve descent parsing library for Python based on functional combinators.
 Description
 -----------
 
-_Parser combinators_ are just higher-order functions that take parsers as their arguments and return them as result values. Parser combinators are:
+**Parser combinators** are just higher-order functions that take parsers as
+their arguments and return them as result values. Parser combinators are:
 
   * First-class values
   * Extremely composable
   * Tend to make the code quite compact
   * Resemble the readable notation of xBNF grammars
 
-Parsers made with `funcparserlib` are pure-Python LL(\*) parsers. It means that it's very easy to write them without thinking about look-aheads and all that hardcore parsing stuff. But the recursive descent parsing is a rather slow method compared to LL(k) or LR(k) algorithms.
+Parsers made with `funcparserlib` are pure-Python LL(\*) parsers. It means that
+it's **very easy to write them** without thinking about lookaheads and all
+that hardcore parsing stuff. However, the recursive descent parsing is a rather
+slow method compared to LL(k) or LR(k) algorithms.
 
-So the primary domain for `funcparserlib` is **parsing little languages** or **external DSLs** (domain specific languages).
+So the primary domain for `funcparserlib` is **parsing little languages** or
+**external DSLs** (domain specific languages).
 
-The library itself is very small. Its source code is only 0.5 KLOC, with lots of comments included. It features the longest parsed prefix error reporting, as well as a tiny lexer generator for token position tracking.
+The library itself is very small. Its source code is only 600 lines of code,
+with lots of comments included. It features the longest parsed prefix error
+reporting, as well as a tiny lexer generator for token position tracking.
 
 
 Show Me the Code
 ----------------
 
-This is an excerpt from a JSON parser ([RFC
-4627](https://tools.ietf.org/html/rfc4627)) written using `funcparserlib`. This
-full example as well as others can be found [here](tests/json.py).
+This is an excerpt from a JSON parser
+([RFC 4627](https://tools.ietf.org/html/rfc4627)) written using
+`funcparserlib`. This full example as well as others can be found
+[here](tests/json.py).
 
 ```python
 def parse(seq):
-    'Sequence(Token) -> object'
+    """Sequence(Token) -> object"""
     ...
     n = lambda s: a(Token('Name', s)) >> tokval
     def make_array(n):
@@ -76,7 +84,8 @@ def parse(seq):
 Installation
 ------------
 
-You can install the `funcparserlib` library from [PyPI](https://pypi.python.org/pypi/funcparserlib) via `pip`:
+You can install the `funcparserlib` library from
+[PyPI](https://pypi.python.org/pypi/funcparserlib) via `pip`:
 
     $ pip install funcparserlib
 
@@ -86,10 +95,10 @@ There are no dependencies on other libraries.
 Documentation
 -------------
 
-A short intro to `funcparserlib` can be found in the [Nested Brackets
-Mini-HOWTO](doc/Brackets.md).
-
-The comprehensive [funcparserlib Tutorial](doc/Tutorial.md) is also available.
+* [Nested Brackets Mini-HOWTO](doc/Brackets.md)
+    * A short intro to `funcparserlib`
+* [Tutorial](doc/Tutorial.md)
+    * The comprehensive `funcparserlib` tutorial
 
 See also comments inside the modules `funcparserlib.parser` and
 `funcparserlib.lexer` or generate the API docs from the modules using `pydoc`.
@@ -105,7 +114,11 @@ See also [the changelog](CHANGES.md) and [FAQ](doc/FAQ.md).
 Performance and Code Size
 -------------------------
 
-Despite being an LL(`*`) parser, `funcparserlib` has a reasonable performance. For example, a JSON parser written using `funcparserlib` is 3 times faster than a parser using the popular `pyparsing` library and only 5 times slower than the specialized JSON library `simplejson` that uses _ad hoc_ parsing. Here are some stats<sup>1</sup>:
+Despite being an LL(`*`) parser, `funcparserlib` has a reasonable performance.
+For example, a JSON parser written using `funcparserlib` is 3 times faster
+than a parser using the popular `pyparsing` library and only 5 times slower
+than the specialized JSON library `simplejson` that uses _ad hoc_ parsing.
+Here are some stats<sup>1</sup>:
 
 | **File Size** | **cjson** | **simplejson** | **funcparserlib** | **json-ply** | **pyparsing** |
 |:--------------|:----------|:---------------|:------------------|:-------------|:--------------|
@@ -117,23 +130,35 @@ Despite being an LL(`*`) parser, `funcparserlib` has a reasonable performance. F
 | **User Code**    | 0.9 KLOC | 0.8 KLOC | 0.1 KLOC | 0.5 KLOC | 0.1 KLOC |
 | **Library Code** | 0 KLOC   | 0 KLOC   | 0.5 KLOC | 5.3 KLOC | 3.7 KLOC |
 
-`funcparserlib` and `pyparsing` both have the smallest user code size (that is a common feature of parsing libraries compared to _ad hoc_ parsers). The library code of `funcparserlib` is 7 times smaller (and much more cleaner) than `pyparsing`. The `json-ply` uses a LALR parser `ply` (similar to Yacc) and performs like `funcparserlib`. `cjson` is a C library, hence the incredible performance :)
+Both `funcparserlib` and `pyparsing` have the smallest user code size (that is
+a common feature of parsing libraries compared to _ad hoc_ parsers). The
+library code of `funcparserlib` is 7 times smaller (and much cleaner) than
+`pyparsing`. The `json-ply` uses a LALR parser `ply` (similar to Yacc) and
+performs like `funcparserlib`. `cjson` is a C library, hence the incredible
+performance :)
 
 
 Similar Projects
 ----------------
 
-  * [LEPL](https://code.google.com/p/lepl/). A recursive descent parsing library that uses two-way generators for backtracking. Its source code is rather large: 17 KLOC
-  * [pyparsing](https://github.com/pyparsing/pyparsing/). A recursive descent parsing library. Probably the most popular Python parsing library. Nevertheless its source code is quite dirty (though 4 KLOC only)
-  * [Monadic Parsing in Python](https://web.archive.org/web/20120507001413/http://sandersn.com/blog/?tag=/monads). A series of blog entries on monadic parsing
-  * [Pysec (aka Parsec in Python)](http://www.valuedlessons.com/2008/02/pysec-monadic-combinatoric-parsing-in.html). A blog entry on monadic parsing, with nice syntax for Python
+  * [LEPL](https://code.google.com/p/lepl/). A recursive descent parsing
+    library that uses two-way generators for backtracking. Its source code is
+    rather large: 17 KLOC.
+  * [pyparsing](https://github.com/pyparsing/pyparsing/). A recursive descent
+    parsing library. Probably the most popular Python parsing library.
+    Nevertheless, its source code is quite dirty (though 4 KLOC only).
+  * [Monadic Parsing in Python](https://web.archive.org/web/20120507001413/http://sandersn.com/blog/?tag=/monads).
+    A series of blog entries on monadic parsing.
+  * [Pysec (aka Parsec in Python)](http://www.valuedlessons.com/2008/02/pysec-monadic-combinatoric-parsing-in.html).
+    A blog entry on monadic parsing, with nice syntax for Python.
 
 
 ---
 
 
-<sup>1</sup> Testing hardware: Pentium III, 1 GHz, 512 MB. JSON files were taken from a real project, in a normalized encoding, i. e. they contained no extra separators. The version 0.3.2 of the library was used.
-
+<sup>1</sup> Testing hardware: Pentium III, 1 GHz, 512 MB. I took JSON files
+from a real project, in a normalized encoding, i.e. they contained no extra
+separators. I used version 0.3.2 of the library for testing.
 
 
 <!-- vim:set ft=markdown tw=80: -->

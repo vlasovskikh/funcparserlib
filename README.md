@@ -3,6 +3,8 @@ funcparserlib
 
 Recurisve descent parsing library for Python based on functional combinators.
 
+![PyPI - Downloads](https://img.shields.io/pypi/dm/funcparserlib)
+
 
 Description
 -----------

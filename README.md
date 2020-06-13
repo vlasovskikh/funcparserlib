@@ -26,7 +26,7 @@ Show Me the Code
 
 This is an excerpt from a JSON parser ([RFC
 4627](https://tools.ietf.org/html/rfc4627)) written using `funcparserlib`. This
-full example as well as others can be found [here](funcparserlib/tests/json.py).
+full example as well as others can be found [here](tests/json.py).
 
 ```python
 def parse(seq):
@@ -92,10 +92,10 @@ The comprehensive [funcparserlib Tutorial](doc/Tutorial.md) is also available.
 See also comments inside the modules `funcparserlib.parser` and
 `funcparserlib.lexer` or generate the API docs from the modules using `pydoc`.
 
-There a couple of examples available in the funcparserlib/tests directory:
+There a couple of examples available in the tests/ directory:
 
-* [GraphViz DOT parser](funcparserlib/tests/dot.py)
-* [JSON parser](funcparserlib/tests/json.py)
+* [GraphViz DOT parser](tests/dot.py)
+* [JSON parser](tests/json.py)
 
 See also [the changelog](CHANGES.md) and [FAQ](doc/FAQ.md).
 

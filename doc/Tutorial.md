@@ -113,9 +113,17 @@ some feeling of its structure.
 In the end of this tutorial you will fully understand this code and will be able
 to write parsers for your own needs.
 
-    >>> from StringIO import StringIO
+    >>> import operator
+    >>> import sys
+    >>> import token
+    >>> from functools import reduce
     >>> from tokenize import generate_tokens
-    >>> import operator, token
+    
+    >>> if sys.version_info < (3,):
+    ...     from StringIO import StringIO
+    ... else:
+    ...     from io import StringIO
+    
     >>> from funcparserlib.parser import (some, a, many, skip, finished, maybe,
     ...     with_forward_decls)
 
@@ -131,7 +139,7 @@ to write parsers for your own needs.
     ...     def type(self):
     ...         return token.tok_name[self.code]
     ...
-    ...     def __unicode__(self):
+    ...     def __str__(self):
     ...         pos = '-'.join('%d,%d' % x for x in [self.start, self.stop])
     ...         return "%s %s '%s'" % (pos, self.type, self.value)
     ...
@@ -164,7 +172,7 @@ to write parsers for your own needs.
     ...             return float(s)
     ...     def eval_expr(z, list):
     ...         'float, [((float, float -> float), float)] -> float'
-    ...         return reduce(lambda s, (f, x): f(s, x), list, z)
+    ...         return reduce(lambda s, f_x: f_x[0](s, f_x[1]), list, z)
     ...     eval = unarg(eval_expr)
     ...
     ...     # Primitives
@@ -178,7 +186,7 @@ to write parsers for your own needs.
     ...     add = makeop('+', operator.add)
     ...     sub = makeop('-', operator.sub)
     ...     mul = makeop('*', operator.mul)
-    ...     div = makeop('/', operator.div)
+    ...     div = makeop('/', operator.truediv)
     ...     pow = makeop('**', operator.pow)
     ...
     ...     mul_op = mul | div
@@ -208,7 +216,7 @@ A couple of tests:
 
 OK, now let's forget about all this stuff:
 
-    >>> del StringIO, generate_tokens, operator, token
+    >>> del generate_tokens, operator, token
     >>> del Token, tokenize, parse
 
 and start from scratch!
@@ -224,25 +232,27 @@ this section and start with &ldquo;The Library Basics&rdquo;.
 
 We will need to `generate_tokens` using the standard `tokenize` module:
 
+    >>> import token
     >>> from tokenize import generate_tokens
 
 Import some standard library stuff:
 
-    >>> from StringIO import StringIO
     >>> from pprint import pformat
 
 This is an output from the tokenizer:
 
-    >>> ts = list(generate_tokens(StringIO('3 * (4 + 5)').readline))
-    >>> print(pformat(ts))
-    [(2, '3', (1, 0), (1, 1), '3 * (4 + 5)'),
-     (51, '*', (1, 2), (1, 3), '3 * (4 + 5)'),
-     (51, '(', (1, 4), (1, 5), '3 * (4 + 5)'),
-     (2, '4', (1, 5), (1, 6), '3 * (4 + 5)'),
-     (51, '+', (1, 7), (1, 8), '3 * (4 + 5)'),
-     (2, '5', (1, 9), (1, 10), '3 * (4 + 5)'),
-     (51, ')', (1, 10), (1, 11), '3 * (4 + 5)'),
-     (0, '', (2, 0), (2, 0), '')]
+    >>> ts = [t for t in generate_tokens(StringIO('3 * (4 + 5)').readline)
+    ...         if t[0] != token.NEWLINE]
+    >>> print(pformat([(token.tok_name[t[0]], t[1], t[2], t[3], t[4])
+    ...                for t in ts]))
+    [('NUMBER', '3', (1, 0), (1, 1), '3 * (4 + 5)'),
+     ('OP', '*', (1, 2), (1, 3), '3 * (4 + 5)'),
+     ('OP', '(', (1, 4), (1, 5), '3 * (4 + 5)'),
+     ('NUMBER', '4', (1, 5), (1, 6), '3 * (4 + 5)'),
+     ('OP', '+', (1, 7), (1, 8), '3 * (4 + 5)'),
+     ('NUMBER', '5', (1, 9), (1, 10), '3 * (4 + 5)'),
+     ('OP', ')', (1, 10), (1, 11), '3 * (4 + 5)'),
+     ('ENDMARKER', '', (2, 0), (2, 0), '')]
 
 As we can see, the lexer has already thrown away the spaces. Each token is a
 5-tuple of the token code, the token string, the beginning and ending of the
@@ -251,10 +261,6 @@ token, the line on which it was found.
 Let's make the output more pretty by wrapping a token in a class. We could
 definitely go on without such a wrapper, but it will make messages more readable
 and allow access to the fields of the token by name.
-
-Import a standard module containing the code-to-name map for tokens:
-
-    >>> import token
 
 Define the wrapper class:
 
@@ -270,7 +276,7 @@ Define the wrapper class:
     ...     def type(self):
     ...         return token.tok_name[self.code]
     ...
-    ...     def __unicode__(self):
+    ...     def __str__(self):
     ...         pos = '-'.join('%d,%d' % x for x in [self.start, self.stop])
     ...         return "%s %s '%s'" % (pos, self.type, self.value)
     ...
@@ -406,7 +412,7 @@ And this is how it works:
 
 and how it reports errors:
 
-    >>> number.parse(tokenize('a'))
+    >>> number.parse(tokenize('a'))  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     NoParseError: got unexpected token: 1,0-1,1 NAME 'a'
@@ -675,7 +681,7 @@ Test it:
 
 and what if none of the alternatives matches:
 
-    >>> expr.parse(tokenize('2 + 2'))
+    >>> expr.parse(tokenize('2 + 2'))  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     NoParseError: got unexpected token: 1,2-1,3 OP '+'
@@ -688,7 +694,7 @@ abstraction:
     >>> add = makeop('+', operator.add)
     >>> sub = makeop('-', operator.sub)
     >>> mul = makeop('*', operator.mul)
-    >>> div = makeop('/', operator.div)
+    >>> div = makeop('/', operator.truediv)
     >>> pow = makeop('**', operator.pow)
 
     >>> operator = add | sub | mul | div | pow
@@ -809,7 +815,7 @@ It seems that we forgot to map parsing results to numbers again.  Let's fix
 this:
 
     >>> def eval_expr(z, list):
-    ...     return reduce(lambda s, (f, x): f(s, x), list, z)
+    ...     return reduce(lambda s, f_x: f_x[0](s, f_x[1]), list, z)
 
 Here we fold the `list` of an operator an its right operand starting with the
 initial value `z` using a function that applies the operator `f` to the
@@ -997,7 +1003,7 @@ Look at the examples:
     (2, 3)
     >>> (skip(number) + number).parse(tokenize('2 3'))
     3
-    >>> (skip(number) + number).parse(tokenize('+ 2 3'))
+    >>> (skip(number) + number).parse(tokenize('+ 2 3'))  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     NoParseError: got unexpected token: 1,0-1,1 OP '+'
@@ -1073,7 +1079,7 @@ Checking the `ENDMARKER` is easy:
 
 Test it:
 
-    >>> toplevel.parse(tokenize('2 + 3 foo'))
+    >>> toplevel.parse(tokenize('2 + 3 foo'))  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     NoParseError: got unexpected token: 1,6-1,9 NAME 'foo'
@@ -1113,7 +1119,7 @@ Test is using a hand crafted illegal sequence of tokens:
     >>> toplevel.parse([
     ...     Token(token.NUMBER, '5'),
     ...     Token(token.ENDMARKER, ''),
-    ...     Token(token.ENDMARKER, '')])
+    ...     Token(token.ENDMARKER, '')])  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     NoParseError: should have reached <EOF>: 0,0-0,0 ENDMARKER ''
@@ -1123,7 +1129,7 @@ Test is using a hand crafted illegal sequence of tokens:
 
 And what about the empty input:
 
-    >>> toplevel.parse(tokenize(''))
+    >>> toplevel.parse(tokenize(''))  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     NoParseError: got unexpected token: 1,0-1,0 ENDMARKER ''
@@ -1171,7 +1177,7 @@ Test it:
 
     >>> _maybe(op('(')).parse(tokenize('()'))
     '('
-    >>> (_maybe(op('(')) + number).parse(tokenize('5'))
+    >>> (_maybe(op('(')) + number).parse(tokenize('5'))  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     NoParseError: got unexpected token: 2,0-2,0 ENDMARKER ''

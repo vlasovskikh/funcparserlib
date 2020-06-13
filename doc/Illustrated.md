@@ -49,7 +49,7 @@ Then you can:
     `funcparserlib` here):
 
         >>> import sys, os
-        >>> sys.path.append(os.path.join(os.getcwd(), '../examples/dot'))
+        >>> sys.path.append(os.path.join(os.getcwd(), '../tests'))
         >>> import dot as dotparser
 
 3. Transform the source code into a sequence of tokens:
@@ -57,36 +57,36 @@ Then you can:
         >>> toks = dotparser.tokenize(s)
 
         >>> print('\n'.join(str(tok) for tok in toks))
-        1,0-1,7: Name 'digraph'
-        1,8-1,10: Name 'g1'
-        1,11-1,12: Op '{'
-        2,4-2,6: Name 'n1'
-        2,7-2,9: Op '->'
-        2,10-2,12: Name 'n2'
-        2,13-2,15: Op '->'
-        3,4-3,12: Name 'subgraph'
-        3,13-3,15: Name 'n3'
-        3,16-3,17: Op '{'
-        4,8-4,11: Name 'nn1'
-        4,12-4,14: Op '->'
-        4,15-4,18: Name 'nn2'
-        4,19-4,21: Op '->'
-        4,22-4,25: Name 'nn3'
-        4,25-4,26: Op ';'
-        5,8-5,11: Name 'nn3'
-        5,12-5,14: Op '->'
-        5,15-5,18: Name 'nn1'
-        5,18-5,19: Op ';'
-        6,4-6,5: Op '}'
-        6,5-6,6: Op ';'
-        7,4-7,12: Name 'subgraph'
-        7,13-7,15: Name 'n3'
-        7,16-7,17: Op '{'
-        7,17-7,18: Op '}'
-        7,19-7,21: Op '->'
-        7,22-7,24: Name 'n1'
-        7,24-7,25: Op ';'
-        8,0-8,1: Op '}'
+        1,1-1,7: Name 'digraph'
+        1,9-1,10: Name 'g1'
+        1,12-1,12: Op '{'
+        2,5-2,6: Name 'n1'
+        2,8-2,9: Op '->'
+        2,11-2,12: Name 'n2'
+        2,14-2,15: Op '->'
+        3,5-3,12: Name 'subgraph'
+        3,14-3,15: Name 'n3'
+        3,17-3,17: Op '{'
+        4,9-4,11: Name 'nn1'
+        4,13-4,14: Op '->'
+        4,16-4,18: Name 'nn2'
+        4,20-4,21: Op '->'
+        4,23-4,25: Name 'nn3'
+        4,26-4,26: Op ';'
+        5,9-5,11: Name 'nn3'
+        5,13-5,14: Op '->'
+        5,16-5,18: Name 'nn1'
+        5,19-5,19: Op ';'
+        6,5-6,5: Op '}'
+        6,6-6,6: Op ';'
+        7,5-7,12: Name 'subgraph'
+        7,14-7,15: Name 'n3'
+        7,17-7,17: Op '{'
+        7,18-7,18: Op '}'
+        7,20-7,21: Op '->'
+        7,23-7,24: Name 'n1'
+        7,25-7,25: Op ';'
+        8,1-8,1: Op '}'
 
 4. Parse the sequence of tokens into a parse tree:
 

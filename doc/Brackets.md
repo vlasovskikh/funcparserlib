@@ -79,12 +79,12 @@ Test it:
     >>> nested.parse('{{}}')
     ('{', ('{', None, '}'), '}')
 
-    >>> nested.parse('{{}')
+    >>> nested.parse('{{}')  # doctest:+IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     NoParseError: no tokens left in the stream: <EOF>
 
-    >>> nested.parse('{foo}')
+    >>> nested.parse('{foo}')  # doctest:+IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     NoParseError: got unexpected token: f
@@ -101,7 +101,7 @@ the input symbols have been parsed:
 
 Test it:
 
-    >>> input.parse('{}foo')
+    >>> input.parse('{}foo')  # doctest:+IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
         ...
     NoParseError: should have reached <EOF>: f

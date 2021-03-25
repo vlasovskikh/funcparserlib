@@ -119,7 +119,7 @@ Despite being an LL(`*`) parser, `funcparserlib` has a reasonable performance.
 For example, a JSON parser written using `funcparserlib` is 3 times faster
 than a parser using the popular `pyparsing` library and only 5 times slower
 than the specialized JSON library `simplejson` that uses _ad hoc_ parsing.
-Here are some stats<sup>1</sup>:
+Here are some stats:
 
 | **File Size** | **cjson** | **simplejson** | **funcparserlib** | **json-ply** | **pyparsing** |
 |:--------------|:----------|:---------------|:------------------|:-------------|:--------------|
@@ -139,27 +139,42 @@ performs like `funcparserlib`. `cjson` is a C library, hence the incredible
 performance :)
 
 
+Used By
+-------
+
+Some open-source projects that use `funcparserlib` as an explicit dependency:
+
+* https://github.com/hylang/hy
+    * 3.8K stars, version `>= 0.3.6`, Python 3.6+
+* https://github.com/scrapinghub/splash
+    * 3.3K stars, version `*`. Python 3 in Docker
+* https://github.com/klen/graphite-beacon
+    * 460 stars, version `==0.3.6`, Python 2 and 3
+* https://github.com/blockdiag/blockdiag
+    * 118 stars, version `*`, Python 3.5+
+* https://github.com/pyta-uoft/pyta
+    * 48 stars, version `*`, Python 3.8+
+
+
+Usages in tests / secondary dependencies:
+
+* https://github.com/buildbot/buildbot
+    * 4.6K stars, version `== 0.3.6`
+* https://github.com/quay/quay
+    * 1.7K stars, version `==0.3.6`
+
+
+
 Similar Projects
 ----------------
 
-  * [LEPL](https://code.google.com/p/lepl/). A recursive descent parsing
-    library that uses two-way generators for backtracking. Its source code is
-    rather large: 17 KLOC.
-  * [pyparsing](https://github.com/pyparsing/pyparsing/). A recursive descent
-    parsing library. Probably the most popular Python parsing library.
-    Nevertheless, its source code is quite dirty (though 4 KLOC only).
-  * [Monadic Parsing in Python](https://web.archive.org/web/20120507001413/http://sandersn.com/blog/?tag=/monads).
-    A series of blog entries on monadic parsing.
-  * [Pysec (aka Parsec in Python)](http://www.valuedlessons.com/2008/02/pysec-monadic-combinatoric-parsing-in.html).
-    A blog entry on monadic parsing, with nice syntax for Python.
-
-
----
-
-
-<sup>1</sup> Testing hardware: Pentium III, 1 GHz, 512 MB. I took JSON files
-from a real project, in a normalized encoding, i.e. they contained no extra
-separators. I used version 0.3.2 of the library for testing.
-
-
-<!-- vim:set ft=markdown tw=80: -->
+* [LEPL](https://code.google.com/p/lepl/). A recursive descent parsing
+  library that uses two-way generators for backtracking. Its source code is
+  rather large: 17 KLOC.
+* [pyparsing](https://github.com/pyparsing/pyparsing/). A recursive descent
+  parsing library. Probably the most popular Python parsing library.
+  Nevertheless, its source code is quite dirty (though 4 KLOC only).
+* [Monadic Parsing in Python](https://web.archive.org/web/20120507001413/http://sandersn.com/blog/?tag=/monads).
+  A series of blog entries on monadic parsing.
+* [Pysec (aka Parsec in Python)](http://www.valuedlessons.com/2008/02/pysec-monadic-combinatoric-parsing-in.html).
+  A blog entry on monadic parsing, with nice syntax for Python.

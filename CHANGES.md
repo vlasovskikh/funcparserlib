@@ -8,11 +8,13 @@ The Changelog
 ### Changed
 
 * Python 3 compatibility
-* More info available in exception objects (#14)
+* More info available in exception objects
+  ([#14](https://github.com/vlasovskikh/funcparserlib/issues/14))
 
 ### Fixed
 
-* Fixed `many()` that consumed too many tokens in some cases (#31)
+* Fixed `many()` that consumed too many tokens in some cases
+  ([#31](https://github.com/vlasovskikh/funcparserlib/issues/31))
 
 
 0.3.5 — 2011-01-13

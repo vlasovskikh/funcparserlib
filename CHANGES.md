@@ -1,6 +1,38 @@
 The Changelog
 =============
 
+1.0.0 (to be released)
+----------------------
+
+The stable release that freezes the API of funcparserlib 0.3.6 which was released on 
+2013-05-02.
+
+### Added
+
+* Added support for Python 3.9
+  ([#63](https://github.com/vlasovskikh/funcparserlib/pull/63))
+  (Thanks to [@pkulev](https://github.com/pkulev))
+* Added support for Python 3.8
+
+### Changed
+
+* Dropped support for Python 3.4, 3.5 (end of life)
+* Dropped support for Python 2.5, 2.6, 3.3 (end of life), modernized code for Python 
+  3 to run without obsolete `2to3`
+  ([#57](https://github.com/vlasovskikh/funcparserlib/pull/57))
+  (Thanks to [@jdufresne](https://github.com/jdufresne))
+* Removed documentation and unit tests from the distribution
+* Switched from setuptools to Poetry
+* Run unit tests on GitHub Actions for all supported Pythons
+
+### Fixed
+
+* Fixed `TypeError` in `oneplus` when applying it `parser + parser` 
+  ([#66](https://github.com/vlasovskikh/funcparserlib/issues/66))
+  (Thanks to [@martica](https://github.com/martica))
+* Fixed doctests in the tutorial
+  ([#49](https://github.com/vlasovskikh/funcparserlib/issues/49))
+
 
 0.3.6 — 2013-05-02
 ------------------

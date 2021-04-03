@@ -29,6 +29,7 @@ mypy = {version = "^0.812", python = "^3.6"}
 tox = "^3.23.0"
 pre-commit = {version = "^2.11.1", python = "^3.6.1"}
 black = {version = "^20.8b1", python = "^3.6"}
+flake8 = "^3.9.0"
 
 [build-system]
 requires = ["poetry>=0.12"]

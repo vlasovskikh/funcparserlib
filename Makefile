@@ -15,7 +15,6 @@ unittest: poetry-install
 	poetry run python -m unittest discover
 
 tox:
-	poetry run python -m pip install tox
 	poetry run tox
 
 clean:

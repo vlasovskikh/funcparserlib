@@ -82,6 +82,7 @@ class Parser(object):
 
     def __init__(self, p):
         """Wraps a parser function p into an object."""
+        self.name = ''
         self.define(p)
 
     def named(self, name):
@@ -105,7 +106,7 @@ class Parser(object):
         """
         if debug:
             log.debug('trying %s' % self.name)
-        return self._run(tokens, s)
+        return self._run(tokens, s)  # noqa
 
     def _run(self, tokens, s):
         raise NotImplementedError('you must define() a parser')
@@ -405,7 +406,7 @@ def forward_decl():
     """
 
     @Parser
-    def f(tokens, s):
+    def f(_tokens, _s):
         raise NotImplementedError('you must define() a forward_decl somewhere')
 
     return f

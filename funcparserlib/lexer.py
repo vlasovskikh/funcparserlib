@@ -70,7 +70,7 @@ class Token(object):
         return self.value
 
     def pformat(self):
-        return "%s %s '%s'" % (self._pos_str().ljust(20),
+        return "%s %s '%s'" % (self._pos_str().ljust(20),  # noqa
                                self.type.ljust(14),
                                self.value)
 
@@ -84,10 +84,10 @@ def make_tokenizer(specs):
 
     compiled = [compile_spec(s) for s in specs]
 
-    def match_specs(specs, str, i, position):
+    def match_specs(s, i, position):
         line, pos = position
-        for type, regexp in specs:
-            m = regexp.match(str, i)
+        for type, regexp in compiled:
+            m = regexp.match(s, i)
             if m is not None:
                 value = m.group()
                 nls = value.count('\n')
@@ -98,20 +98,21 @@ def make_tokenizer(specs):
                     n_pos = len(value) - value.rfind('\n') - 1
                 return Token(type, value, (line, pos + 1), (n_line, n_pos))
         else:
-            errline = str.splitlines()[line - 1]
+            errline = s.splitlines()[line - 1]
             raise LexerError((line, pos + 1), errline)
 
-    def f(str):
-        length = len(str)
+    def f(s):
+        length = len(s)
         line, pos = 1, 0
         i = 0
         while i < length:
-            t = match_specs(compiled, str, i, (line, pos))
+            t = match_specs(s, i, (line, pos))
             yield t
             line, pos = t.end
             i += len(t.value)
 
     return f
+
 
 # This is an example of a token spec. See also [this article][1] for a
 # discussion of searching for multiline comments using regexps (including `*?`).
@@ -132,4 +133,4 @@ _example_token_specs = [
     ('CHAR', (r'#[0-9]+',)),
     ('CHAR', (r'#\$[0-9A-Fa-f]+',)),
 ]
-#tokenize = make_tokenizer(_example_token_specs)
+# tokenize = make_tokenizer(_example_token_specs)

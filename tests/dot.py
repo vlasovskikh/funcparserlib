@@ -24,8 +24,18 @@ from re import MULTILINE
 from typing import Sequence, List, TypeVar, Any, Callable, Text
 
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
-from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-                                  oneplus, forward_decl, NoParseError, Parser)
+from funcparserlib.parser import (
+    some,
+    a,
+    maybe,
+    many,
+    finished,
+    skip,
+    oneplus,
+    forward_decl,
+    NoParseError,
+    Parser,
+)
 from funcparserlib.util import pretty_tree
 
 ENCODING = 'UTF-8'
@@ -99,52 +109,27 @@ def parse(tokens):
         return Edge([node] + xs, attrs)
 
     node_id = dot_id  # + maybe(port)
-    a_list = (
-        dot_id +
-        maybe(op_('=') + dot_id) +
-        skip(maybe(op(',')))
-        >> un_arg(Attr))
-    attr_list = (
-        many(op_('[') + many(a_list) + op_(']'))
-        >> flatten)
-    attr_stmt = (
-        (n('graph') | n('node') | n('edge')) +
-        attr_list
-        >> un_arg(DefAttrs))
+    a_list = dot_id + maybe(op_('=') + dot_id) + skip(maybe(op(','))) >> un_arg(Attr)
+    attr_list = many(op_('[') + many(a_list) + op_(']')) >> flatten
+    attr_stmt = (n('graph') | n('node') | n('edge')) + attr_list >> un_arg(DefAttrs)
     graph_attr = dot_id + op_('=') + dot_id >> make_graph_attr
     node_stmt = node_id + attr_list >> un_arg(Node)
     # We use a forward_decl because of circular definitions like
     # (stmt_list -> stmt -> subgraph -> stmt_list)
     subgraph = forward_decl()
     edge_rhs = skip(op('->') | op('--')) + (subgraph | node_id)
-    edge_stmt = (
-        (subgraph | node_id) +
-        oneplus(edge_rhs) +
-        attr_list
-        >> un_arg(make_edge))
-    stmt = (
-        attr_stmt
-        | edge_stmt
-        | subgraph
-        | graph_attr
-        | node_stmt
+    edge_stmt = (subgraph | node_id) + oneplus(edge_rhs) + attr_list >> un_arg(
+        make_edge
     )
+    stmt = attr_stmt | edge_stmt | subgraph | graph_attr | node_stmt
     stmt_list = many(stmt + skip(maybe(op(';'))))
     subgraph.define(
-        skip(n('subgraph')) +
-        maybe(dot_id) +
-        op_('{') +
-        stmt_list +
-        op_('}')
-        >> un_arg(SubGraph))
-    graph = (
-        maybe(n('strict')) +
-        maybe(n('graph') | n('digraph')) +
-        maybe(dot_id) +
-        op_('{') +
-        stmt_list +
-        op_('}')
-        >> un_arg(Graph))
+        skip(n('subgraph')) + maybe(dot_id) + op_('{') + stmt_list + op_('}')
+        >> un_arg(SubGraph)
+    )
+    graph = maybe(n('strict')) + maybe(n('graph') | n('digraph')) + maybe(dot_id) + op_(
+        '{'
+    ) + stmt_list + op_('}') >> un_arg(Graph)
     dotfile = graph + skip(finished)
 
     return dotfile.parse(tokens)
@@ -173,7 +158,10 @@ def pretty_parse_tree(obj):
             return x.first
         elif isinstance(x, Graph):
             return 'Graph [id=%s, strict=%r, type=%s]' % (
-                x.id, x.strict is not None, x.type)
+                x.id,
+                x.strict is not None,
+                x.type,
+            )
         elif isinstance(x, SubGraph):
             return 'SubGraph [id=%s]' % (x.id,)
         elif isinstance(x, Edge):

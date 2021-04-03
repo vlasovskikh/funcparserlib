@@ -15,14 +15,33 @@ import re
 import sys
 from pprint import pformat
 from re import VERBOSE
-from typing import (List, Sequence, Optional, Tuple, Any, Dict, Match, TypeVar,
-                    Callable, Text)
+from typing import (
+    List,
+    Sequence,
+    Optional,
+    Tuple,
+    Any,
+    Dict,
+    Match,
+    TypeVar,
+    Callable,
+    Text,
+)
 
 import six
 
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
-from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-                                  forward_decl, NoParseError, Parser)
+from funcparserlib.parser import (
+    some,
+    a,
+    maybe,
+    many,
+    finished,
+    skip,
+    forward_decl,
+    NoParseError,
+    Parser,
+)
 
 ENCODING = 'UTF-8'
 # noinspection SpellCheckingInspection
@@ -45,12 +64,18 @@ def tokenize(s):
     specs = [
         ('Space', (r'[ \t\r\n]+',)),
         ('String', (r'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
-        ('Number', (r'''
-            -?                  # Minus
-            (0|([1-9][0-9]*))   # Int
-            (\.[0-9]+)?         # Frac
-            ([Ee][+-][0-9]+)?   # Exp
-            ''', VERBOSE)),
+        (
+            'Number',
+            (
+                r'''
+                -?                  # Minus
+                (0|([1-9][0-9]*))   # Int
+                (\.[0-9]+)?         # Frac
+                ([Ee][+-][0-9]+)?   # Exp
+            ''',
+                VERBOSE,
+            ),
+        ),
         ('Op', (r'[{}\[\]\-,:]',)),
         ('Name', (r'[A-Za-z_][A-Za-z_0-9]*',)),
     ]
@@ -111,14 +136,20 @@ def parse(tokens):
     def unescape(s):
         # type: (Text) -> Text
         std = {
-            '"': '"', '\\': '\\', '/': '/', 'b': '\b', 'f': '\f',
-            'n': '\n', 'r': '\r', 't': '\t',
+            '"': '"',
+            '\\': '\\',
+            '/': '/',
+            'b': '\b',
+            'f': '\f',
+            'n': '\n',
+            'r': '\r',
+            't': '\t',
         }
 
         def sub(m):
             # type: (Match[Text]) -> Text
-            if m.group('standard') is not None: # noqa
-                return std[m.group('standard')] # noqa
+            if m.group('standard') is not None:  # noqa
+                return std[m.group('standard')]  # noqa
             else:
                 return six.unichr(int(m.group('unicode'), 16))  # noqa
 
@@ -136,23 +167,12 @@ def parse(tokens):
     value = forward_decl()
     member = string + op_(':') + value >> tuple
     json_object = (
-        op_('{') +
-        maybe(member + many(op_(',') + member)) +
-        op_('}')
-        >> make_object)
+        op_('{') + maybe(member + many(op_(',') + member)) + op_('}') >> make_object
+    )
     json_array = (
-        op_('[') +
-        maybe(value + many(op_(',') + value)) +
-        op_(']')
-        >> make_array)
-    value.define(
-        null
-        | true
-        | false
-        | json_object
-        | json_array
-        | number
-        | string)
+        op_('[') + maybe(value + many(op_(',') + value)) + op_(']') >> make_array
+    )
+    value.define(null | true | false | json_object | json_array | number | string)
     json_text = json_object | json_array
     json_file = json_text + skip(finished)
 

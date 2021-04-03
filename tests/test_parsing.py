@@ -17,8 +17,7 @@ class ParsingTest(unittest.TestCase):
         y = a('y')
         expr = oneplus(x + y)
         # noinspection SpellCheckingInspection
-        self.assertEqual(expr.parse('xyxyxy'),
-                         ([('x', 'y'), ('x', 'y'), ('x', 'y')]))
+        self.assertEqual(expr.parse('xyxyxy'), ([('x', 'y'), ('x', 'y'), ('x', 'y')]))
 
     # Issue 31
     def test_many_backtracking(self):
@@ -27,23 +26,25 @@ class ParsingTest(unittest.TestCase):
         y = a('y')
         expr = many(x + y) + x + x
         # noinspection SpellCheckingInspection
-        self.assertEqual(expr.parse('xyxyxx'),
-                         ([('x', 'y'), ('x', 'y')], 'x', 'x'))
+        self.assertEqual(expr.parse('xyxyxx'), ([('x', 'y'), ('x', 'y')], 'x', 'x'))
 
     # Issue 14
     def test_error_info(self):
         # type: () -> None
-        tokenize = make_tokenizer([
-            ('keyword', (r'(is|end)',)),
-            ('id', (r'[a-z]+',)),
-            ('space', (r'[ \t]+',)),
-            ('nl', (r'[\n\r]+',)),
-        ])
+        tokenize = make_tokenizer(
+            [
+                ('keyword', (r'(is|end)',)),
+                ('id', (r'[a-z]+',)),
+                ('space', (r'[ \t]+',)),
+                ('nl', (r'[\n\r]+',)),
+            ]
+        )
         try:
             list(tokenize('f is ф'))
         except LexerError as e:
-            self.assertEqual(six.text_type(e),
-                             'cannot tokenize data: 1,6: "f is \u0444"')
+            self.assertEqual(
+                six.text_type(e), 'cannot tokenize data: 1,6: "f is \u0444"'
+            )
         else:
             self.fail('must raise LexerError')
 
@@ -77,8 +78,7 @@ end"""
         try:
             file.parse(tokens)
         except NoParseError as e:
-            self.assertEqual(e.msg,
-                             "got unexpected token: 2,11-2,14: id 'spam'")
+            self.assertEqual(e.msg, "got unexpected token: 2,11-2,14: id 'spam'")
             self.assertEqual(e.state.pos, 4)
             self.assertEqual(e.state.max, 7)
             # May raise KeyError

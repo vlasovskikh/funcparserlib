@@ -70,9 +70,11 @@ class Token(object):
         return self.value
 
     def pformat(self):
-        return "%s %s '%s'" % (self._pos_str().ljust(20),  # noqa
-                               self.type.ljust(14),
-                               self.value)
+        return "%s %s '%s'" % (
+            self._pos_str().ljust(20),  # noqa
+            self.type.ljust(14),
+            self.value,
+        )
 
 
 def make_tokenizer(specs):

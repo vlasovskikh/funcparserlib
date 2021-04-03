@@ -64,8 +64,17 @@ Debug messages are emitted via a `logging.Logger` object named
 from __future__ import unicode_literals
 
 __all__ = [
-    'some', 'a', 'many', 'pure', 'finished', 'maybe', 'skip', 'oneplus',
-    'forward_decl', 'NoParseError', 'Parser',
+    'some',
+    'a',
+    'many',
+    'pure',
+    'finished',
+    'maybe',
+    'skip',
+    'oneplus',
+    'forward_decl',
+    'NoParseError',
+    'Parser',
 ]
 
 import logging
@@ -371,6 +380,7 @@ def oneplus(p):
 
     Returns a parser that applies the parser p one or more times.
     """
+
     @Parser
     def _oneplus(tokens, s):
         (v1, s2) = p.run(tokens, s)
@@ -414,4 +424,5 @@ def forward_decl():
 
 if __name__ == '__main__':
     import doctest
+
     doctest.testmod()

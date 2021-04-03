@@ -1,24 +1,29 @@
-from typing import Optional, Generic, TypeVar, Union, Callable, Tuple, Sequence, Any, \
-    List, Text
+from typing import (
+    Optional,
+    Generic,
+    TypeVar,
+    Union,
+    Callable,
+    Tuple,
+    Sequence,
+    Any,
+    List,
+    Text,
+)
 
 _A = TypeVar("_A")
 _B = TypeVar("_B")
 _C = TypeVar("_C")
 
-
 class State:
     pos: int
     max: int
-
     def __init__(self, pos: int = ..., max: int = ...) -> None: ...
-
 
 _ParserCallable = Callable[[_A, State], Tuple[_B, State]]
 
-
 class Parser(Generic[_A, _B]):
     name: str
-
     def __init__(self, p: _ParserCallable) -> None: ...
     def named(self, name: Text) -> Parser[_A, _B]: ...
     def define(self, p: Union[Parser[_A, _B], _ParserCallable]) -> None: ...
@@ -29,9 +34,7 @@ class Parser(Generic[_A, _B]):
     def __rshift__(self, f: Callable[[_B], _C]) -> Parser[_A, _C]: ...
     def bind(self, f: Callable[[_B], Parser[_A, _C]]) -> Parser[_A, _C]: ...
 
-
 finished: Parser[Any, None]
-
 
 def many(p: Parser[_A, _B]) -> Parser[_A, List[_B]]: ...
 def some(pred: Callable[[_A], bool]) -> Parser[_A, _A]: ...
@@ -45,5 +48,4 @@ def forward_decl() -> Parser[Any, Any]: ...
 class NoParseError(Exception):
     msg: Text
     state: State
-
     def __init__(self, msg: Text = ..., state: Optional[State] = None) -> None: ...

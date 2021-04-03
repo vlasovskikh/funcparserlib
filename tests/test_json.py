@@ -42,7 +42,8 @@ class JsonTest(unittest.TestCase):
     def test_many_object(self):
         # type: () -> None
         # noinspection SpellCheckingInspection
-        self.t('''
+        self.t(
+            '''
             {
                 "foo": 1,
                 "bar":
@@ -53,15 +54,17 @@ class JsonTest(unittest.TestCase):
                 },
                 "spam": "eggs"
             }
-        ''', {
-            'foo': 1,
-            'bar': {
-                'baz': 2,
-                'quux': [True, False],
-                '{}': {},
+        ''',
+            {
+                'foo': 1,
+                'bar': {
+                    'baz': 2,
+                    'quux': [True, False],
+                    '{}': {},
+                },
+                'spam': 'eggs',
             },
-            'spam': 'eggs',
-        })
+        )
 
     def test_null(self):
         # type: () -> None
@@ -74,22 +77,36 @@ class JsonTest(unittest.TestCase):
 
     def test_numbers(self):
         # type: () -> None
-        self.t('''\
+        self.t(
+            '''\
             [
                 0, 1, -1, 14, -14, 65536,
                 0.0, 3.14, -3.14, -123.456,
                 6.67428e-11, -1.602176e-19, 6.67428E-11
             ]
-        ''', [
-            0, 1, -1, 14, -14, 65536,
-            0.0, 3.14, -3.14, -123.456,
-            6.67428e-11, -1.602176e-19, 6.67428E-11,
-        ])
+        ''',
+            [
+                0,
+                1,
+                -1,
+                14,
+                -14,
+                65536,
+                0.0,
+                3.14,
+                -3.14,
+                -123.456,
+                6.67428e-11,
+                -1.602176e-19,
+                6.67428e-11,
+            ],
+        )
 
     def test_strings(self):
         # type: () -> None
         # noinspection SpellCheckingInspection
-        self.t(r'''
+        self.t(
+            r'''
             [
                 ["", "hello", "hello world!"],
                 ["привет, мир!", "λx.x"],
@@ -97,13 +114,15 @@ class JsonTest(unittest.TestCase):
                 ["\u0000", "\u03bb", "\uffff", "\uFFFF"],
                 ["вот функция идентичности:\nλx.x\nили так:\n\u03bbx.x"]
             ]
-        ''', [
-            ['', 'hello', 'hello world!'],
-            ['привет, мир!', 'λx.x'],
-            ['"', '\\', '/', '\x08', '\x0c', '\n', '\r', '\t'],
-            ['\u0000', '\u03bb', '\uffff', '\uffff'],
-            ['вот функция идентичности:\nλx.x\nили так:\n\u03bbx.x'],
-        ])
+        ''',
+            [
+                ['', 'hello', 'hello world!'],
+                ['привет, мир!', 'λx.x'],
+                ['"', '\\', '/', '\x08', '\x0c', '\n', '\r', '\t'],
+                ['\u0000', '\u03bb', '\uffff', '\uffff'],
+                ['вот функция идентичности:\nλx.x\nили так:\n\u03bbx.x'],
+            ],
+        )
 
     def test_toplevel_string(self):
         # type: () -> None

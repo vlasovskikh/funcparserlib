@@ -30,7 +30,7 @@ def pretty_tree(x, kids, show):
     Returns a pseudographic tree representation of x similar to the tree command
     in Unix.
     """
-    (MID, END, CONT, LAST, ROOT) = ('|-- ', '`-- ', '|   ', '    ', '')
+    (MID, END, CONT, LAST, ROOT) = ("|-- ", "`-- ", "|   ", "    ", "")
 
     def rec(obj, indent, sym):
         line = indent + sym + show(obj)
@@ -46,6 +46,6 @@ def pretty_tree(x, kids, show):
                 next_indent = indent + LAST
             syms = [MID] * (len(obj_kids) - 1) + [END]
             lines = [rec(kid, next_indent, sym) for kid, sym in zip(obj_kids, syms)]
-            return '\n'.join([line] + lines)
+            return "\n".join([line] + lines)
 
-    return rec(x, '', ROOT)
+    return rec(x, "", ROOT)

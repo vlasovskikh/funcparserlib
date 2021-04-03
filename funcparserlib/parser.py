@@ -64,22 +64,22 @@ Debug messages are emitted via a `logging.Logger` object named
 from __future__ import unicode_literals
 
 __all__ = [
-    'some',
-    'a',
-    'many',
-    'pure',
-    'finished',
-    'maybe',
-    'skip',
-    'oneplus',
-    'forward_decl',
-    'NoParseError',
-    'Parser',
+    "some",
+    "a",
+    "many",
+    "pure",
+    "finished",
+    "maybe",
+    "skip",
+    "oneplus",
+    "forward_decl",
+    "NoParseError",
+    "Parser",
 ]
 
 import logging
 
-log = logging.getLogger('funcparserlib')
+log = logging.getLogger("funcparserlib")
 
 debug = False
 
@@ -91,7 +91,7 @@ class Parser(object):
 
     def __init__(self, p):
         """Wraps a parser function p into an object."""
-        self.name = ''
+        self.name = ""
         self.define(p)
 
     def named(self, name):
@@ -101,12 +101,12 @@ class Parser(object):
 
     def define(self, p):
         """Defines a parser wrapped into this object."""
-        f = getattr(p, 'run', p)
+        f = getattr(p, "run", p)
         if debug:
-            setattr(self, '_run', f)
+            setattr(self, "_run", f)
         else:
-            setattr(self, 'run', f)
-        self.named(getattr(p, 'name', p.__doc__))
+            setattr(self, "run", f)
+        self.named(getattr(p, "name", p.__doc__))
 
     def run(self, tokens, s):
         """Sequence(a), State -> (b, State)
@@ -114,11 +114,11 @@ class Parser(object):
         Runs a parser wrapped into this object.
         """
         if debug:
-            log.debug('trying %s' % self.name)
+            log.debug("trying %s" % self.name)
         return self._run(tokens, s)  # noqa
 
     def _run(self, tokens, s):
-        raise NotImplementedError('you must define() a parser')
+        raise NotImplementedError("you must define() a parser")
 
     def parse(self, tokens):
         """Sequence(a) -> b
@@ -137,8 +137,8 @@ class Parser(object):
             if len(tokens) > max:
                 tok = tokens[max]
             else:
-                tok = '<EOF>'
-            raise NoParseError('%s: %s' % (e.msg, tok), e.state)
+                tok = "<EOF>"
+            raise NoParseError("%s: %s" % (e.msg, tok), e.state)
 
     def __add__(self, other):
         """Parser(a, b), Parser(a, c) -> Parser(a, _Tuple(b, c))
@@ -172,7 +172,7 @@ class Parser(object):
 
         # or in terms of bind and pure:
         # _add = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
-        _add.name = '(%s , %s)' % (self.name, other.name)
+        _add.name = "(%s , %s)" % (self.name, other.name)
         return _add
 
     def __or__(self, other):
@@ -192,7 +192,7 @@ class Parser(object):
             except NoParseError as e:
                 return other.run(tokens, State(s.pos, e.state.max))
 
-        _or.name = '(%s | %s)' % (self.name, other.name)
+        _or.name = "(%s | %s)" % (self.name, other.name)
         return _or
 
     def __rshift__(self, f):
@@ -213,7 +213,7 @@ class Parser(object):
 
         # or in terms of bind and pure:
         # _shift = self.bind(lambda x: pure(f(x)))
-        _shift.name = '(%s)' % (self.name,)
+        _shift.name = "(%s)" % (self.name,)
         return _shift
 
     def bind(self, f):
@@ -228,7 +228,7 @@ class Parser(object):
             (v, s2) = self.run(tokens, s)
             return f(v).run(tokens, s2)
 
-        _bind.name = '(%s >>=)' % (self.name,)
+        _bind.name = "(%s >>=)" % (self.name,)
         return _bind
 
 
@@ -248,11 +248,11 @@ class State(object):
         return str((self.pos, self.max))
 
     def __repr__(self):
-        return 'State(%r, %r)' % (self.pos, self.max)
+        return "State(%r, %r)" % (self.pos, self.max)
 
 
 class NoParseError(Exception):
-    def __init__(self, msg='', state=None):
+    def __init__(self, msg="", state=None):
         self.msg = msg
         self.state = state
 
@@ -269,7 +269,7 @@ class _Ignored(object):
         self.value = value
 
     def __repr__(self):
-        return '_Ignored(%s)' % repr(self.value)
+        return "_Ignored(%s)" % repr(self.value)
 
 
 @Parser
@@ -281,10 +281,10 @@ def finished(tokens, s):
     if s.pos >= len(tokens):
         return None, s
     else:
-        raise NoParseError('should have reached <EOF>', s)
+        raise NoParseError("should have reached <EOF>", s)
 
 
-finished.name = 'finished'
+finished.name = "finished"
 
 
 def many(p):
@@ -306,7 +306,7 @@ def many(p):
         except NoParseError as e:
             return res, State(s.pos, e.state.max)
 
-    _many.name = '{ %s }' % p.name
+    _many.name = "{ %s }" % p.name
     return _many
 
 
@@ -319,7 +319,7 @@ def some(pred):
     @Parser
     def _some(tokens, s):
         if s.pos >= len(tokens):
-            raise NoParseError('no tokens left in the stream', s)
+            raise NoParseError("no tokens left in the stream", s)
         else:
             t = tokens[s.pos]
             if pred(t):
@@ -331,9 +331,9 @@ def some(pred):
             else:
                 if debug:
                     log.debug('failed "%s", state = %s' % (t, s))
-                raise NoParseError('got unexpected token', s)
+                raise NoParseError("got unexpected token", s)
 
-    _some.name = '(some)'
+    _some.name = "(some)"
     return _some
 
 
@@ -342,7 +342,7 @@ def a(value):
 
     Returns a parser that parses a token that is equal to the value value.
     """
-    name = getattr(value, 'name', value)
+    name = getattr(value, "name", value)
     return some(lambda t: t == value).named('(a "%s")' % (name,))
 
 
@@ -351,7 +351,7 @@ def pure(x):
     def _pure(_, s):
         return x, s
 
-    _pure.name = '(pure %r)' % (x,)
+    _pure.name = "(pure %r)" % (x,)
     return _pure
 
 
@@ -363,7 +363,7 @@ def maybe(p):
     NOTE: In a statically typed language, the type Maybe b could be more
     approprieate.
     """
-    return (p | pure(None)).named('[ %s ]' % (p.name,))
+    return (p | pure(None)).named("[ %s ]" % (p.name,))
 
 
 def skip(p):
@@ -387,7 +387,7 @@ def oneplus(p):
         (v2, s3) = many(p).run(tokens, s2)
         return [v1] + v2, s3
 
-    _oneplus.name = '(%s , { %s })' % (p.name, p.name)
+    _oneplus.name = "(%s , { %s })" % (p.name, p.name)
     return _oneplus
 
 
@@ -417,12 +417,12 @@ def forward_decl():
 
     @Parser
     def f(_tokens, _s):
-        raise NotImplementedError('you must define() a forward_decl somewhere')
+        raise NotImplementedError("you must define() a forward_decl somewhere")
 
     return f
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import doctest
 
     doctest.testmod()

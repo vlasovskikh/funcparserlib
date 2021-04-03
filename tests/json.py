@@ -43,43 +43,43 @@ from funcparserlib.parser import (
     Parser,
 )
 
-ENCODING = 'UTF-8'
+ENCODING = "UTF-8"
 # noinspection SpellCheckingInspection
 regexps = {
-    'escaped': r'''
+    "escaped": r"""
         \\                                  # Escape
           ((?P<standard>["\\/bfnrt])        # Standard escapes
         | (u(?P<unicode>[0-9A-Fa-f]{4})))   # uXXXX
-        ''',
-    'unescaped': r'''
+        """,
+    "unescaped": r"""
         [^"\\]                              # Unescaped: avoid ["\\]
-        ''',
+        """,
 }
-re_esc = re.compile(regexps['escaped'], VERBOSE)
-T = TypeVar('T')  # noqa
+re_esc = re.compile(regexps["escaped"], VERBOSE)
+T = TypeVar("T")  # noqa
 
 
 def tokenize(s):
     # type: (Text) -> List[Token]
     specs = [
-        ('Space', (r'[ \t\r\n]+',)),
-        ('String', (r'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
+        ("Space", (r"[ \t\r\n]+",)),
+        ("String", (r'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
         (
-            'Number',
+            "Number",
             (
-                r'''
+                r"""
                 -?                  # Minus
                 (0|([1-9][0-9]*))   # Int
                 (\.[0-9]+)?         # Frac
                 ([Ee][+-][0-9]+)?   # Exp
-            ''',
+            """,
                 VERBOSE,
             ),
         ),
-        ('Op', (r'[{}\[\]\-,:]',)),
-        ('Name', (r'[A-Za-z_][A-Za-z_0-9]*',)),
+        ("Op", (r"[{}\[\]\-,:]",)),
+        ("Name", (r"[A-Za-z_][A-Za-z_0-9]*",)),
     ]
-    useless = ['Space']
+    useless = ["Space"]
     t = make_tokenizer(specs)
     return [x for x in t(s) if x.type not in useless]
 
@@ -105,7 +105,7 @@ def parse(tokens):
 
     def op(s):
         # type: (Text) -> Parser[Token, Text]
-        return a(Token('Op', s)) >> tok_val
+        return a(Token("Op", s)) >> tok_val
 
     def op_(s):
         # type: (Text) -> Parser[Token, Text]
@@ -113,7 +113,7 @@ def parse(tokens):
 
     def n(s):
         # type: (Text) -> Parser[Token, Text]
-        return a(Token('Name', s)) >> tok_val
+        return a(Token("Name", s)) >> tok_val
 
     def make_array(values):
         # type: (Optional[Tuple[object, List[object]]]) -> List[Any]
@@ -137,21 +137,21 @@ def parse(tokens):
         # type: (Text) -> Text
         std = {
             '"': '"',
-            '\\': '\\',
-            '/': '/',
-            'b': '\b',
-            'f': '\f',
-            'n': '\n',
-            'r': '\r',
-            't': '\t',
+            "\\": "\\",
+            "/": "/",
+            "b": "\b",
+            "f": "\f",
+            "n": "\n",
+            "r": "\r",
+            "t": "\t",
         }
 
         def sub(m):
             # type: (Match[Text]) -> Text
-            if m.group('standard') is not None:  # noqa
-                return std[m.group('standard')]  # noqa
+            if m.group("standard") is not None:  # noqa
+                return std[m.group("standard")]  # noqa
             else:
-                return six.unichr(int(m.group('unicode'), 16))  # noqa
+                return six.unichr(int(m.group("unicode"), 16))  # noqa
 
         return re_esc.sub(sub, s)
 
@@ -159,18 +159,18 @@ def parse(tokens):
         # type: (Text) -> Text
         return unescape(s[1:-1])
 
-    null = n('null') >> const(None)
-    true = n('true') >> const(True)
-    false = n('false') >> const(False)
-    number = tok_type('Number') >> make_number
-    string = tok_type('String') >> make_string
+    null = n("null") >> const(None)
+    true = n("true") >> const(True)
+    false = n("false") >> const(False)
+    number = tok_type("Number") >> make_number
+    string = tok_type("String") >> make_string
     value = forward_decl()
-    member = string + op_(':') + value >> tuple
+    member = string + op_(":") + value >> tuple
     json_object = (
-        op_('{') + maybe(member + many(op_(',') + member)) + op_('}') >> make_object
+        op_("{") + maybe(member + many(op_(",") + member)) + op_("}") >> make_object
     )
     json_array = (
-        op_('[') + maybe(value + many(op_(',') + value)) + op_(']') >> make_array
+        op_("[") + maybe(value + many(op_(",") + value)) + op_("]") >> make_array
     )
     value.define(null | true | false | json_object | json_array | number | string)
     json_text = json_object | json_array
@@ -188,15 +188,15 @@ def main():
     # type: () -> None
     logging.basicConfig(level=logging.DEBUG)
     try:
-        stdin = os.fdopen(sys.stdin.fileno(), 'rb')
+        stdin = os.fdopen(sys.stdin.fileno(), "rb")
         text = stdin.read().decode(ENCODING)
         tree = loads(text)
         print(pformat(tree))
     except (NoParseError, LexerError) as e:
-        msg = ('syntax error: %s' % e).encode(ENCODING)
+        msg = ("syntax error: %s" % e).encode(ENCODING)
         print(msg, file=sys.stderr)
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

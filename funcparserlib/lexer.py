@@ -23,7 +23,7 @@
 
 from __future__ import unicode_literals
 
-__all__ = ['make_tokenizer', 'Token', 'LexerError']
+__all__ = ["make_tokenizer", "Token", "LexerError"]
 
 import re
 
@@ -34,7 +34,7 @@ class LexerError(Exception):
         self.msg = msg
 
     def __str__(self):
-        s = 'cannot tokenize data'
+        s = "cannot tokenize data"
         line, pos = self.place
         return '%s: %d,%d: "%s"' % (s, line, pos, self.msg)
 
@@ -47,7 +47,7 @@ class Token(object):
         self.end = end
 
     def __repr__(self):
-        return 'Token(%r, %r)' % (self.type, self.value)
+        return "Token(%r, %r)" % (self.type, self.value)
 
     def __eq__(self, other):
         # FIXME: Case sensitivity is assumed here
@@ -55,11 +55,11 @@ class Token(object):
 
     def _pos_str(self):
         if self.start is None or self.end is None:
-            return ''
+            return ""
         else:
             sl, sp = self.start
             el, ep = self.end
-            return '%d,%d-%d,%d:' % (sl, sp, el, ep)
+            return "%d,%d-%d,%d:" % (sl, sp, el, ep)
 
     def __str__(self):
         s = "%s %s '%s'" % (self._pos_str(), self.type, self.value)
@@ -92,12 +92,12 @@ def make_tokenizer(specs):
             m = regexp.match(s, i)
             if m is not None:
                 value = m.group()
-                nls = value.count('\n')
+                nls = value.count("\n")
                 n_line = line + nls
                 if nls == 0:
                     n_pos = pos + len(value)
                 else:
-                    n_pos = len(value) - value.rfind('\n') - 1
+                    n_pos = len(value) - value.rfind("\n") - 1
                 return Token(type, value, (line, pos + 1), (n_line, n_pos))
         else:
             errline = s.splitlines()[line - 1]
@@ -121,18 +121,18 @@ def make_tokenizer(specs):
 #
 #   [1]: http://ostermiller.org/findcomment.html
 _example_token_specs = [
-    ('COMMENT', (r'\(\*(.|[\r\n])*?\*\)', re.MULTILINE)),
-    ('COMMENT', (r'\{(.|[\r\n])*?\}', re.MULTILINE)),
-    ('COMMENT', (r'//.*',)),
-    ('NL', (r'[\r\n]+',)),
-    ('SPACE', (r'[ \t\r\n]+',)),
-    ('NAME', (r'[A-Za-z_][A-Za-z_0-9]*',)),
-    ('REAL', (r'[0-9]+\.[0-9]*([Ee][+\-]?[0-9]+)*',)),
-    ('INT', (r'[0-9]+',)),
-    ('INT', (r'\$[0-9A-Fa-f]+',)),
-    ('OP', (r'(\.\.)|(<>)|(<=)|(>=)|(:=)|[;,=\(\):\[\]\.+\-<>\*/@\^]',)),
-    ('STRING', (r"'([^']|(''))*'",)),
-    ('CHAR', (r'#[0-9]+',)),
-    ('CHAR', (r'#\$[0-9A-Fa-f]+',)),
+    ("COMMENT", (r"\(\*(.|[\r\n])*?\*\)", re.MULTILINE)),
+    ("COMMENT", (r"\{(.|[\r\n])*?\}", re.MULTILINE)),
+    ("COMMENT", (r"//.*",)),
+    ("NL", (r"[\r\n]+",)),
+    ("SPACE", (r"[ \t\r\n]+",)),
+    ("NAME", (r"[A-Za-z_][A-Za-z_0-9]*",)),
+    ("REAL", (r"[0-9]+\.[0-9]*([Ee][+\-]?[0-9]+)*",)),
+    ("INT", (r"[0-9]+",)),
+    ("INT", (r"\$[0-9A-Fa-f]+",)),
+    ("OP", (r"(\.\.)|(<>)|(<=)|(>=)|(:=)|[;,=\(\):\[\]\.+\-<>\*/@\^]",)),
+    ("STRING", (r"'([^']|(''))*'",)),
+    ("CHAR", (r"#[0-9]+",)),
+    ("CHAR", (r"#\$[0-9A-Fa-f]+",)),
 ]
 # tokenize = make_tokenizer(_example_token_specs)

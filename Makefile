@@ -1,4 +1,4 @@
-.PHONY: default install test doctest unittest clean poetry-install tox
+.PHONY: default install test doctest unittest clean poetry-install tox mypy
 
 default: poetry-install
 	poetry build
@@ -16,6 +16,9 @@ unittest: poetry-install
 
 tox:
 	poetry run tox
+
+mypy:
+	poetry run mypy tests
 
 clean:
 	rm -fr build dist *.egg-info .tox

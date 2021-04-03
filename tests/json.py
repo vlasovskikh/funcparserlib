@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-r"""A JSON parser using funcparserlib.
+"""A JSON parser using funcparserlib.
 
 The parser is based on [the JSON grammar][1].
 
@@ -9,18 +9,23 @@ The parser is based on [the JSON grammar][1].
 
 from __future__ import print_function, unicode_literals
 
-import sys
+import logging
 import os
 import re
-import logging
-import six
-from re import VERBOSE
+import sys
 from pprint import pformat
+from re import VERBOSE
+from typing import (List, Sequence, Optional, Tuple, Any, Dict, Match, TypeVar,
+                    Callable, Text)
+
+import six
+
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
 from funcparserlib.parser import (some, a, maybe, many, finished, skip,
-                                  forward_decl, NoParseError)
+                                  forward_decl, NoParseError, Parser)
 
 ENCODING = 'UTF-8'
+# noinspection SpellCheckingInspection
 regexps = {
     'escaped': r'''
         \\                                  # Escape
@@ -32,10 +37,11 @@ regexps = {
         ''',
 }
 re_esc = re.compile(regexps['escaped'], VERBOSE)
+T = TypeVar('T')  # noqa
 
 
-def tokenize(str):
-    """str -> Sequence(Token)"""
+def tokenize(s):
+    # type: (Text) -> List[Token]
     specs = [
         ('Space', (r'[ \t\r\n]+',)),
         ('String', (r'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
@@ -50,63 +56,91 @@ def tokenize(str):
     ]
     useless = ['Space']
     t = make_tokenizer(specs)
-    return [x for x in t(str) if x.type not in useless]
+    return [x for x in t(s) if x.type not in useless]
 
 
-def parse(seq):
-    """Sequence(Token) -> object"""
-    const = lambda x: lambda _: x
-    tokval = lambda x: x.value
-    toktype = lambda t: some(lambda x: x.type == t) >> tokval
-    op = lambda s: a(Token('Op', s)) >> tokval
-    op_ = lambda s: skip(op(s))
-    n = lambda s: a(Token('Name', s)) >> tokval
+def parse(tokens):
+    # type: (Sequence[Token]) -> object
 
-    def make_array(n):
-        if n is None:
+    def const(x):
+        # type: (T) -> Callable[[Any], T]
+        return lambda _: x
+
+    def tok_val(t):
+        # type: (Token) -> Text
+        return t.value
+
+    def tok_type(name):
+        # type: (Text) -> Parser[Token, Text]
+        def is_type(t):
+            # type: (Token) -> bool
+            return t.type == name
+
+        return some(is_type) >> tok_val
+
+    def op(s):
+        # type: (Text) -> Parser[Token, Text]
+        return a(Token('Op', s)) >> tok_val
+
+    def op_(s):
+        # type: (Text) -> Parser[Token, Text]
+        return skip(op(s))
+
+    def n(s):
+        # type: (Text) -> Parser[Token, Text]
+        return a(Token('Name', s)) >> tok_val
+
+    def make_array(values):
+        # type: (Optional[Tuple[object, List[object]]]) -> List[Any]
+        if values is None:
             return []
         else:
-            return [n[0]] + n[1]
+            return [values[0]] + values[1]
 
-    def make_object(n):
-        return dict(make_array(n))
+    def make_object(values):
+        # type: (Optional[Tuple[object, List[object]]]) -> Dict[Any, Any]
+        return dict(make_array(values))
 
-    def make_number(n):
+    def make_number(s):
+        # type: (Text) -> float
         try:
-            return int(n)
+            return int(s)
         except ValueError:
-            return float(n)
+            return float(s)
 
     def unescape(s):
+        # type: (Text) -> Text
         std = {
             '"': '"', '\\': '\\', '/': '/', 'b': '\b', 'f': '\f',
             'n': '\n', 'r': '\r', 't': '\t',
         }
 
         def sub(m):
-            if m.group('standard') is not None:
-                return std[m.group('standard')]
+            # type: (Match[Text]) -> Text
+            if m.group('standard') is not None: # noqa
+                return std[m.group('standard')] # noqa
             else:
-                return six.unichr(int(m.group('unicode'), 16))
+                return six.unichr(int(m.group('unicode'), 16))  # noqa
 
         return re_esc.sub(sub, s)
 
-    def make_string(n):
-        return unescape(n[1:-1])
+    def make_string(s):
+        # type: (Text) -> Text
+        return unescape(s[1:-1])
 
     null = n('null') >> const(None)
     true = n('true') >> const(True)
     false = n('false') >> const(False)
-    number = toktype('Number') >> make_number
-    string = toktype('String') >> make_string
+    number = tok_type('Number') >> make_number
+    string = tok_type('String') >> make_string
     value = forward_decl()
     member = string + op_(':') + value >> tuple
-    object = (
+    json_object = (
         op_('{') +
         maybe(member + many(op_(',') + member)) +
         op_('}')
         >> make_object)
-    array = (
+    json_array = (
         op_('[') +
         maybe(value + many(op_(',') + value)) +
         op_(']')
@@ -115,27 +149,28 @@ def parse(seq):
         null
         | true
         | false
-        | object
-        | array
+        | json_object
+        | json_array
         | number
         | string)
-    json_text = object | array
+    json_text = json_object | json_array
     json_file = json_text + skip(finished)
 
-    return json_file.parse(seq)
+    return json_file.parse(tokens)
 
 
 def loads(s):
-    """str -> object"""
+    # type: (Text) -> Any
     return parse(tokenize(s))
 
 
 def main():
+    # type: () -> None
     logging.basicConfig(level=logging.DEBUG)
     try:
         stdin = os.fdopen(sys.stdin.fileno(), 'rb')
-        input = stdin.read().decode(ENCODING)
-        tree = loads(input)
+        text = stdin.read().decode(ENCODING)
+        tree = loads(text)
         print(pformat(tree))
     except (NoParseError, LexerError) as e:
         msg = ('syntax error: %s' % e).encode(ENCODING)

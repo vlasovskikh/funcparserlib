@@ -3,6 +3,8 @@
 from __future__ import unicode_literals
 
 import unittest
+from typing import Text, Optional
+
 from funcparserlib.parser import NoParseError
 from funcparserlib.lexer import LexerError
 from . import json
@@ -10,27 +12,36 @@ from . import json
 
 class JsonTest(unittest.TestCase):
     def t(self, data, expected=None):
+        # type: (Text, Optional[object]) -> None
         self.assertEqual(json.loads(data), expected)
 
     def test_1_array(self):
+        # type: () -> None
         self.t('[1]', [1])
 
     def test_1_object(self):
+        # type: () -> None
         self.t('{"foo": "bar"}', {'foo': 'bar'})
 
     def test_bool_and_null(self):
+        # type: () -> None
         self.t('[null, true, false]', [None, True, False])
 
     def test_empty_array(self):
+        # type: () -> None
         self.t('[]', [])
 
     def test_empty_object(self):
+        # type: () -> None
         self.t('{}', {})
 
     def test_many_array(self):
+        # type: () -> None
         self.t('[1, 2, [3, 4, 5], 6]', [1, 2, [3, 4, 5], 6])
 
     def test_many_object(self):
+        # type: () -> None
+        # noinspection SpellCheckingInspection
         self.t('''
             {
                 "foo": 1,
@@ -53,6 +64,7 @@ class JsonTest(unittest.TestCase):
         })
 
     def test_null(self):
+        # type: () -> None
         try:
             self.t('')
         except NoParseError:
@@ -61,6 +73,7 @@ class JsonTest(unittest.TestCase):
             self.fail('must raise NoParseError')
 
     def test_numbers(self):
+        # type: () -> None
         self.t('''\
             [
                 0, 1, -1, 14, -14, 65536,
@@ -74,6 +87,8 @@ class JsonTest(unittest.TestCase):
         ])
 
     def test_strings(self):
+        # type: () -> None
+        # noinspection SpellCheckingInspection
         self.t(r'''
             [
                 ["", "hello", "hello world!"],
@@ -91,6 +106,7 @@ class JsonTest(unittest.TestCase):
         ])
 
     def test_toplevel_string(self):
+        # type: () -> None
         try:
             self.t('неправильно')
         except LexerError:

@@ -24,6 +24,8 @@ python = "~2.7 || ^3.6"
 
 [tool.poetry.dev-dependencies]
 six = "^1.15.0"
+typing = {version = "^3.7.4", python = "~2.7"}
+mypy = {version = "^0.812", python = "^3.6"}
 tox = "^3.23.0"
 
 [build-system]

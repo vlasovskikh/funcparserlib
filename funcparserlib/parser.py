@@ -65,7 +65,7 @@ from __future__ import unicode_literals
 
 __all__ = [
     'some', 'a', 'many', 'pure', 'finished', 'maybe', 'skip', 'oneplus',
-    'forward_decl', 'NoParseError',
+    'forward_decl', 'NoParseError', 'Parser',
 ]
 
 import logging

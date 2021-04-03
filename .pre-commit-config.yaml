@@ -5,3 +5,12 @@ repos:
       - id: mypy
         args: []
         files: "^tests/"
+  - repo: local
+    hooks:
+      - id: unittest
+        name: unittest
+        entry: poetry run python -m unittest discover
+        language: system
+        types:
+          - python
+        pass_filenames: false

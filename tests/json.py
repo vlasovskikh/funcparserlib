@@ -45,6 +45,7 @@ from typing import (
     TypeVar,
     Callable,
     Text,
+    Union,
 )
 
 import six
@@ -56,7 +57,6 @@ from funcparserlib.parser import (
     maybe,
     many,
     finished,
-    skip,
     forward_decl,
     NoParseError,
     Parser,
@@ -76,6 +76,8 @@ regexps = {
 }
 re_esc = re.compile(regexps["escaped"], VERBOSE)
 T = TypeVar("T")  # noqa
+JsonValue = Union[None, bool, dict, list, int, float, str]
+JsonMember = Tuple[str, JsonValue]
 
 
 def tokenize(s):
@@ -126,24 +128,27 @@ def parse(tokens):
         # type: (Text) -> Parser[Token, Text]
         return a(Token("Op", s)) >> tok_val
 
-    def op_(s):
-        # type: (Text) -> Parser[Token, Text]
-        return skip(op(s))
-
     def n(s):
         # type: (Text) -> Parser[Token, Text]
         return a(Token("Name", s)) >> tok_val
 
     def make_array(values):
-        # type: (Optional[Tuple[object, List[object]]]) -> List[Any]
+        # type: (Optional[Tuple[JsonValue, List[JsonValue]]]) -> List[Any]
         if values is None:
             return []
         else:
             return [values[0]] + values[1]
 
     def make_object(values):
-        # type: (Optional[Tuple[object, List[object]]]) -> Dict[Any, Any]
-        return dict(make_array(values))
+        # type: (Optional[Tuple[JsonMember, List[JsonMember]]]) -> Dict[str, Any]
+        if values is None:
+            return {}
+        else:
+            first, rest = values
+            k, v = first
+            d = {k: v}
+            d.update(rest)
+            return d
 
     def make_number(s):
         # type: (Text) -> float
@@ -178,22 +183,27 @@ def parse(tokens):
         # type: (Text) -> Text
         return unescape(s[1:-1])
 
+    def make_member(values):
+        # type: (JsonMember) -> JsonMember
+        k, v = values
+        return k, v
+
     null = n("null") >> const(None)
     true = n("true") >> const(True)
     false = n("false") >> const(False)
     number = tok_type("Number") >> make_number
     string = tok_type("String") >> make_string
-    value = forward_decl()
-    member = string + op_(":") + value >> tuple
+    value = forward_decl()  # type: Parser[Token, JsonValue]
+    member = string + -op(":") + value >> make_member
     json_object = (
-        op_("{") + maybe(member + many(op_(",") + member)) + op_("}") >> make_object
-    )
+        -op("{") + maybe(member + many(-op(",") + member)) + -op("}")
+    ) >> make_object
     json_array = (
-        op_("[") + maybe(value + many(op_(",") + value)) + op_("]") >> make_array
-    )
+        -op("[") + maybe(value + many(-op(",") + value)) + -op("]")
+    ) >> make_array
     value.define(null | true | false | json_object | json_array | number | string)
     json_text = json_object | json_array
-    json_file = json_text + skip(finished)
+    json_file = json_text + -finished
 
     return json_file.parse(tokens)
 

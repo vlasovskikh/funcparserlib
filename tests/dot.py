@@ -49,7 +49,6 @@ from funcparserlib.parser import (
     maybe,
     many,
     finished,
-    skip,
     oneplus,
     forward_decl,
     NoParseError,
@@ -66,7 +65,7 @@ Attr = namedtuple("Attr", "name value")
 Edge = namedtuple("Edge", "nodes attrs")
 DefAttrs = namedtuple("DefAttrs", "object attrs")
 
-_A = TypeVar("_A")  # noqa
+T = TypeVar("T")  # noqa
 
 
 def tokenize(s):
@@ -90,7 +89,7 @@ def parse(tokens):
     # type: (Sequence[Token]) -> Graph
 
     def un_arg(f):
-        # type: (Callable[..., _A]) -> Callable[[tuple], _A]
+        # type: (Callable[..., T]) -> Callable[[tuple], T]
         return lambda args: f(*args)
 
     def tok_val(t):
@@ -98,7 +97,7 @@ def parse(tokens):
         return t.value
 
     def flatten(xs):
-        # type: (List[List[_A]]) -> List[_A]
+        # type: (List[List[Attr]]) -> List[Attr]
         return sum(xs, [])
 
     def is_id_type(t):
@@ -113,10 +112,6 @@ def parse(tokens):
         # type: (Text) -> Parser[Token, Text]
         return a(Token("Op", s)) >> tok_val
 
-    def op_(s):
-        # type: (Text) -> Parser[Token, Text]
-        return skip(op(s))
-
     dot_id = some(is_id_type).named("id") >> tok_val
 
     def make_graph_attr(args):
@@ -128,28 +123,25 @@ def parse(tokens):
         return Edge([node] + xs, attrs)
 
     node_id = dot_id  # + maybe(port)
-    a_list = dot_id + maybe(op_("=") + dot_id) + skip(maybe(op(","))) >> un_arg(Attr)
-    attr_list = many(op_("[") + many(a_list) + op_("]")) >> flatten
+    a_list = dot_id + maybe(-op("=") + dot_id) + -maybe(op(",")) >> un_arg(Attr)
+    attr_list = many(-op("[") + many(a_list) + -op("]")) >> flatten
     attr_stmt = (n("graph") | n("node") | n("edge")) + attr_list >> un_arg(DefAttrs)
-    graph_attr = dot_id + op_("=") + dot_id >> make_graph_attr
+    graph_attr = dot_id + -op("=") + dot_id >> make_graph_attr
     node_stmt = node_id + attr_list >> un_arg(Node)
     # We use a forward_decl because of circular definitions like
     # (stmt_list -> stmt -> subgraph -> stmt_list)
-    subgraph = forward_decl()
-    edge_rhs = skip(op("->") | op("--")) + (subgraph | node_id)
+    subgraph = forward_decl()  # type: Parser[Token, SubGraph]
+    edge_rhs = -(op("->") | op("--")) + (subgraph | node_id)
     edge_stmt = (subgraph | node_id) + oneplus(edge_rhs) + attr_list >> un_arg(
         make_edge
     )
     stmt = attr_stmt | edge_stmt | subgraph | graph_attr | node_stmt
-    stmt_list = many(stmt + skip(maybe(op(";"))))
-    subgraph.define(
-        skip(n("subgraph")) + maybe(dot_id) + op_("{") + stmt_list + op_("}")
-        >> un_arg(SubGraph)
-    )
-    graph = maybe(n("strict")) + maybe(n("graph") | n("digraph")) + maybe(dot_id) + op_(
-        "{"
-    ) + stmt_list + op_("}") >> un_arg(Graph)
-    dotfile = graph + skip(finished)
+    stmt_list = many(stmt + -maybe(op(";")))
+    graph_body = -op("{") + stmt_list + -op("}")
+    subgraph.define(-n("subgraph") + maybe(dot_id) + graph_body >> un_arg(SubGraph))
+    graph_modifiers = maybe(n("strict")) + maybe(n("graph") | n("digraph"))
+    graph = graph_modifiers + maybe(dot_id) + graph_body >> un_arg(Graph)
+    dotfile = graph + -finished
 
     return dotfile.parse(tokens)
 

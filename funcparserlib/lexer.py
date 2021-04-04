@@ -77,12 +77,7 @@ class Token(object):
 
 def make_tokenizer(specs):
     """[(str, (str, int?))] -> (str -> Iterable(Token))"""
-
-    def compile_spec(spec):
-        name, args = spec
-        return name, re.compile(*args)
-
-    compiled = [compile_spec(s) for s in specs]
+    compiled = [(name, re.compile(*args)) for name, args in specs]
 
     def match_specs(s, i, position):
         line, pos = position

@@ -13,6 +13,7 @@ The stable release that freezes the API of funcparserlib 0.3.6 which was release
   ([#63](https://github.com/vlasovskikh/funcparserlib/pull/63))
   (Thanks to [@pkulev](https://github.com/pkulev))
 * Added support for Python 3.8
+* Added type hints for the public API
 
 ### Changed
 

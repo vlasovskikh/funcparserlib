@@ -42,8 +42,8 @@ def pretty_tree(x, kids, show):
                 next_indent = indent + ROOT
             else:
                 next_indent = indent + LAST
-            syms = [MID] * (len(obj_kids) - 1) + [END]
-            lines = [rec(kid, next_indent, sym) for kid, sym in zip(obj_kids, syms)]
+            chars = [MID] * (len(obj_kids) - 1) + [END]
+            lines = [rec(kid, next_indent, sym) for kid, sym in zip(obj_kids, chars)]
             return "\n".join([line] + lines)
 
     return rec(x, "", ROOT)

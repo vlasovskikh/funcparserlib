@@ -3,11 +3,22 @@
 from __future__ import unicode_literals
 
 import unittest
-from typing import Text
+from typing import Text, Optional, Tuple
 
 import six
+
 from funcparserlib.lexer import make_tokenizer, LexerError, Token
-from funcparserlib.parser import a, many, some, skip, NoParseError, oneplus, Parser
+from funcparserlib.parser import (
+    a,
+    many,
+    some,
+    skip,
+    NoParseError,
+    oneplus,
+    Parser,
+    maybe,
+    _Ignored,  # noqa
+)
 
 
 class ParsingTest(unittest.TestCase):
@@ -60,12 +71,17 @@ class ParsingTest(unittest.TestCase):
             # type: (Text) -> Parser[Token, Token]
             return a(Token("keyword", s))
 
+        def make_equality(values):
+            # type: (Tuple[Token, Token]) -> Tuple[Token, Token]
+            v1, v2 = values
+            return v1, v2
+
         tok_id = some_tok("id")
         is_ = keyword("is")
         end = keyword("end")
         nl = some_tok("nl")
 
-        equality = tok_id + skip(is_) + tok_id >> tuple
+        equality = tok_id + skip(is_) + tok_id >> make_equality
         expr = equality + skip(nl)
         file = many(expr) + end
 
@@ -87,3 +103,98 @@ end"""
             self.assertEqual((t.start, t.end), ((2, 11), (2, 14)))
         else:
             self.fail("must raise NoParseError")
+
+    def test_ok_ignored(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = -x + y  # type: Parser[Text, Text]
+        self.assertEqual(expr.parse("xy"), "y")
+
+    def test_ignored_ok(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = x + -y  # type: Parser[Text, Text]
+        self.assertEqual(expr.parse("xy"), "x")
+
+    def test_ignored_ok_ok(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = -x + y + x  # type: Parser[Text, Tuple[Text, Text]]
+        self.assertEqual(expr.parse("xyx"), ("y", "x"))
+
+    def test_ok_ignored_ok(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = x + -y + x  # type: Parser[Text, Tuple[Text, Text]]
+        self.assertEqual(expr.parse("xyx"), ("x", "x"))
+
+    def test_ok_ok_ok(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = x + y + x  # type: Parser[Text, Tuple[Text, Text, Text]]
+        self.assertEqual(expr.parse("xyx"), ("x", "y", "x"))
+
+    def test_ok_ok_ignored(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = x + y + -x  # type: Parser[Text, Tuple[Text, Text]]
+        self.assertEqual(expr.parse("xyx"), ("x", "y"))
+
+    def test_ignored_ignored_ok(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = -x + -x + y  # type: Parser[Text, Text]
+        self.assertEqual(expr.parse("xxy"), "y")
+
+    def test_ok_ignored_ignored(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = x + -y + -y  # type: Parser[Text, Text]
+        self.assertEqual(expr.parse("xyy"), "x")
+
+    def test_ignored_ignored(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = -x + -y  # type: Parser[Text, _Ignored]
+        self.assertEqual(expr.parse("xy"), _Ignored("y"))
+
+    def test_ignored_ignored_ignored(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        z = a("z")
+        expr = -x + -y + -z  # type: Parser[Text, _Ignored]
+        self.assertEqual(expr.parse("xyz"), _Ignored("z"))
+
+    def test_ignored_maybe(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = -maybe(x) + y  # type: Parser[Text, Text]
+        self.assertEqual(expr.parse("xy"), "y")
+        self.assertEqual(expr.parse("y"), "y")
+
+    def test_maybe_ignored(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = maybe(-x) + y  # type: Parser[Text, Tuple[Optional[_Ignored], Text]]
+        self.assertEqual(expr.parse("xy"), (_Ignored("x"), "y"))
+        self.assertEqual(expr.parse("y"), (None, "y"))
+
+    def test_ignored_maybe_ignored(self):
+        # type: () -> None
+        x = a("x")
+        y = a("y")
+        expr = -x + maybe(y) + -x  # type: Parser[Text, Optional[Text]]
+        self.assertEqual(expr.parse("xyx"), "y")
+        self.assertEqual(expr.parse("xx"), None)

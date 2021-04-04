@@ -68,6 +68,10 @@ Parser Combinators
     rendering:
         heading_level: 3
 
+::: funcparserlib.parser.Parser.__neg__
+    rendering:
+        heading_level: 3
+
 ::: funcparserlib.parser.Parser.__or__
     rendering:
         heading_level: 3

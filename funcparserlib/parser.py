@@ -34,7 +34,8 @@ The structure of the language:
 * Primitive parsers
     * `a(value)`, `some(pred)`, `forward_decl()`, `finished`
 * Parser combinators
-    * `p1 + p2`, `p1 | p2`, `p >> f`, `maybe(p)`, `many(p)`, `oneplus(p)`, `skip(p)`
+    * `p1 + p2`, `p1 | p2`, `p >> f`, `-p`, `maybe(p)`, `many(p)`, `oneplus(p)`,
+      `skip(p)`
 * Abstraction
     * Use regular Python variables `p = ...  # Expression of type Parser` to define new
       rules (non-terminals) of your grammar
@@ -105,6 +106,8 @@ class Parser(object):
     def named(self, name):
         # noinspection GrazieInspection
         """Specify the name of the parser for easier debugging.
+
+        Type: `(str) -> Parser[A, B]`
 
         This name is used in the debug-level parsing log. You can also get it via the
         `Parser.name` attribute.
@@ -216,7 +219,26 @@ class Parser(object):
         """Sequential combination of parsers. It runs this parser, then the other
         parser.
 
-        Type: `(Parser[A, Any]) -> Parser[A, Any]`
+        The return value of the resulting parser is a tuple of each parsed value in
+        the sum of parsers. We merge all parsing results of `p1 + p2 + ... + pN` into a
+        single tuple. It means that the parsing result may be a 2-tuple, a 3-tuple,
+        a 4-tuple, etc. of parsed values. You avoid this by transforming the parsed
+        pair into a new value using the `>>` combinator.
+
+        You can also skip some parsing results in the resulting parsers by using `-p`
+        or `skip(p)` for some parsers in your sum of parsers. It means that the parsing
+        result might be a single value, not a tuple of parsed values. See the docs
+        for `Parser.__neg__()` for more examples.
+
+        Overloaded types (lots of them to provide stricter checking for the quite
+        dynamic return type of this method):
+
+        * `(self: Parser[A, B], _IgnoredParser[A]) -> Parser[A, B]`
+        * `(self: Parser[A, B], Parser[A, C]) -> _TupleParser[A, Tuple[B, C]]`
+        * `(self: _TupleParser[A, B], _IgnoredParser[A]) -> _TupleParser[A, B]`
+        * `(self: _TupleParser[A, B], Parser[A, Any]) -> Parser[A, Any]`
+        * `(self: _IgnoredParser[A], _IgnoredParser[A]) -> _IgnoredParser[A]`
+        * `(self: _IgnoredParser[A], Parser[A, C]) -> Parser[A, C]`
 
         Examples:
 
@@ -242,35 +264,30 @@ class Parser(object):
         parser.NoParseError: got unexpected token: z
 
         ```
-
-        Note:
-            Here we use dynamic typing for ignoring the tokens that you want to
-            `skip()`. Also, we merge all parsing results into a single tuple unless you
-            transform the parsed pair into a new value using the `>>` combinator.
         """
 
         def magic(v1, v2):
-            vs = [v for v in [v1, v2] if not isinstance(v, _Ignored)]
-            if len(vs) == 1:
-                return vs[0]
-            elif len(vs) == 2:
-                if isinstance(vs[0], _Tuple):
-                    return _Tuple(v1 + (v2,))
-                else:
-                    return _Tuple(vs)
+            if isinstance(v1, _Tuple):
+                return _Tuple(v1 + (v2,))
             else:
-                return _Ignored(())
+                return _Tuple((v1, v2))
 
-        @Parser
+        @_TupleParser
         def _add(tokens, s):
             (v1, s2) = self.run(tokens, s)
             (v2, s3) = other.run(tokens, s2)
             return magic(v1, v2), s3
 
-        # or in terms of bind and pure:
-        # _add = self.bind(lambda x: other.bind(lambda y: pure(magic(x, y))))
-        _add.name = "(%s , %s)" % (self.name, other.name)
-        return _add
+        @Parser
+        def ignored_right(tokens, s):
+            v, s2 = self.run(tokens, s)
+            _, s3 = other.run(tokens, s2)
+            return v, s3
+
+        if isinstance(other, _IgnoredParser):
+            return ignored_right.named("(%s , -%s)" % (self.name, other.name))
+        else:
+            return _add.named("(%s , %s)" % (self.name, other.name))
 
     def __or__(self, other):
         """Choice combination of parsers.
@@ -331,8 +348,6 @@ class Parser(object):
             (v, s2) = self.run(tokens, s)
             return f(v), s2
 
-        # or in terms of bind and pure:
-        # _shift = self.bind(lambda x: pure(f(x)))
         _shift.name = "(%s)" % (self.name,)
         return _shift
 
@@ -355,6 +370,71 @@ class Parser(object):
 
         _bind.name = "(%s >>=)" % (self.name,)
         return _bind
+
+    def __neg__(self):
+        """Return a parser that parses the same tokens, but its parsing result is
+        ignored by the sequential `+` combinator.
+
+        Type: `(Parser[A, B]) -> _IgnoredParser[A]`
+
+        You can use it for throwing away elements of concrete syntax (e.g. `","`,
+        `";"`).
+
+        Examples:
+
+        ```pycon
+        >>> expr = -a("x") + a("y")
+        >>> expr.parse("xy")
+        'y'
+
+        ```
+
+        ```pycon
+        >>> expr = a("x") + -a("y")
+        >>> expr.parse("xy")
+        'x'
+
+        ```
+
+        ```pycon
+        >>> expr = a("x") + -a("y") + a("z")
+        >>> expr.parse("xyz")
+        ('x', 'z')
+
+        ```
+
+        ```pycon
+        >>> expr = -a("x") + a("y") + -a("z")
+        >>> expr.parse("xyz")
+        'y'
+
+        ```
+
+        ```pycon
+        >>> expr = -a("x") + a("y")
+        >>> expr.parse("yz")
+        Traceback (most recent call last):
+            ...
+        parser.NoParseError: got unexpected token: y
+
+        ```
+
+        ```pycon
+        >>> expr = a("x") + -a("y")
+        >>> expr.parse("xz")
+        Traceback (most recent call last):
+            ...
+        parser.NoParseError: got unexpected token: z
+
+        ```
+
+        Note:
+            You **should not** pass the resulting parser to any combinators other than
+            `+`. You **should** have at least one non-skipped value in your
+            `p1 + p2 + ... + pN`. The parsed value of `-p` is an **internal** `_Ignored`
+            object, not intended for actual use.
+        """
+        return _IgnoredParser(self)
 
 
 class State(object):
@@ -388,12 +468,19 @@ class _Tuple(tuple):
     pass
 
 
+class _TupleParser(Parser):
+    pass
+
+
 class _Ignored(object):
     def __init__(self, value):
         self.value = value
 
     def __repr__(self):
         return "_Ignored(%s)" % repr(self.value)
+
+    def __eq__(self, other):
+        return isinstance(other, _Ignored) and self.value == other.value
 
 
 @Parser
@@ -449,6 +536,8 @@ def many(p):
 
 def some(pred):
     """Return a parser that parses a token if it satisfies the predicate `pred`.
+
+    Type: `(Callable[[A], bool]) -> Parser[A, A]`
 
     Examples:
 
@@ -553,48 +642,36 @@ def maybe(p):
 
 
 def skip(p):
-    """Return a parser based on the parser `p`, which results are ignored by the
-    sequential `+` combinator.
+    """An alias for `-p`.
 
-    You can use it for throwing away elements of concrete syntax (e.g. `","`, `";"`).
-
-    Examples:
-
-    ```pycon
-    >>> expr = skip(a("x")) + a("y")
-    >>> expr.parse("xy")
-    'y'
-
-    ```
-
-    ```pycon
-    >>> expr = a("x") + skip(a("y"))
-    >>> expr.parse("xy")
-    'x'
-
-    ```
-
-    ```pycon
-    >>> expr = a("x") + skip(a("y")) + a("z")
-    >>> expr.parse("xyz")
-    ('x', 'z')
-
-    ```
-
-    ```pycon
-    >>> expr = skip(a("x")) + a("y") + skip(a("z"))
-    >>> expr.parse("xyz")
-    'y'
-
-    ```
-
-    Note:
-        You **should not** pass the resulting parser to any combinators other than
-        `+`. You **should** have at least one non-skipped value in your
-        `p1 + p2 + ... pN`. The parsed value of `skip()` is an **internal** `_Ignored`
-        object, not intended for actual use.
+    See also the docs for `Parser.__neg__()`.
     """
-    return p >> _Ignored
+    return -p
+
+
+class _IgnoredParser(Parser):
+    def __init__(self, p):
+        super(_IgnoredParser, self).__init__(p)
+        run = self.run
+
+        def ignored(tokens, s):
+            v, s2 = run(tokens, s)
+            return v if isinstance(v, _Ignored) else _Ignored(v), s2
+
+        self.define(ignored)
+
+    def __add__(self, other):
+        def ignored_left(tokens, s):
+            _, s2 = self.run(tokens, s)
+            v, s3 = other.run(tokens, s2)
+            return v, s3
+
+        if isinstance(other, _IgnoredParser):
+            return _IgnoredParser(ignored_left).named(
+                "(-%s , -%s)" % (self.name, other.name)
+            )
+        else:
+            return Parser(ignored_left).named("(-%s , %s)" % (self.name, other.name))
 
 
 def oneplus(p):

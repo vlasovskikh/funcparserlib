@@ -23,9 +23,7 @@ from __future__ import unicode_literals
 
 
 def pretty_tree(x, kids, show):
-    """(a, (a -> list(a)), (a -> str)) -> str
-
-    Returns a pseudographic tree representation of x similar to the tree command
+    """Return a pseudo-graphic tree representation of `x` similar to the `tree` command
     in Unix.
     """
     (MID, END, CONT, LAST, ROOT) = ("|-- ", "`-- ", "|   ", "    ", "")

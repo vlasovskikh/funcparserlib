@@ -1,0 +1,59 @@
+site_name: funcparserlib
+repo_url: https://github.com/vlasovskikh/funcparserlib
+repo_name: vlasovskikh/funcparserlib
+nav:
+  - Home: index.md
+#  - Getting Started: getting-started.md
+#  - Examples:
+#      - Nested Brackets Language: examples/brackets.md
+#      - S-expressions Language: examples/s-exp.md
+#      - DOT Language:  examples/dot.md
+#      - JSON Language: examples/json.md
+  - API Reference:
+      - Overview: api/index.md
+      - Parser: api/parser.md
+      - Lexer: api/lexer.md
+      - Utilities: api/util.md
+  - Changelog: changes.md
+theme:
+  name: material
+  icon:
+    logo: fontawesome/solid/angle-double-right
+  features:
+    - navigation.expand
+    - navigation.tabs
+#    - toc.integrate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+extra_css:
+  - "media/extra.css"
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - admonition
+plugins:
+  - search
+  - mkdocstrings:
+      watch:
+        - funcparserlib
+      handlers:
+        python:
+          rendering:
+            show_root_toc_entry: false
+            show_root_heading: true
+            show_source: false
+          selection:
+            members: false

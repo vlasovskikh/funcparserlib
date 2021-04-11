@@ -4,7 +4,7 @@ The Changelog
 1.0.0 (to be released)
 ----------------------
 
-The stable release that freezes the API of funcparserlib 0.3.6 which was released on 
+The stable 1.0.0 release freezes the API of funcparserlib 0.3.6 which was released on
 2013-05-02.
 
 ### Added

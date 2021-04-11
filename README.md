@@ -109,7 +109,7 @@ There a couple of examples available in the tests/ directory:
 * [GraphViz DOT parser](tests/dot.py)
 * [JSON parser](tests/json.py)
 
-See also [the changelog](CHANGES.md) and [FAQ](doc/FAQ.md).
+See also [the changelog](docs/changes.md) and [FAQ](doc/FAQ.md).
 
 
 Performance and Code Size

@@ -19,42 +19,34 @@
 # CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-"""Recursive descent parser library based on functional combinators.
+"""Functional parsing combinators.
 
-Basic combinators are taken from the Harrison's book [Introduction to Functional
-Programming][1] and translated from ML into Python.
+Parsing combinators define an internal domain-specific language (DSL) for describing
+the parsing rules of a grammar. The DSL allows you to start with a few primitive
+parsers, then combine your parsers to get more complex ones, and finally cover
+the whole grammar you want to parse.
+
+The structure of the language:
+
+* Class `Parser`
+    * All the primitives and combinators of the language return `Parser` objects
+    * It defines the main `Parser.parse(tokens)` method
+* Primitive parsers
+    * `a(value)`, `some(pred)`, `forward_decl()`, `finished`
+* Parser combinators
+    * `p1 + p2`, `p1 | p2`, `p >> f`, `maybe(p)`, `many(p)`, `oneplus(p)`, `skip(p)`
+* Abstraction
+    * Use regular Python variables `p = ...  # Expression of type Parser` to define new
+      rules (non-terminals) of your grammar
+
+Every time you apply one of the combinators, you get a new `Parser` object. In other
+words, the set of `Parser` objects is closed under the means of combination.
+
+Note:
+    We took the parsing combinators language from the book [Introduction to Functional
+    Programming][1] and translated it from ML into Python.
 
   [1]: https://www.cl.cam.ac.uk/teaching/Lectures/funprog-jrh-1996/
-
-A parser is represented by a function of type:
-
-    def run(tokens: Sequence[A], s: State) -> Tuple[B, State]: ...
-
-that takes as its input a sequence of tokens of arbitrary type `A` and a current
-parsing state and returns a pair of the parsed value of arbitrary type `B` and the new
-parsing state.
-
-The parsing state includes the current position in the sequence being parsed, and the
-position of the rightmost token that has been consumed while parsing for better error
-messages.
-
-Parser functions are wrapped into objects of the class `Parser[A, B]`. This class
-implements custom operators `+` for sequential composition of parsers, `|` for choice
-composition, `>>` for transforming the result of parsing. The method `Parser.parse()`
-provides an easier way to parse tokens by hiding the details related to the parser
-state:
-
-    class Parser(Generic[A, B]):
-        def parse(self, tokens: Sequence[A]) -> B: ...
-
-Although this module is able to deal with sequences of any objects, the recommended
-way of using it is parsing `Sequence[Token]`. `Token` objects are produced by a
-regexp-based tokenizer defined in `funcparserlib.lexer`. By using it this way you get
-more readable parsing error messages (as `Token` objects contain their position in the
-source file) and good separation of lexical and syntactic levels of the grammar.
-See the examples in docs and tests for more info.
-
-Debug messages are emitted via a `logging.Logger` object named `"funcparserlib"`.
 """
 
 from __future__ import unicode_literals
@@ -82,7 +74,28 @@ debug = False
 
 
 class Parser(object):
-    """Wrapper for a parser function with several methods for composing parsers."""
+    """A parser object that can parse a sequence of tokens or can be combined with
+    other parsers using `+`, `|`, `>>`, `many()`, and other parsing combinators.
+
+    Type: `Parser[A, B]`
+
+    The generic variables in the type are: `A` — the type of the tokens in the
+    sequence to parse,`B` — the type of the parsed value.
+
+    In order to define a parser for your grammar:
+
+    1. You start with primitive parsers by calling `a(value)`, `some(pred)`,
+       `forward_decl()`, `finished`
+    2. You use parsing combinators `p1 + p2`, `p1 | p2`, `p >> f`, `many(p)`, and
+       others to combine parsers into a more complex parser
+    3. You can assign complex parsers to variables to define names that correspond to
+       the rules of your grammar
+
+    Note:
+        The constructor `Parser.__init__()` is considered **internal** and may be
+        changed in future versions. Use primitive parsers and parsing combinators to
+        construct new parsers.
+    """
 
     def __init__(self, p):
         """Wrap the parser function `p` into a `Parser` object."""
@@ -90,14 +103,52 @@ class Parser(object):
         self.define(p)
 
     def named(self, name):
-        """Specify the name of the parser for a more readable parsing log."""
+        # noinspection GrazieInspection
+        """Specify the name of the parser for easier debugging.
+
+        This name is used in the debug-level parsing log. You can also get it via the
+        `Parser.name` attribute.
+
+        Examples:
+
+        ```pycon
+        >>> expr = (a("x") + a("y")).named("expr")
+        >>> expr.name
+        'expr'
+
+        ```
+
+        ```pycon
+        >>> expr = a("x") + a("y")
+        >>> expr.name
+        '((a "x") , (a "y"))'
+
+        ```
+
+        Note:
+            You can enable the parsing log this way:
+
+            ```python
+            import logging
+            logging.basicConfig(level=logging.DEBUG)
+            import funcparserlib.parser
+            funcparserlib.parser.debug = True
+            ```
+
+            The way to enable the parsing log may be changed in future versions.
+        """
         self.name = name
         return self
 
     def define(self, p):
-        """Define a parser to be wrapped into this object.
+        """Define the parser created earlier as a forward declaration.
 
-        Should be used only with `forward_decl()` parsers to define them later.
+        Type: `(Parser[A, B]) -> None`
+
+        Use `p = forward_decl()` in combination with `p.define(...)` to define
+        recursive parsers.
+
+        See the examples in the docs for `forward_decl()`.
         """
         f = getattr(p, "run", p)
         if debug:
@@ -107,8 +158,21 @@ class Parser(object):
         self.named(getattr(p, "name", p.__doc__))
 
     def run(self, tokens, s):
-        """Run the parser function against the tokens using the specified parsing
-        state."""
+        """Run the parser against the tokens with the specified parsing state.
+
+        Type: `(Sequence[A], State) -> Tuple[B, State]`
+
+        The parsing state includes the current position in the sequence being parsed,
+        and the position of the rightmost token that has been consumed while parsing for
+        better error messages.
+
+        If the parser fails to parse the tokens, it raises `NoParseError`.
+
+        Warning:
+            This is method is **internal** and may be changed in future versions. Use
+            `Parser.parse(tokens)` instead and let the parser object take care of
+            updating the parsing state.
+        """
         if debug:
             log.debug("trying %s" % self.name)
         return self._run(tokens, s)  # noqa
@@ -119,9 +183,24 @@ class Parser(object):
     def parse(self, tokens):
         """Parse the sequence of tokens and return the parsed value.
 
-        It provides a way to invoke a parser with details about the parser state. Also,
-        it makes error messages more readable by showing the position of the
-        rightmost token that it has managed to reach.
+        Type: `(Sequence[A]) -> B`
+
+        It takes a sequence of tokens of arbitrary type `A` and the current parsing
+        state and returns a pair of the parsed value of arbitrary type `B` and the
+        new parsing state.
+
+        If the parser fails to parse the tokens, it raises `NoParseError`.
+
+        Note:
+            Although `Parser.parse()` can parse sequences of any objects (including
+            `str` which is a sequence of `str` chars), **the recommended way** is
+            parsing sequences of `Token` objects.
+
+            You **should** use a regexp-based tokenizer defined in `funcparserlib.lexer`
+            to convert your text into a sequence of `Token` objects before parsing
+            it. You will get more readable parsing error messages (as `Token` objects
+            contain their position in the source file) and good separation of the
+            lexical and syntactic levels of the grammar.
         """
         try:
             (tree, _) = self.run(tokens, State())
@@ -135,13 +214,40 @@ class Parser(object):
             raise NoParseError("%s: %s" % (e.msg, tok), e.state)
 
     def __add__(self, other):
-        """Sequential composition of parsers. It runs this parser, then the other
+        """Sequential combination of parsers. It runs this parser, then the other
         parser.
 
-        NOTE: The real type of the parsed value isn't always such as specified.
-        Here we use dynamic typing for ignoring the tokens that are of no
-        interest to the user. Also, we merge parsing results into a single `_Tuple`
-        unless the user explicitly prevents it. See also `skip` and `>>` combinators.
+        Type: `(Parser[A, Any]) -> Parser[A, Any]`
+
+        Examples:
+
+        ```pycon
+        >>> expr = a("x") + a("y")
+        >>> expr.parse("xy")
+        ('x', 'y')
+
+        ```
+
+        ```pycon
+        >>> expr = a("x") + a("y") + a("z")
+        >>> expr.parse("xyz")
+        ('x', 'y', 'z')
+
+        ```
+
+        ```pycon
+        >>> expr = a("x") + a("y")
+        >>> expr.parse("xz")
+        Traceback (most recent call last):
+            ...
+        parser.NoParseError: got unexpected token: z
+
+        ```
+
+        Note:
+            Here we use dynamic typing for ignoring the tokens that you want to
+            `skip()`. Also, we merge all parsing results into a single tuple unless you
+            transform the parsed pair into a new value using the `>>` combinator.
         """
 
         def magic(v1, v2):
@@ -168,8 +274,26 @@ class Parser(object):
         return _add
 
     def __or__(self, other):
-        """Choice composition of parsers. It runs this parser and returns its result. If
-        the parser fails, it runs the other parser."""
+        """Choice combination of parsers.
+
+        It runs this parser and returns its result. If the parser fails, it runs the
+        other parser.
+
+        Examples:
+
+        ```pycon
+        >>> expr = a("x") | a("y")
+        >>> expr.parse("x")
+        'x'
+        >>> expr.parse("y")
+        'y'
+        >>> expr.parse("z")
+        Traceback (most recent call last):
+            ...
+        parser.NoParseError: got unexpected token: z
+
+        ```
+        """
 
         @Parser
         def _or(tokens, s):
@@ -182,12 +306,25 @@ class Parser(object):
         return _or
 
     def __rshift__(self, f):
-        """Given a function from `B` to `C`, transforms a parser of `B` into a parser of
-        `C`. It is useful for transforming the parsed value into another value before
+        """Transform the parsing result by applying the specified function.
+
+        Type: `(Callable[[B], C]) -> Parser[A, C]`
+
+        You can use it for transforming the parsed value into another value before
         including it into the parse tree (the AST).
 
-        You can think of this combinator as a functor from `(B) -> C` to
-        `(Parser[A, B]) -> Parser[A, C]`. It is also known as `map` in other areas.
+        Examples:
+
+        ```pycon
+        >>> def make_canonical_name(s):
+        ...     return s.lower()
+        >>> expr = (a("D") | a("d")) >> make_canonical_name
+        >>> expr.parse("D")
+        'd'
+        >>> expr.parse("d")
+        'd'
+
+        ```
         """
 
         @Parser
@@ -201,13 +338,15 @@ class Parser(object):
         return _shift
 
     def bind(self, f):
-        """Monadic bind method.
+        """Bind the parser to a monadic function that returns a new parser.
 
-        It may be used internally to implement other combinators. Functions `bind` and
-        `pure` make the `Parser` a monad.
+        Type: `(Callable[[B], Parser[A, C]]) -> Parser[A, C]`
 
-        You can parse any context-free grammar without resorting to `bind`. Due to its
-        poor performance please use it only when you really need it.
+        Also known as `>>=` in Haskell.
+
+        Note:
+            You can parse any context-free grammar without resorting to `bind`. Due
+            to its poor performance please use it only when you really need it.
         """
 
         @Parser
@@ -260,7 +399,8 @@ class _Ignored(object):
 
 @Parser
 def finished(tokens, s):
-    """Throw an exception if there are any unparsed tokens in the sequence."""
+    """A parser that throws an exception if there are any unparsed tokens left in the
+    sequence."""
     if s.pos >= len(tokens):
         return None, s
     else:
@@ -271,11 +411,27 @@ finished.name = "finished"
 
 
 def many(p):
-    """Apply parser `p` as many times as it succeeds.
+    """Return a parser that applies the parser `p` as many times as it succeeds at
+    parsing the tokens.
 
     Return a parser that infinitely applies the parser `p` to the input sequence
-    of tokens while it successfully parses them. The returned parser returns a
-    list of parsed values.
+    of tokens as long as it successfully parses them. The parsed value is a list of
+    the sequentially parsed values.
+
+    Examples:
+
+    ```pycon
+    >>> expr = many(a("x"))
+    >>> expr.parse("x")
+    ['x']
+    >>> expr.parse("xx")
+    ['x', 'x']
+    >>> expr.parse("xxxy")  # noqa
+    ['x', 'x', 'x']
+    >>> expr.parse("y")
+    []
+
+    ```
     """
 
     @Parser
@@ -293,7 +449,29 @@ def many(p):
 
 
 def some(pred):
-    """Return a parser that parses a token if it satisfies the predicate `pred`."""
+    """Return a parser that parses a token if it satisfies the predicate `pred`.
+
+    Examples:
+
+    ```pycon
+    >>> expr = some(lambda s: s.isalpha())
+    >>> expr.parse("x")
+    'x'
+    >>> expr.parse("y")
+    'y'
+    >>> expr.parse("1")
+    Traceback (most recent call last):
+        ...
+    parser.NoParseError: got unexpected token: 1
+
+    ```
+
+    Note:
+        The `some()` combinator is quite slow and may be changed or removed in future
+        versions. If you need a parser for just one specific token, use `a(token)`
+        instead. For parsing several specific tokens, use the choice combinator
+        `a(token_1) | a(token_2) | ... | a(token_N)`.
+    """
 
     @Parser
     def _some(tokens, s):
@@ -317,12 +495,44 @@ def some(pred):
 
 
 def a(value):
-    """Return a parser that parses a token if it's equal to `value`."""
+    """Return a parser that parses a token if it's equal to `value`.
+
+    Type: `(A) -> Parser[A, A]`
+
+    Examples:
+
+    ```pycon
+    >>> expr = a("x")
+    >>> expr.parse("x")
+    'x'
+
+    ```
+
+    ```pycon
+    >>> expr = a("x")
+    >>> expr.parse("y")
+    Traceback (most recent call last):
+        ...
+    parser.NoParseError: got unexpected token: y
+
+    ```
+
+    """
     name = getattr(value, "name", value)
     return some(lambda t: t == value).named('(a "%s")' % (name,))
 
 
 def pure(x):
+    """Wrap any object into a parser.
+
+    Type: `(A) -> Parser[A, A]`
+
+    A pure parser doesn't touch the tokens sequence, it just returns its pure `x`
+    value.
+
+    Also known as `return` in Haskell.
+    """
+
     @Parser
     def _pure(_, s):
         return x, s
@@ -332,22 +542,88 @@ def pure(x):
 
 
 def maybe(p):
-    """Return a parser that returns `None` if parsing fails."""
+    """Return a parser that returns `None` if the parser `p` fails.
+
+    Examples:
+
+    ```pycon
+    >>> expr = maybe(a("x"))
+    >>> expr.parse("x")
+    'x'
+    >>> expr.parse("y") is None
+    True
+
+    ```
+    """
     return (p | pure(None)).named("[ %s ]" % (p.name,))
 
 
 def skip(p):
-    """Return a parser which results are ignored by the combinator `+`.
+    """Return a parser based on the parser `p`, which results are ignored by the
+    sequential `+` combinator.
 
-    This is useful for throwing away elements of concrete syntax (e.g. `","`, `";"`).
+    You can use it for throwing away elements of concrete syntax (e.g. `","`, `";"`).
 
-    You shouldn't pass the resulting parser to any combinators other than `+`.
+    Examples:
+
+    ```pycon
+    >>> expr = skip(a("x")) + a("y")
+    >>> expr.parse("xy")
+    'y'
+
+    ```
+
+    ```pycon
+    >>> expr = a("x") + skip(a("y"))
+    >>> expr.parse("xy")
+    'x'
+
+    ```
+
+    ```pycon
+    >>> expr = a("x") + skip(a("y")) + a("z")
+    >>> expr.parse("xyz")
+    ('x', 'z')
+
+    ```
+
+    ```pycon
+    >>> expr = skip(a("x")) + a("y") + skip(a("z"))
+    >>> expr.parse("xyz")
+    'y'
+
+    ```
+
+    Note:
+        You **should not** pass the resulting parser to any combinators other than
+        `+`. You **should** have at least one non-skipped value in your
+        `p1 + p2 + ... pN`. The parsed value of `skip()` is an **internal** `_Ignored`
+        object, not intended for actual use.
     """
     return p >> _Ignored
 
 
 def oneplus(p):
-    """Return a parser that applies the parser `p` one or more times."""
+    """Return a parser that applies the parser `p` one or more times.
+
+    A similar parser combinator `many(p)` means apply `p` zero or more times, whereas
+    `oneplus(p)` means apply `p` one or more times.
+
+    Examples:
+
+    ```pycon
+    >>> expr = oneplus(a("x"))
+    >>> expr.parse("x")
+    ['x']
+    >>> expr.parse("xx")
+    ['x', 'x']
+    >>> expr.parse("y")
+    Traceback (most recent call last):
+        ...
+    parser.NoParseError: got unexpected token: y
+
+    ```
+    """
 
     @Parser
     def _oneplus(tokens, s):
@@ -360,15 +636,6 @@ def oneplus(p):
 
 
 def with_forward_decls(suspension):
-    """Return a parser that computes itself lazily as a result of the suspension
-    provided.
-
-    It is needed when some parsers contain forward references to parsers defined later
-    and such references are cyclic. See examples for more details.
-
-    This function is deprecated, use `forward_decl()` instead.
-    """
-
     warnings.warn(
         "Use forward_decl() instead:\n"
         "\n"
@@ -388,8 +655,35 @@ def with_forward_decls(suspension):
 def forward_decl():
     """Return an undefined parser that can be used as a forward declaration.
 
-    You should define it via `p.define(parser_value)` when all the parsers it depends
-    on are available.
+    Type: `Parser[Any, Any]`
+
+    Use `p = forward_decl()` in combination with `p.define(...)` to define recursive
+    parsers.
+
+
+    Examples:
+
+    ```pycon
+    >>> expr = forward_decl()
+    >>> expr.define(a("x") + maybe(expr) + a("y"))
+    >>> expr.parse("xxyy")  # noqa
+    ('x', ('x', None, 'y'), 'y')
+    >>> expr.parse("xxy")
+    Traceback (most recent call last):
+        ...
+    parser.NoParseError: no tokens left in the stream: <EOF>
+
+    ```
+
+    Note:
+        If you care about static types, you should add a type hint for your forward
+        declaration, so that your type checker can check types in `p.define(...)` later:
+
+        ```python
+        p: Parser[str, int] = forward_decl()
+        p.define(a("x"))  # Type checker error
+        p.define(a("1") >> int)  # OK
+        ```
     """
 
     @Parser

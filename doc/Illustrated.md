@@ -49,7 +49,7 @@ Then you can:
     `funcparserlib` here):
 
         >>> import sys, os
-        >>> sys.path.append(os.path.join(os.getcwd(), '../tests'))
+        >>> sys.path.append(os.path.join(os.getcwd(), 'tests'))
         >>> import dot as dotparser
 
 3. Transform the source code into a sequence of tokens:

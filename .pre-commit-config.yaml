@@ -23,3 +23,13 @@ repos:
         types:
           - python
         pass_filenames: false
+  - repo: local
+    hooks:
+      - id: doctest
+        name: doctest
+        entry: poetry run python -m doctest
+        language: system
+        files: (^funcparserlib/|^doc/|^docs/)
+        types_or:
+          - python
+          - markdown

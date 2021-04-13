@@ -504,11 +504,6 @@ def a(value):
     >>> expr = a("x")
     >>> expr.parse("x")
     'x'
-
-    ```
-
-    ```pycon
-    >>> expr = a("x")
     >>> expr.parse("y")
     Traceback (most recent call last):
         ...

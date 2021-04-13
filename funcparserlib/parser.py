@@ -185,9 +185,8 @@ class Parser(object):
 
         Type: `(Sequence[A]) -> B`
 
-        It takes a sequence of tokens of arbitrary type `A` and the current parsing
-        state and returns a pair of the parsed value of arbitrary type `B` and the
-        new parsing state.
+        It takes a sequence of tokens of arbitrary type `A` and returns the parsed value
+        of arbitrary type `B`.
 
         If the parser fails to parse the tokens, it raises `NoParseError`.
 

@@ -38,7 +38,21 @@ class LexerError(Exception):
 
 
 class Token(object):
+    """A token object that represents a substring of certain type in your text.
+
+    You can compare tokens for equality using the `==` operator. Tokens also define
+    custom `repr()` and `str()`.
+
+    Attributes:
+        type (str): User-defined type of the token (e.g. `"name"`, `"number"`,
+            `"operator"`)
+        value (str): Text value of the token
+        start (Optional[Tuple[int, int]]): Start position (_line_, _column_)
+        end (Optional[Tuple[int, int]]): End position (_line_, _column_)
+    """
+
     def __init__(self, type, value, start=None, end=None):
+        """Initialize a `Token` object."""
         self.type = type
         self.value = value
         self.start = start
@@ -76,6 +90,38 @@ class Token(object):
 
 
 def make_tokenizer(specs):
+    # noinspection GrazieInspection
+    """Make a function that tokenizes text based on the regexp specs.
+
+    Type: `(List[Tuple[str, Tuple[Any, ...]]]) -> Callable[[str], Iterable[Token]]`
+
+    A token spec is a tuple of (_type_, _args_), where _type_ sets the value of
+    `Token.type` for a found token, and _args_ are the positional arguments for
+    `re.compile()`: either just (_pattern_,) or (_pattern_, _flags_).
+
+    It returns a tokenizer function that takes a string and returns an iterable of
+    `Token` objects, or raises `LexerError` if it cannot tokenize the string according
+    to its token specs.
+
+    Examples:
+
+    ```pycon
+    >>> tokenize = make_tokenizer([
+    ...     ("space", (r"\\s+",)),
+    ...     ("id", (r"\\w+",)),
+    ...     ("op", (r"[,!]",)),
+    ... ])
+    >>> text = "Hello, World!"
+    >>> [t for t in tokenize(text) if t.type != "space"]  # noqa
+    [Token('id', 'Hello'), Token('op', ','), Token('id', 'World'), Token('op', '!')]
+    >>> text = "Bye?"
+    >>> list(tokenize(text))
+    Traceback (most recent call last):
+        ...
+    lexer.LexerError: cannot tokenize data: 1,4: "Bye?"
+
+    ```
+    """
     compiled = [(name, re.compile(*args)) for name, args in specs]
 
     def match_specs(s, i, position):

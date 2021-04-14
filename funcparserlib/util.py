@@ -23,8 +23,33 @@ from __future__ import unicode_literals
 
 
 def pretty_tree(x, kids, show):
-    """Return a pseudo-graphic tree representation of `x` similar to the `tree` command
-    in Unix.
+    """Return a pseudo-graphic tree representation of the object `x` similar to the
+    `tree` command in Unix.
+
+    Type: `(T, Callable[[T], List[T]], Callable[[T], str]) -> str`
+
+    It applies the parameter `show` (which is a function of type `(T) -> str`) to get a
+    textual representation of the objects to show.
+
+    It applies the parameter `kids` (which is a function of type `(T) -> List[T]`) to
+    list the children of the object to show.
+
+    Examples:
+
+    ```pycon
+    >>> print(pretty_tree(
+    ...     ["foo", ["bar", "baz"], "quux"],
+    ...     lambda obj: obj if isinstance(obj, list) else [],
+    ...     lambda obj: "[]" if isinstance(obj, list) else str(obj),
+    ... ))
+    []
+    |-- foo
+    |-- []
+    |   |-- bar
+    |   `-- baz
+    `-- quux
+
+    ```
     """
     (MID, END, CONT, LAST, ROOT) = ("|-- ", "`-- ", "|   ", "    ", "")
 

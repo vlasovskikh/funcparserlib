@@ -445,6 +445,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#funcparserlib.parser.Parser.__neg__" class="md-nav__link">
+    __neg__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#funcparserlib.parser.Parser.__or__" class="md-nav__link">
     __or__()
   </a>
@@ -686,6 +693,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#funcparserlib.parser.Parser.__neg__" class="md-nav__link">
+    __neg__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#funcparserlib.parser.Parser.__or__" class="md-nav__link">
     __or__()
   </a>
@@ -801,7 +815,8 @@ the whole grammar you want to parse.</p>
 </ul>
 </li>
 <li>Parser combinators<ul>
-<li><code>p1 + p2</code>, <code>p1 | p2</code>, <code>p &gt;&gt; f</code>, <code>maybe(p)</code>, <code>many(p)</code>, <code>oneplus(p)</code>, <code>skip(p)</code></li>
+<li><code>p1 + p2</code>, <code>p1 | p2</code>, <code>p &gt;&gt; f</code>, <code>-p</code>, <code>maybe(p)</code>, <code>many(p)</code>, <code>oneplus(p)</code>,
+  <code>skip(p)</code></li>
 </ul>
 </li>
 <li>Abstraction<ul>
@@ -939,6 +954,7 @@ recursive parsers.</p>
     <div class="doc doc-contents first">
 
       <p>Specify the name of the parser for easier debugging.</p>
+<p>Type: <code>(str) -&gt; Parser[A, B]</code></p>
 <p>This name is used in the debug-level parsing log. You can also get it via the
 <code>Parser.name</code> attribute.</p>
 
@@ -1015,6 +1031,7 @@ recursive parsers.</p>
     <div class="doc doc-contents first">
 
       <p>Return a parser that parses a token if it satisfies the predicate <code>pred</code>.</p>
+<p>Type: <code>(Callable[[A], bool]) -&gt; Parser[A, A]</code></p>
 
 <p><strong>Examples:</strong></p>
     
@@ -1119,7 +1136,25 @@ declaration, so that your type checker can check types in <code>p.define(...)</c
 
       <p>Sequential combination of parsers. It runs this parser, then the other
 parser.</p>
-<p>Type: <code>(Parser[A, Any]) -&gt; Parser[A, Any]</code></p>
+<p>The return value of the resulting parser is a tuple of each parsed value in
+the sum of parsers. We merge all parsing results of <code>p1 + p2 + ... + pN</code> into a
+single tuple. It means that the parsing result may be a 2-tuple, a 3-tuple,
+a 4-tuple, etc. of parsed values. You avoid this by transforming the parsed
+pair into a new value using the <code>&gt;&gt;</code> combinator.</p>
+<p>You can also skip some parsing results in the resulting parsers by using <code>-p</code>
+or <code>skip(p)</code> for some parsers in your sum of parsers. It means that the parsing
+result might be a single value, not a tuple of parsed values. See the docs
+for <code>Parser.__neg__()</code> for more examples.</p>
+<p>Overloaded types (lots of them to provide stricter checking for the quite
+dynamic return type of this method):</p>
+<ul>
+<li><code>(self: Parser[A, B], _IgnoredParser[A]) -&gt; Parser[A, B]</code></li>
+<li><code>(self: Parser[A, B], Parser[A, C]) -&gt; _TupleParser[A, Tuple[B, C]]</code></li>
+<li><code>(self: _TupleParser[A, B], _IgnoredParser[A]) -&gt; _TupleParser[A, B]</code></li>
+<li><code>(self: _TupleParser[A, B], Parser[A, Any]) -&gt; Parser[A, Any]</code></li>
+<li><code>(self: _IgnoredParser[A], _IgnoredParser[A]) -&gt; _IgnoredParser[A]</code></li>
+<li><code>(self: _IgnoredParser[A], Parser[A, C]) -&gt; Parser[A, C]</code></li>
+</ul>
 
 <p><strong>Examples:</strong></p>
     
@@ -1137,11 +1172,70 @@ parser.</p>
     <span class="o">...</span>
 <span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: z</span>
 </code></pre></div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="funcparserlib.parser.Parser.__neg__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">funcparserlib</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">Parser</span><span class="o">.</span><span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents first">
+
+      <p>Return a parser that parses the same tokens, but its parsing result is
+ignored by the sequential <code>+</code> combinator.</p>
+<p>Type: <code>(Parser[A, B]) -&gt; _IgnoredParser[A]</code></p>
+<p>You can use it for throwing away elements of concrete syntax (e.g. <code>","</code>,
+<code>";"</code>).</p>
+
+<p><strong>Examples:</strong></p>
+    
+      <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="o">-</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xy&quot;</span><span class="p">)</span>
+<span class="go">&#39;y&#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="o">-</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xy&quot;</span><span class="p">)</span>
+<span class="go">&#39;x&#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="o">-</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xyz&quot;</span><span class="p">)</span>
+<span class="go">(&#39;x&#39;, &#39;z&#39;)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="o">-</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="o">-</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xyz&quot;</span><span class="p">)</span>
+<span class="go">&#39;y&#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="o">-</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;yz&quot;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: y</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="o">-</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xz&quot;</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: z</span>
+</code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Here we use dynamic typing for ignoring the tokens that you want to
-<code>skip()</code>. Also, we merge all parsing results into a single tuple unless you
-transform the parsed pair into a new value using the <code>&gt;&gt;</code> combinator.</p>
+<p>You <strong>should not</strong> pass the resulting parser to any combinators other than
+<code>+</code>. You <strong>should</strong> have at least one non-skipped value in your
+<code>p1 + p2 + ... + pN</code>. The parsed value of <code>-p</code> is an <strong>internal</strong> <code>_Ignored</code>
+object, not intended for actual use.</p>
 </div>
 
     </div>
@@ -1338,35 +1432,8 @@ the sequentially parsed values.</p>
 
     <div class="doc doc-contents first">
 
-      <p>Return a parser based on the parser <code>p</code>, which results are ignored by the
-sequential <code>+</code> combinator.</p>
-<p>You can use it for throwing away elements of concrete syntax (e.g. <code>","</code>, <code>";"</code>).</p>
-
-<p><strong>Examples:</strong></p>
-    
-      <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">skip</span><span class="p">(</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">))</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xy&quot;</span><span class="p">)</span>
-<span class="go">&#39;y&#39;</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">skip</span><span class="p">(</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xy&quot;</span><span class="p">)</span>
-<span class="go">&#39;x&#39;</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">skip</span><span class="p">(</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">))</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xyz&quot;</span><span class="p">)</span>
-<span class="go">(&#39;x&#39;, &#39;z&#39;)</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">skip</span><span class="p">(</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">))</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">skip</span><span class="p">(</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xyz&quot;</span><span class="p">)</span>
-<span class="go">&#39;y&#39;</span>
-</code></pre></div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>You <strong>should not</strong> pass the resulting parser to any combinators other than
-<code>+</code>. You <strong>should</strong> have at least one non-skipped value in your
-<code>p1 + p2 + ... pN</code>. The parsed value of <code>skip()</code> is an <strong>internal</strong> <code>_Ignored</code>
-object, not intended for actual use.</p>
-</div>
+      <p>An alias for <code>-p</code>.</p>
+<p>See also the docs for <code>Parser.__neg__()</code>.</p>
 
     </div>
 

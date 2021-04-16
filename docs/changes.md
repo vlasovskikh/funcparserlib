@@ -13,6 +13,7 @@ The stable 1.0.0 release freezes the API of funcparserlib 0.3.6 which was releas
   ([#63](https://github.com/vlasovskikh/funcparserlib/pull/63))
   (Thanks to [@pkulev](https://github.com/pkulev))
 * Added support for Python 3.8
+* Added `-p` (the same as `skip(p)`) with more strict type hints for `-p` and `p1 + p2`
 * Added type hints for the public API
 
 ### Changed

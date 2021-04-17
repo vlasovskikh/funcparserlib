@@ -518,7 +518,7 @@
     <div class="doc doc-contents first">
 
       <p>Make a function that tokenizes text based on the regexp specs.</p>
-<p>Type: <code>(List[Tuple[str, Tuple[Any, ...]]]) -&gt; Callable[[str], Iterable[Token]]</code></p>
+<p>Type: <code>(Sequence[Tuple[str, Tuple[Any, ...]]]) -&gt; Callable[[str], Iterable[Token]]</code></p>
 <p>A token spec is a tuple of (<em>type</em>, <em>args</em>), where <em>type</em> sets the value of
 <code>Token.type</code> for a found token, and <em>args</em> are the positional arguments for
 <code>re.compile()</code>: either just (<em>pattern</em>,) or (<em>pattern</em>, <em>flags</em>).</p>

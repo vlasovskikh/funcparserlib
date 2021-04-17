@@ -32,6 +32,9 @@ The stable 1.0.0 release freezes the API of funcparserlib 0.3.6 which was releas
 * Fixed `TypeError` in `oneplus` when applying it `parser + parser` 
   ([#66](https://github.com/vlasovskikh/funcparserlib/issues/66))
   (Thanks to [@martica](https://github.com/martica))
+* Fixed `AttributeError` when comparing `Token` objects to `None`
+  ([#58](https://github.com/vlasovskikh/funcparserlib/pull/58))
+  (Thanks to [@Halolegend94](https://github.com/Halolegend94))
 * Fixed doctests in the tutorial
   ([#49](https://github.com/vlasovskikh/funcparserlib/issues/49))
 

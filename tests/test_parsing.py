@@ -198,3 +198,14 @@ end"""
         expr = -x + maybe(y) + -x  # type: Parser[Text, Optional[Text]]
         self.assertEqual(expr.parse("xyx"), "y")
         self.assertEqual(expr.parse("xx"), None)
+
+    def test_compare_token_with_none(self):
+        # type: () -> None
+        # https://github.com/vlasovskikh/funcparserlib/pull/58
+        specs = [
+            ("id", (r"\w+",)),
+        ]
+        tokenize = make_tokenizer(specs)
+        tokens = list(tokenize("foo"))
+        expr = maybe(a(None))
+        self.assertEqual(expr.parse(tokens), None)  # type: ignore

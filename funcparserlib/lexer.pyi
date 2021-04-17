@@ -1,4 +1,4 @@
-from typing import Tuple, Optional, List, Callable, Iterable, Any, Text
+from typing import Tuple, Optional, Callable, Iterable, Any, Text, Sequence
 
 _Place = Tuple[int, int]
 _Spec = Tuple[Text, Tuple[Any, ...]]
@@ -18,7 +18,7 @@ class Token:
     ) -> None: ...
     def pformat(self) -> Text: ...
 
-def make_tokenizer(specs: List[_Spec]) -> Callable[[Text], Iterable[Token]]: ...
+def make_tokenizer(specs: Sequence[_Spec]) -> Callable[[Text], Iterable[Token]]: ...
 
 class LexerError(Exception):
     place: Tuple[int, int]

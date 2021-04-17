@@ -96,7 +96,7 @@ def make_tokenizer(specs):
     # noinspection GrazieInspection
     """Make a function that tokenizes text based on the regexp specs.
 
-    Type: `(List[Tuple[str, Tuple[Any, ...]]]) -> Callable[[str], Iterable[Token]]`
+    Type: `(Sequence[Tuple[str, Tuple[Any, ...]]]) -> Callable[[str], Iterable[Token]]`
 
     A token spec is a tuple of (_type_, _args_), where _type_ sets the value of
     `Token.type` for a found token, and _args_ are the positional arguments for

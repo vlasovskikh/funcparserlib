@@ -32,7 +32,7 @@ The structure of the language:
     * All the primitives and combinators of the language return `Parser` objects
     * It defines the main `Parser.parse(tokens)` method
 * Primitive parsers
-    * `a(value)`, `some(pred)`, `forward_decl()`, `finished`
+    * `tok(type, value)`, `a(value)`, `some(pred)`, `forward_decl()`, `finished`
 * Parser combinators
     * `p1 + p2`, `p1 | p2`, `p >> f`, `-p`, `maybe(p)`, `many(p)`, `oneplus(p)`,
       `skip(p)`
@@ -55,6 +55,7 @@ from __future__ import unicode_literals
 __all__ = [
     "some",
     "a",
+    "tok",
     "many",
     "pure",
     "finished",
@@ -68,6 +69,8 @@ __all__ = [
 
 import logging
 import warnings
+
+from funcparserlib.lexer import Token
 
 log = logging.getLogger("funcparserlib")
 
@@ -124,7 +127,7 @@ class Parser(object):
         ```pycon
         >>> expr = a("x") + a("y")
         >>> expr.name
-        '((a "x") , (a "y"))'
+        "('x', 'y')"
 
         ```
 
@@ -198,11 +201,11 @@ class Parser(object):
             `str` which is a sequence of `str` chars), **the recommended way** is
             parsing sequences of `Token` objects.
 
-            You **should** use a regexp-based tokenizer defined in `funcparserlib.lexer`
-            to convert your text into a sequence of `Token` objects before parsing
-            it. You will get more readable parsing error messages (as `Token` objects
-            contain their position in the source file) and good separation of the
-            lexical and syntactic levels of the grammar.
+            You **should** use a regexp-based tokenizer `make_tokenizer()` defined in
+            `funcparserlib.lexer` to convert your text into a sequence of `Token`
+            objects before parsing it. You will get more readable parsing error messages
+            (as `Token` objects contain their position in the source file) and good
+            separation of the lexical and syntactic levels of the grammar.
         """
         try:
             (tree, _) = self.run(tokens, State())
@@ -210,10 +213,10 @@ class Parser(object):
         except NoParseError as e:
             max = e.state.max
             if len(tokens) > max:
-                tok = tokens[max]
+                t = tokens[max]
             else:
-                tok = "<EOF>"
-            raise NoParseError("%s: %s" % (e.msg, tok), e.state)
+                t = "<EOF>"
+            raise NoParseError("%s: %s" % (e.msg, t), e.state)
 
     def __add__(self, other):
         """Sequential combination of parsers. It runs this parser, then the other
@@ -284,10 +287,11 @@ class Parser(object):
             _, s3 = other.run(tokens, s2)
             return v, s3
 
+        name = "(%s, %s)" % (self.name, other.name)
         if isinstance(other, _IgnoredParser):
-            return ignored_right.named("(%s , -%s)" % (self.name, other.name))
+            return ignored_right.named(name)
         else:
-            return _add.named("(%s , %s)" % (self.name, other.name))
+            return _add.named(name)
 
     def __or__(self, other):
         """Choice combination of parsers.
@@ -554,11 +558,11 @@ def some(pred):
 
     ```
 
-    Note:
+    Warning:
         The `some()` combinator is quite slow and may be changed or removed in future
-        versions. If you need a parser for just one specific token, use `a(token)`
-        instead. For parsing several specific tokens, use the choice combinator
-        `a(token_1) | a(token_2) | ... | a(token_N)`.
+        versions. If you need a parser for a token by its type (e.g. any identifier)
+        and maybe its value, use `tok(type[, value])` instead. You should use
+        `make_tokenizer()` from `funcparserlib.lexer` to tokenize your text first.
     """
 
     @Parser
@@ -600,9 +604,67 @@ def a(value):
 
     ```
 
+    Note:
+        Although `Parser.parse()` can parse sequences of any objects (including
+        `str` which is a sequence of `str` chars), **the recommended way** is
+        parsing sequences of `Token` objects.
+
+        You **should** use a regexp-based tokenizer `make_tokenizer()` defined in
+        `funcparserlib.lexer` to convert your text into a sequence of `Token` objects
+        before parsing it. You will get more readable parsing error messages (as `Token`
+        objects contain their position in the source file) and good separation of the
+        lexical and syntactic levels of the grammar.
     """
     name = getattr(value, "name", value)
-    return some(lambda t: t == value).named('(a "%s")' % (name,))
+    return some(lambda t: t == value).named(repr(name))
+
+
+def tok(type, value=None):
+    """Return a parser that parses a `Token` and returns the string value of the token.
+
+    Type: `(str, Optional[str]) -> Parser[Token, str]`
+
+    You can match any token of the specified `type` or you can match a specific token by
+    its `type` and `value`.
+
+    Examples:
+
+    ```pycon
+    >>> expr = tok("expr")
+    >>> expr.parse([Token("expr", "foo")])
+    'foo'
+    >>> expr.parse([Token("expr", "bar")])
+    'bar'
+    >>> expr.parse([Token("op", "=")])
+    Traceback (most recent call last):
+        ...
+    parser.NoParseError: got unexpected token: op '='
+
+    ```
+
+    ```pycon
+    >>> expr = tok("op", "=")
+    >>> expr.parse([Token("op", "=")])
+    '='
+    >>> expr.parse([Token("op", "+")])
+    Traceback (most recent call last):
+        ...
+    parser.NoParseError: got unexpected token: op '+'
+
+    ```
+
+    Note:
+        In order to convert your text to parse into a sequence of `Token` objects,
+        use a regexp-based tokenizer `make_tokenizer()` defined in
+        `funcparserlib.lexer`. You will get more readable parsing error messages (as
+        `Token` objects contain their position in the source file) and good separation
+        of the lexical and syntactic levels of the grammar.
+    """
+    if value is not None:
+        p = a(Token(type, value))
+    else:
+        p = some(lambda t: t.type == type).named(type)
+    return (p >> (lambda t: t.value)).named(p.name)
 
 
 def pure(x):
@@ -668,10 +730,10 @@ class _IgnoredParser(Parser):
 
         if isinstance(other, _IgnoredParser):
             return _IgnoredParser(ignored_left).named(
-                "(-%s , -%s)" % (self.name, other.name)
+                "(-%s, -%s)" % (self.name, other.name)
             )
         else:
-            return Parser(ignored_left).named("(-%s , %s)" % (self.name, other.name))
+            return Parser(ignored_left).named("(-%s, %s)" % (self.name, other.name))
 
 
 def oneplus(p):
@@ -702,7 +764,7 @@ def oneplus(p):
         (v2, s3) = many(p).run(tokens, s2)
         return [v1] + v2, s3
 
-    _oneplus.name = "(%s , { %s })" % (p.name, p.name)
+    _oneplus.name = "(%s, { %s })" % (p.name, p.name)
     return _oneplus
 
 

@@ -11,13 +11,12 @@ from funcparserlib.lexer import make_tokenizer, LexerError, Token
 from funcparserlib.parser import (
     a,
     many,
-    some,
-    skip,
     NoParseError,
     oneplus,
     Parser,
     maybe,
     _Ignored,  # noqa
+    tok,
 )
 
 
@@ -44,8 +43,8 @@ class ParsingTest(unittest.TestCase):
         # type: () -> None
         tokenize = make_tokenizer(
             [
-                ("keyword", (r"(is|end)",)),
-                ("id", (r"[a-z]+",)),
+                ("keyword", (r"\b(is|end)\b",)),
+                ("id", (r"[a-z_]+",)),
                 ("space", (r"[ \t]+",)),
                 ("nl", (r"[\n\r]+",)),
             ]
@@ -59,48 +58,31 @@ class ParsingTest(unittest.TestCase):
         else:
             self.fail("must raise LexerError")
 
-        def some_tok(type_name):
-            # type: (Text) -> Parser[Token, Token]
-            def is_type(token):
-                # type: (Token) -> bool
-                return token.type == type_name
-
-            return some(is_type)
-
-        def keyword(s):
-            # type: (Text) -> Parser[Token, Token]
-            return a(Token("keyword", s))
-
         def make_equality(values):
-            # type: (Tuple[Token, Token]) -> Tuple[Token, Token]
+            # type: (Tuple[str, str]) -> Tuple[str, str]
             v1, v2 = values
             return v1, v2
 
-        tok_id = some_tok("id")
-        is_ = keyword("is")
-        end = keyword("end")
-        nl = some_tok("nl")
+        tok_id = tok("id")
+        equality = tok_id + -tok("keyword", "is") + tok_id >> make_equality
+        expr = equality + -tok("nl")
+        file = many(expr) + tok("keyword", "end")
 
-        equality = tok_id + skip(is_) + tok_id >> make_equality
-        expr = equality + skip(nl)
-        file = many(expr) + end
-
-        # noinspection GrazieInspection,SpellCheckingInspection
         msg = """\
 spam is eggs
-eggs isnt spam
+foo is_not bar
 end"""
         tokens = [x for x in tokenize(msg) if x.type != "space"]
         try:
             file.parse(tokens)
         except NoParseError as e:
-            self.assertEqual(e.msg, "got unexpected token: 2,11-2,14: id 'spam'")
             self.assertEqual(e.state.pos, 4)
-            self.assertEqual(e.state.max, 7)
+            self.assertEqual(e.state.max, 5)
             # May raise KeyError
             t = tokens[e.state.max]
-            self.assertEqual(t, Token("id", "spam"))
-            self.assertEqual((t.start, t.end), ((2, 11), (2, 14)))
+            self.assertEqual(t, Token("id", "is_not"))
+            self.assertEqual((t.start, t.end), ((2, 5), (2, 10)))
+            self.assertEqual("got unexpected token: 2,5-2,10: id 'is_not'", e.msg)
         else:
             self.fail("must raise NoParseError")
 

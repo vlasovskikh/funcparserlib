@@ -43,29 +43,29 @@ This is an excerpt from a JSON parser
 def parse(seq):
     """Sequence(Token) -> object"""
     ...
-    n = lambda s: a(Token('Name', s)) >> tokval
-    def make_array(n):
-        if n is None:
+    n = lambda s: tok("Name", s)
+    def make_array(values):
+        if values is None:
             return []
         else:
-            return [n[0]] + n[1]
+            return [values[0]] + values[1]
     ...
-    null = n('null') >> const(None)
-    true = n('true') >> const(True)
-    false = n('false') >> const(False)
-    number = toktype('Number') >> make_number
-    string = toktype('String') >> make_string
+    null = n("null") >> const(None)
+    true = n("true") >> const(True)
+    false = n("false") >> const(False)
+    number = tok("Number") >> make_number
+    string = tok("String") >> make_string
     value = forward_decl()
-    member = string + op_(':') + value >> tuple
+    member = string + -op(":") + value >> tuple
     object = (
-        op_('{') +
-        maybe(member + many(op_(',') + member)) +
-        op_('}')
+        -op("{") +
+        maybe(member + many(-op(",") + member)) +
+        -op("}")
         >> make_object)
     array = (
-        op_('[') +
-        maybe(value + many(op_(',') + value)) +
-        op_(']')
+        -op("[") +
+        maybe(value + many(-op(",") + value)) +
+        -op("]")
         >> make_array)
     value.define(
           null
@@ -76,7 +76,7 @@ def parse(seq):
         | number
         | string)
     json_text = object | array
-    json_file = json_text + skip(finished)
+    json_file = json_text + -finished
 
     return json_file.parse(seq)
 ```

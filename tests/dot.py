@@ -44,8 +44,6 @@ from typing import Sequence, List, TypeVar, Any, Callable, Text
 
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
 from funcparserlib.parser import (
-    some,
-    a,
     maybe,
     many,
     finished,
@@ -53,6 +51,7 @@ from funcparserlib.parser import (
     forward_decl,
     NoParseError,
     Parser,
+    tok,
 )
 from funcparserlib.util import pretty_tree
 
@@ -92,27 +91,19 @@ def parse(tokens):
         # type: (Callable[..., T]) -> Callable[[tuple], T]
         return lambda args: f(*args)
 
-    def tok_val(t):
-        # type: (Token) -> Text
-        return t.value
-
     def flatten(xs):
         # type: (List[List[Attr]]) -> List[Attr]
         return sum(xs, [])
 
-    def is_id_type(t):
-        # type: (Token) -> bool
-        return t.type in ["Name", "Number", "String"]
-
     def n(s):
         # type: (Text) -> Parser[Token, Text]
-        return a(Token("Name", s)) >> tok_val
+        return tok("Name", s)
 
     def op(s):
         # type: (Text) -> Parser[Token, Text]
-        return a(Token("Op", s)) >> tok_val
+        return tok("Op", s)
 
-    dot_id = some(is_id_type).named("id") >> tok_val
+    dot_id = (tok("Name") | tok("Number") | tok("String")).named("id")
 
     def make_graph_attr(args):
         # type: (tuple) -> DefAttrs

@@ -52,14 +52,13 @@ import six
 
 from funcparserlib.lexer import make_tokenizer, Token, LexerError
 from funcparserlib.parser import (
-    some,
-    a,
     maybe,
     many,
     finished,
     forward_decl,
     NoParseError,
     Parser,
+    tok,
 )
 
 ENCODING = "UTF-8"
@@ -112,25 +111,13 @@ def parse(tokens):
         # type: (T) -> Callable[[Any], T]
         return lambda _: x
 
-    def tok_val(t):
-        # type: (Token) -> Text
-        return t.value
-
-    def tok_type(name):
-        # type: (Text) -> Parser[Token, Text]
-        def is_type(t):
-            # type: (Token) -> bool
-            return t.type == name
-
-        return some(is_type) >> tok_val
-
     def op(s):
         # type: (Text) -> Parser[Token, Text]
-        return a(Token("Op", s)) >> tok_val
+        return tok("Op", s)
 
     def n(s):
         # type: (Text) -> Parser[Token, Text]
-        return a(Token("Name", s)) >> tok_val
+        return tok("Name", s)
 
     def make_array(values):
         # type: (Optional[Tuple[JsonValue, List[JsonValue]]]) -> List[Any]
@@ -191,8 +178,8 @@ def parse(tokens):
     null = n("null") >> const(None)
     true = n("true") >> const(True)
     false = n("false") >> const(False)
-    number = tok_type("Number") >> make_number
-    string = tok_type("String") >> make_string
+    number = tok("Number") >> make_number
+    string = tok("String") >> make_string
     value = forward_decl()  # type: Parser[Token, JsonValue]
     member = string + -op(":") + value >> make_member
     json_object = (

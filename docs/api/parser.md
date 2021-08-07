@@ -4,7 +4,6 @@
     rendering:
         show_root_heading: false
 
-
 ::: funcparserlib.parser.Parser
 
 ::: funcparserlib.parser.Parser.parse
@@ -22,6 +21,10 @@
 
 Primitive Parsers
 -----------------
+
+::: funcparserlib.parser.tok
+    rendering:
+        heading_level: 3
 
 ::: funcparserlib.parser.a
     rendering:

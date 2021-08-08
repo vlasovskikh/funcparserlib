@@ -21,7 +21,13 @@ _D = TypeVar("_D")
 class State:
     pos: int
     max: int
-    def __init__(self, pos: int = ..., max: int = ...) -> None: ...
+    parser: Union[Parser, _ParserCallable, None]
+    def __init__(
+        self,
+        pos: int,
+        max: int,
+        parser: Union[Parser, _ParserCallable, None],
+    ) -> None: ...
 
 _ParserCallable = Callable[[_A, State], Tuple[_B, State]]
 

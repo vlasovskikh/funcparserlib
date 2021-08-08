@@ -208,15 +208,27 @@ class Parser(object):
             separation of the lexical and syntactic levels of the grammar.
         """
         try:
-            (tree, _) = self.run(tokens, State())
+            (tree, _) = self.run(tokens, State(0, 0, None))
             return tree
         except NoParseError as e:
             max = e.state.max
             if len(tokens) > max:
                 t = tokens[max]
+                if isinstance(t, Token):
+                    if t.start is None or t.end is None:
+                        loc = ""
+                    else:
+                        s_line, s_pos = t.start
+                        e_line, e_pos = t.end
+                        loc = "%d,%d-%d,%d: " % (s_line, s_pos, e_line, e_pos)
+                    msg = "%s%s: %r" % (loc, e.msg, t.value)
+                else:
+                    msg = "%s: %r" % (e.msg, t)
             else:
-                t = "<EOF>"
-            raise NoParseError("%s: %s" % (e.msg, t), e.state)
+                msg = e.msg
+            if e.state.parser is not None:
+                msg = "%s, expected: %s" % (msg, e.state.parser.name)
+            raise NoParseError(msg, e.state)
 
     def __add__(self, other):
         """Sequential combination of parsers. It runs this parser, then the other
@@ -264,7 +276,7 @@ class Parser(object):
         >>> expr.parse("xz")
         Traceback (most recent call last):
             ...
-        parser.NoParseError: got unexpected token: z
+        parser.NoParseError: got unexpected token: 'z', expected: 'y'
 
         ```
         """
@@ -310,7 +322,7 @@ class Parser(object):
         >>> expr.parse("z")
         Traceback (most recent call last):
             ...
-        parser.NoParseError: got unexpected token: z
+        parser.NoParseError: got unexpected token: 'z', expected: 'x' or 'y'
 
         ```
         """
@@ -320,9 +332,14 @@ class Parser(object):
             try:
                 return self.run(tokens, s)
             except NoParseError as e:
-                return other.run(tokens, State(s.pos, e.state.max))
+                try:
+                    return other.run(tokens, State(s.pos, e.state.max, e.state.parser))
+                except NoParseError as e2:
+                    if s.max == e2.state.max:
+                        e2.state = State(e2.state.pos, e2.state.max, _or)
+                    raise
 
-        _or.name = "(%s | %s)" % (self.name, other.name)
+        _or.name = "%s or %s" % (self.name, other.name)
         return _or
 
     def __rshift__(self, f):
@@ -419,7 +436,7 @@ class Parser(object):
         >>> expr.parse("yz")
         Traceback (most recent call last):
             ...
-        parser.NoParseError: got unexpected token: y
+        parser.NoParseError: got unexpected token: 'y', expected: 'x'
 
         ```
 
@@ -428,7 +445,7 @@ class Parser(object):
         >>> expr.parse("xz")
         Traceback (most recent call last):
             ...
-        parser.NoParseError: got unexpected token: z
+        parser.NoParseError: got unexpected token: 'z', expected: 'y'
 
         ```
 
@@ -448,9 +465,10 @@ class State(object):
     position `max` of the rightmost token that has been consumed while parsing.
     """
 
-    def __init__(self, pos=0, max=0):
+    def __init__(self, pos, max, parser):
         self.pos = pos
         self.max = max
+        self.parser = parser
 
     def __str__(self):
         return str((self.pos, self.max))
@@ -494,10 +512,11 @@ def finished(tokens, s):
     if s.pos >= len(tokens):
         return None, s
     else:
-        raise NoParseError("should have reached <EOF>", s)
+        s2 = State(s.pos, s.max, finished)
+        raise NoParseError("got unexpected token", s2)
 
 
-finished.name = "finished"
+finished.name = "end of file"
 
 
 def many(p):
@@ -532,7 +551,7 @@ def many(p):
                 (v, s) = p.run(tokens, s)
                 res.append(v)
         except NoParseError as e:
-            return res, State(s.pos, e.state.max)
+            return res, State(s.pos, e.state.max, e.state.parser)
 
     _many.name = "{ %s }" % p.name
     return _many
@@ -546,7 +565,7 @@ def some(pred):
     Examples:
 
     ```pycon
-    >>> expr = some(lambda s: s.isalpha())
+    >>> expr = some(lambda s: s.isalpha()).named('alpha')
     >>> expr.parse("x")
     'x'
     >>> expr.parse("y")
@@ -554,7 +573,7 @@ def some(pred):
     >>> expr.parse("1")
     Traceback (most recent call last):
         ...
-    parser.NoParseError: got unexpected token: 1
+    parser.NoParseError: got unexpected token: '1', expected: alpha
 
     ```
 
@@ -568,19 +587,21 @@ def some(pred):
     @Parser
     def _some(tokens, s):
         if s.pos >= len(tokens):
-            raise NoParseError("no tokens left in the stream", s)
+            s2 = State(s.pos, s.max, _some if s.pos == s.max else s.parser)
+            raise NoParseError("got unexpected end of file", s2)
         else:
             t = tokens[s.pos]
             if pred(t):
                 pos = s.pos + 1
-                s2 = State(pos, max(pos, s.max))
+                s2 = State(pos, max(pos, s.max), s.parser)
                 if debug:
                     log.debug('*matched* "%s", new state = %s' % (t, s2))
                 return t, s2
             else:
                 if debug:
                     log.debug('failed "%s", state = %s' % (t, s))
-                raise NoParseError("got unexpected token", s)
+                s2 = State(s.pos, s.max, _some if s.pos == s.max else s.parser)
+                raise NoParseError("got unexpected token", s2)
 
     _some.name = "(some)"
     return _some
@@ -600,7 +621,7 @@ def a(value):
     >>> expr.parse("y")
     Traceback (most recent call last):
         ...
-    parser.NoParseError: got unexpected token: y
+    parser.NoParseError: got unexpected token: 'y', expected: 'x'
 
     ```
 
@@ -638,7 +659,7 @@ def tok(type, value=None):
     >>> expr.parse([Token("op", "=")])
     Traceback (most recent call last):
         ...
-    parser.NoParseError: got unexpected token: op '='
+    parser.NoParseError: got unexpected token: '=', expected: expr
 
     ```
 
@@ -649,7 +670,7 @@ def tok(type, value=None):
     >>> expr.parse([Token("op", "+")])
     Traceback (most recent call last):
         ...
-    parser.NoParseError: got unexpected token: op '+'
+    parser.NoParseError: got unexpected token: '+', expected: '='
 
     ```
 
@@ -753,7 +774,7 @@ def oneplus(p):
     >>> expr.parse("y")
     Traceback (most recent call last):
         ...
-    parser.NoParseError: got unexpected token: y
+    parser.NoParseError: got unexpected token: 'y', expected: 'x'
 
     ```
     """
@@ -804,7 +825,7 @@ def forward_decl():
     >>> expr.parse("xxy")
     Traceback (most recent call last):
         ...
-    parser.NoParseError: no tokens left in the stream: <EOF>
+    parser.NoParseError: got unexpected end of file, expected: 'y'
 
     ```
 

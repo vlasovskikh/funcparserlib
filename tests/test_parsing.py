@@ -17,6 +17,8 @@ from funcparserlib.parser import (
     maybe,
     _Ignored,  # noqa
     tok,
+    finished,
+    forward_decl,
 )
 
 
@@ -82,7 +84,10 @@ end"""
             t = tokens[e.state.max]
             self.assertEqual(t, Token("id", "is_not"))
             self.assertEqual((t.start, t.end), ((2, 5), (2, 10)))
-            self.assertEqual("got unexpected token: 2,5-2,10: id 'is_not'", e.msg)
+            self.assertEqual(
+                "2,5-2,10: got unexpected token: 'is_not', expected: 'is'",
+                e.msg,
+            )
         else:
             self.fail("must raise NoParseError")
 
@@ -191,3 +196,94 @@ end"""
         tokens = list(tokenize("foo"))
         expr = maybe(a(None))
         self.assertEqual(expr.parse(tokens), None)  # type: ignore
+
+    def test_seq_parse_error(self):
+        # type: () -> None
+        expr = a("x") + a("y")
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("xz")
+        self.assertEqual(
+            ctx.exception.msg,
+            "got unexpected token: 'z', expected: 'y'",
+        )
+
+    def test_alt_2_parse_error(self):
+        # type: () -> None
+        expr = a("x") + (a("x") | a("y"))
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("xz")
+        self.assertEqual(
+            ctx.exception.msg,
+            "got unexpected token: 'z', expected: 'x' or 'y'",
+        )
+
+    def test_alt_3_parse_error(self):
+        # type: () -> None
+        expr = a("x") + (a("x") | a("y") | a("z"))
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("xa")
+        self.assertEqual(
+            ctx.exception.msg,
+            "got unexpected token: 'a', expected: 'x' or 'y' or 'z'",
+        )
+
+    def test_alt_3_two_steps_parse_error(self):
+        # type: () -> None
+        expr = a("x") + (a("x") | (a("y") + a("a")))
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("xyz")
+        self.assertEqual(
+            ctx.exception.msg,
+            "got unexpected token: 'z', expected: 'a'",
+        )
+
+    def test_expected_eof_error(self):
+        # type: () -> None
+        expr = a("x") + finished
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("xy")
+        self.assertEqual(
+            ctx.exception.msg,
+            "got unexpected token: 'y', expected: end of file",
+        )
+
+    def test_expected_second_in_sequence_error(self):
+        # type: () -> None
+        expr = a("x") + a("y")
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("xz")
+        self.assertEqual(
+            ctx.exception.msg,
+            "got unexpected token: 'z', expected: 'y'",
+        )
+
+    def test_forward_decl_nested_matching_error(self):
+        # type: () -> None
+        expr = forward_decl()
+        expr.define(a("x") + maybe(expr) + a("y"))
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("xxy")
+        self.assertEqual(
+            ctx.exception.msg,
+            "got unexpected end of file, expected: 'y'",
+        )
+
+    def test_expected_token_type_error(self):
+        # type: () -> None
+        expr = tok("number")
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse([Token("id", "foo")])
+        self.assertEqual(
+            ctx.exception.msg,
+            "got unexpected token: 'foo', expected: number",
+        )
+
+    def test_expected_exact_token_error(self):
+        # type: () -> None
+        expr = tok("operator", "=")
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse([Token("operator", "+")])
+        self.assertEqual(
+            ctx.exception.msg,
+            "got unexpected token: '+', expected: '='",
+        )

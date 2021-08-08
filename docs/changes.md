@@ -19,6 +19,8 @@ The stable 1.0.0 release freezes the API of funcparserlib 0.3.6 which was releas
 
 ### Changed
 
+* Parse exceptions now show expected tokens and grammar rules at the stopped position
+  ([#52](https://github.com/vlasovskikh/funcparserlib/issues/52))
 * Dropped support for Python 3.4, 3.5 (end of life)
 * Dropped support for Python 2.5, 2.6, 3.3 (end of life), modernized code for Python 
   3 to run without obsolete `2to3`

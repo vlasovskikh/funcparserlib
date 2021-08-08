@@ -397,6 +397,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#funcparserlib.parser.tok" class="md-nav__link">
+    tok()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#funcparserlib.parser.a" class="md-nav__link">
     a()
   </a>
@@ -645,6 +652,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#funcparserlib.parser.tok" class="md-nav__link">
+    tok()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#funcparserlib.parser.a" class="md-nav__link">
     a()
   </a>
@@ -811,7 +825,7 @@ the whole grammar you want to parse.</p>
 </ul>
 </li>
 <li>Primitive parsers<ul>
-<li><code>a(value)</code>, <code>some(pred)</code>, <code>forward_decl()</code>, <code>finished</code></li>
+<li><code>tok(type, value)</code>, <code>a(value)</code>, <code>some(pred)</code>, <code>forward_decl()</code>, <code>finished</code></li>
 </ul>
 </li>
 <li>Parser combinators<ul>
@@ -904,11 +918,11 @@ of arbitrary type <code>B</code>.</p>
 <p>Although <code>Parser.parse()</code> can parse sequences of any objects (including
 <code>str</code> which is a sequence of <code>str</code> chars), <strong>the recommended way</strong> is
 parsing sequences of <code>Token</code> objects.</p>
-<p>You <strong>should</strong> use a regexp-based tokenizer defined in <code>funcparserlib.lexer</code>
-to convert your text into a sequence of <code>Token</code> objects before parsing
-it. You will get more readable parsing error messages (as <code>Token</code> objects
-contain their position in the source file) and good separation of the
-lexical and syntactic levels of the grammar.</p>
+<p>You <strong>should</strong> use a regexp-based tokenizer <code>make_tokenizer()</code> defined in
+<code>funcparserlib.lexer</code> to convert your text into a sequence of <code>Token</code>
+objects before parsing it. You will get more readable parsing error messages
+(as <code>Token</code> objects contain their position in the source file) and good
+separation of the lexical and syntactic levels of the grammar.</p>
 </div>
 
     </div>
@@ -966,7 +980,7 @@ recursive parsers.</p>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">name</span>
-<span class="go">&#39;((a &quot;x&quot;) , (a &quot;y&quot;))&#39;</span>
+<span class="go">&quot;(&#39;x&#39;, &#39;y&#39;)&quot;</span>
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -984,6 +998,58 @@ recursive parsers.</p>
   </div>
 
 <h2 id="primitive-parsers">Primitive Parsers</h2>
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="funcparserlib.parser.tok" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">funcparserlib</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">tok</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents first">
+
+      <p>Return a parser that parses a <code>Token</code> and returns the string value of the token.</p>
+<p>Type: <code>(str, Optional[str]) -&gt; Parser[Token, str]</code></p>
+<p>You can match any token of the specified <code>type</code> or you can match a specific token by
+its <code>type</code> and <code>value</code>.</p>
+
+<p><strong>Examples:</strong></p>
+    
+      <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">tok</span><span class="p">(</span><span class="s2">&quot;expr&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="n">Token</span><span class="p">(</span><span class="s2">&quot;expr&quot;</span><span class="p">,</span> <span class="s2">&quot;foo&quot;</span><span class="p">)])</span>
+<span class="go">&#39;foo&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="n">Token</span><span class="p">(</span><span class="s2">&quot;expr&quot;</span><span class="p">,</span> <span class="s2">&quot;bar&quot;</span><span class="p">)])</span>
+<span class="go">&#39;bar&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="n">Token</span><span class="p">(</span><span class="s2">&quot;op&quot;</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">)])</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: &#39;=&#39;, expected: expr</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">tok</span><span class="p">(</span><span class="s2">&quot;op&quot;</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="n">Token</span><span class="p">(</span><span class="s2">&quot;op&quot;</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">)])</span>
+<span class="go">&#39;=&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">([</span><span class="n">Token</span><span class="p">(</span><span class="s2">&quot;op&quot;</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">)])</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: &#39;+&#39;, expected: &#39;=&#39;</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In order to convert your text to parse into a sequence of <code>Token</code> objects,
+use a regexp-based tokenizer <code>make_tokenizer()</code> defined in
+<code>funcparserlib.lexer</code>. You will get more readable parsing error messages (as
+<code>Token</code> objects contain their position in the source file) and good separation
+of the lexical and syntactic levels of the grammar.</p>
+</div>
+
+    </div>
+
+  </div>
+
 
 
   <div class="doc doc-object doc-function">
@@ -1009,8 +1075,19 @@ recursive parsers.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
-<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: y</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: &#39;y&#39;, expected: &#39;x&#39;</span>
 </code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although <code>Parser.parse()</code> can parse sequences of any objects (including
+<code>str</code> which is a sequence of <code>str</code> chars), <strong>the recommended way</strong> is
+parsing sequences of <code>Token</code> objects.</p>
+<p>You <strong>should</strong> use a regexp-based tokenizer <code>make_tokenizer()</code> defined in
+<code>funcparserlib.lexer</code> to convert your text into a sequence of <code>Token</code> objects
+before parsing it. You will get more readable parsing error messages (as <code>Token</code>
+objects contain their position in the source file) and good separation of the
+lexical and syntactic levels of the grammar.</p>
+</div>
 
     </div>
 
@@ -1035,7 +1112,7 @@ recursive parsers.</p>
 
 <p><strong>Examples:</strong></p>
     
-      <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">some</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">isalpha</span><span class="p">())</span>
+      <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">some</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">isalpha</span><span class="p">())</span><span class="o">.</span><span class="n">named</span><span class="p">(</span><span class="s1">&#39;alpha&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
 <span class="go">&#39;x&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
@@ -1043,14 +1120,14 @@ recursive parsers.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
-<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: 1</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: &#39;1&#39;, expected: alpha</span>
 </code></pre></div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
 <p>The <code>some()</code> combinator is quite slow and may be changed or removed in future
-versions. If you need a parser for just one specific token, use <code>a(token)</code>
-instead. For parsing several specific tokens, use the choice combinator
-<code>a(token_1) | a(token_2) | ... | a(token_N)</code>.</p>
+versions. If you need a parser for a token by its type (e.g. any identifier)
+and maybe its value, use <code>tok(type[, value])</code> instead. You should use
+<code>make_tokenizer()</code> from <code>funcparserlib.lexer</code> to tokenize your text first.</p>
 </div>
 
     </div>
@@ -1085,7 +1162,7 @@ parsers.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xxy&quot;</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
-<span class="gr">parser.NoParseError</span>: <span class="n">no tokens left in the stream: &lt;EOF&gt;</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected end of file, expected: &#39;y&#39;</span>
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1114,7 +1191,7 @@ declaration, so that your type checker can check types in <code>p.define(...)</c
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xy&quot;</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
-<span class="gr">funcparserlib.parser.NoParseError</span>: <span class="n">should have reached &lt;EOF&gt;: y</span>
+<span class="gr">funcparserlib.parser.NoParseError</span>: <span class="n">got unexpected token: &#39;y&#39;, expected: end of file</span>
 </code></pre></div>
 <h2 id="parser-combinators">Parser Combinators</h2>
 
@@ -1170,7 +1247,7 @@ dynamic return type of this method):</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xz&quot;</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
-<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: z</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: &#39;z&#39;, expected: &#39;y&#39;</span>
 </code></pre></div>
 
     </div>
@@ -1222,13 +1299,13 @@ ignored by the sequential <code>+</code> combinator.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;yz&quot;</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
-<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: y</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: &#39;y&#39;, expected: &#39;x&#39;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">a</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="o">-</span><span class="n">a</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;xz&quot;</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
-<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: z</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: &#39;z&#39;, expected: &#39;y&#39;</span>
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1273,7 +1350,7 @@ other parser.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
-<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: z</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: &#39;z&#39;, expected: &#39;x&#39; or &#39;y&#39;</span>
 </code></pre></div>
 
     </div>
@@ -1411,7 +1488,7 @@ the sequentially parsed values.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
 <span class="gt">Traceback (most recent call last):</span>
     <span class="o">...</span>
-<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: y</span>
+<span class="gr">parser.NoParseError</span>: <span class="n">got unexpected token: &#39;y&#39;, expected: &#39;x&#39;</span>
 </code></pre></div>
 
     </div>

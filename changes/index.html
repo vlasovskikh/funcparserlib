@@ -985,10 +985,13 @@
   (Thanks to <a href="https://github.com/pkulev">@pkulev</a>)</li>
 <li>Added support for Python 3.8</li>
 <li>Added <code>-p</code> (the same as <code>skip(p)</code>) with more strict type hints for <code>-p</code> and <code>p1 + p2</code></li>
+<li>Added <code>tok(type[, value])</code> for more compact grammars, better error messages</li>
 <li>Added type hints for the public API</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
+<li>Parse exceptions now show expected tokens and grammar rules at the stopped position
+  (<a href="https://github.com/vlasovskikh/funcparserlib/issues/52">#52</a>)</li>
 <li>Dropped support for Python 3.4, 3.5 (end of life)</li>
 <li>Dropped support for Python 2.5, 2.6, 3.3 (end of life), modernized code for Python 
   3 to run without obsolete <code>2to3</code>

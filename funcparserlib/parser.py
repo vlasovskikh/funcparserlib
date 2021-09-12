@@ -67,6 +67,7 @@ __all__ = [
     "Parser",
 ]
 
+import sys
 import logging
 import warnings
 
@@ -75,6 +76,11 @@ from funcparserlib.lexer import Token
 log = logging.getLogger("funcparserlib")
 
 debug = False
+PY2 = sys.version_info < (3,)
+if PY2:
+    string_types = (str, unicode)  # noqa
+else:
+    string_types = str
 
 
 class Parser(object):
@@ -222,8 +228,10 @@ class Parser(object):
                         e_line, e_pos = t.end
                         loc = "%d,%d-%d,%d: " % (s_line, s_pos, e_line, e_pos)
                     msg = "%s%s: %r" % (loc, e.msg, t.value)
+                elif isinstance(t, string_types):
+                    msg = "%s: %r" % (e.msg, t)
                 else:
-                    msg = "%s: '%s'" % (e.msg, t)
+                    msg = "%s: %s" % (e.msg, t)
             else:
                 msg = e.msg
             if e.state.parser is not None:

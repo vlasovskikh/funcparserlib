@@ -465,7 +465,7 @@ class State(object):
     position `max` of the rightmost token that has been consumed while parsing.
     """
 
-    def __init__(self, pos, max, parser):
+    def __init__(self, pos, max, parser=None):
         self.pos = pos
         self.max = max
         self.parser = parser

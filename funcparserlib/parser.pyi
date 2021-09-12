@@ -26,7 +26,7 @@ class State:
         self,
         pos: int,
         max: int,
-        parser: Union[Parser, _ParserCallable, None],
+        parser: Union[Parser, _ParserCallable, None] = ...,
     ) -> None: ...
 
 _ParserCallable = Callable[[_A, State], Tuple[_B, State]]

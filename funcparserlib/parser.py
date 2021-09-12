@@ -223,7 +223,7 @@ class Parser(object):
                         loc = "%d,%d-%d,%d: " % (s_line, s_pos, e_line, e_pos)
                     msg = "%s%s: %r" % (loc, e.msg, t.value)
                 else:
-                    msg = "%s: %r" % (e.msg, t)
+                    msg = "%s: '%s'" % (e.msg, t)
             else:
                 msg = e.msg
             if e.state.parser is not None:

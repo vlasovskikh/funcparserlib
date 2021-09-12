@@ -1,0 +1,27 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags: ["*"]
+
+jobs:
+  build-n-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+      - name: Build sdist and wheel
+        run: |
+          poetry build --no-interaction
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}

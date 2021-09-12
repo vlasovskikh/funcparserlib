@@ -9,6 +9,7 @@ The stable 1.0.0 release freezes the API of funcparserlib 0.3.6 which was releas
 
 ### Added
 
+* Added support for Python 3.10
 * Added support for Python 3.9
   ([#63](https://github.com/vlasovskikh/funcparserlib/pull/63))
   (Thanks to [@pkulev](https://github.com/pkulev))

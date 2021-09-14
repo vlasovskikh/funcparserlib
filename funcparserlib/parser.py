@@ -236,7 +236,8 @@ class Parser(object):
                 msg = e.msg
             if e.state.parser is not None:
                 msg = "%s, expected: %s" % (msg, e.state.parser.name)
-            raise NoParseError(msg, e.state)
+            e.msg = msg
+            raise
 
     def __add__(self, other):
         """Sequential combination of parsers. It runs this parser, then the other
@@ -340,12 +341,13 @@ class Parser(object):
             try:
                 return self.run(tokens, s)
             except NoParseError as e:
-                try:
-                    return other.run(tokens, State(s.pos, e.state.max, e.state.parser))
-                except NoParseError as e2:
-                    if s.max == e2.state.max:
-                        e2.state = State(e2.state.pos, e2.state.max, _or)
-                    raise
+                state = e.state
+            try:
+                return other.run(tokens, State(s.pos, state.max, state.parser))
+            except NoParseError as e:
+                if s.max == e.state.max:
+                    e.state = State(e.state.pos, e.state.max, _or)
+                raise
 
         _or.name = "%s or %s" % (self.name, other.name)
         return _or

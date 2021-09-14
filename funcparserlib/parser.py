@@ -379,8 +379,7 @@ class Parser(object):
             (v, s2) = self.run(tokens, s)
             return f(v), s2
 
-        _shift.name = "(%s)" % (self.name,)
-        return _shift
+        return _shift.named(self.name)
 
     def bind(self, f):
         """Bind the parser to a monadic function that returns a new parser.

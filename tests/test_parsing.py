@@ -303,3 +303,14 @@ end"""
         else:
             msg = "got unexpected end of file, expected: 'y'"
         self.assertEqual(ctx.exception.msg, msg)
+
+    def test_expected_transform_parsing_results_error(self):
+        # type: () -> None
+        expr = (a("1") >> int) | a("2")
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("x")
+        if six.PY2:
+            msg = "got unexpected token: u'x', expected: u'1' or u'2'"
+        else:
+            msg = "got unexpected token: 'x', expected: '1' or '2'"
+        self.assertEqual(ctx.exception.msg, msg)

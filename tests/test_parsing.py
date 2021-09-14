@@ -292,3 +292,14 @@ end"""
         else:
             msg = "got unexpected token: '+', expected: '='"
         self.assertEqual(ctx.exception.msg, msg)
+
+    def test_unexpected_eof(self):
+        # type: () -> None
+        expr = (a("x") + a("y")) | a("z")
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("x")
+        if six.PY2:
+            msg = "got unexpected end of file, expected: u'y'"
+        else:
+            msg = "got unexpected end of file, expected: 'y'"
+        self.assertEqual(ctx.exception.msg, msg)

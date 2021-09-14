@@ -233,7 +233,7 @@ class Parser(object):
                 else:
                     msg = "%s: %s" % (e.msg, t)
             else:
-                msg = e.msg
+                msg = "got unexpected end of file"
             if e.state.parser is not None:
                 msg = "%s, expected: %s" % (msg, e.state.parser.name)
             e.msg = msg

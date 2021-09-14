@@ -751,6 +751,7 @@ class _IgnoredParser(Parser):
             return v if isinstance(v, _Ignored) else _Ignored(v), s2
 
         self.define(ignored)
+        self.name = getattr(p, "name", p.__doc__)
 
     def __add__(self, other):
         def ignored_left(tokens, s):

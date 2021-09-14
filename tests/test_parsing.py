@@ -314,3 +314,14 @@ end"""
         else:
             msg = "got unexpected token: 'x', expected: '1' or '2'"
         self.assertEqual(ctx.exception.msg, msg)
+
+    def test_expected_sequence_with_skipped_parts(self):
+        # type: () -> None
+        expr = (-a("x") + a("y")) | a("z")
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("b")
+        if six.PY2:
+            msg = "got unexpected token: u'b', expected: (-u'x', u'y') or u'z'"
+        else:
+            msg = "got unexpected token: 'b', expected: (-'x', 'y') or 'z'"
+        self.assertEqual(ctx.exception.msg, msg)

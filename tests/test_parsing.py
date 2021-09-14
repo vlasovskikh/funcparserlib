@@ -322,9 +322,9 @@ end"""
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("b")
         if six.PY2:
-            msg = "got unexpected token: u'b', expected: (-u'x', u'y') or u'z'"
+            msg = "got unexpected token: u'b', expected: (u'x', u'y') or u'z'"
         else:
-            msg = "got unexpected token: 'b', expected: (-'x', 'y') or 'z'"
+            msg = "got unexpected token: 'b', expected: ('x', 'y') or 'z'"
         self.assertEqual(ctx.exception.msg, msg)
 
     def test_expected_some_without_name(self):
@@ -340,4 +340,42 @@ end"""
             msg = "got unexpected token: u'A', expected: some(...)"
         else:
             msg = "got unexpected token: 'A', expected: some(...)"
+        self.assertEqual(ctx.exception.msg, msg)
+
+    def test_expected_forward_decl_without_name(self):
+        # type: () -> None
+        nested = forward_decl()
+        nested.define(-a("a") + maybe(nested) + -a("z"))
+        expr = nested | a("x")
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("y")
+        if six.PY2:
+            msg = (
+                "got unexpected token: u'y', expected: ((u'a', [ forward_decl() ]), "
+                "u'z') or u'x'"
+            )
+        else:
+            msg = (
+                "got unexpected token: 'y', expected: (('a', [ forward_decl() ]), "
+                "'z') or 'x'"
+            )
+        self.assertEqual(ctx.exception.msg, msg)
+
+    def test_expected_forward_decl_with_name(self):
+        # type: () -> None
+        nested = forward_decl().named("nested")
+        nested.define(-a("a") + maybe(nested) + -a("z"))
+        expr = nested | a("x")
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("y")
+        if six.PY2:
+            msg = (
+                "got unexpected token: u'y', expected: ((u'a', [ nested ]), "
+                "u'z') or u'x'"
+            )
+        else:
+            msg = (
+                "got unexpected token: 'y', expected: (('a', [ nested ]), "
+                "'z') or 'x'"
+            )
         self.assertEqual(ctx.exception.msg, msg)

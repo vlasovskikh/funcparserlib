@@ -761,10 +761,10 @@ class _IgnoredParser(Parser):
 
         if isinstance(other, _IgnoredParser):
             return _IgnoredParser(ignored_left).named(
-                "(-%s, -%s)" % (self.name, other.name)
+                "(%s, %s)" % (self.name, other.name)
             )
         else:
-            return Parser(ignored_left).named("(-%s, %s)" % (self.name, other.name))
+            return Parser(ignored_left).named("(%s, %s)" % (self.name, other.name))
 
 
 def oneplus(p):
@@ -854,6 +854,7 @@ def forward_decl():
     def f(_tokens, _s):
         raise NotImplementedError("you must define() a forward_decl somewhere")
 
+    f.name = "forward_decl()"
     return f
 
 

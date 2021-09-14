@@ -612,7 +612,7 @@ def some(pred):
                 s2 = State(s.pos, s.max, _some if s.pos == s.max else s.parser)
                 raise NoParseError("got unexpected token", s2)
 
-    _some.name = "(some)"
+    _some.name = "some(...)"
     return _some
 
 

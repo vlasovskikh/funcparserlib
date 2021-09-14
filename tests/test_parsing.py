@@ -19,6 +19,7 @@ from funcparserlib.parser import (
     tok,
     finished,
     forward_decl,
+    some,
 )
 
 
@@ -324,4 +325,19 @@ end"""
             msg = "got unexpected token: u'b', expected: (-u'x', u'y') or u'z'"
         else:
             msg = "got unexpected token: 'b', expected: (-'x', 'y') or 'z'"
+        self.assertEqual(ctx.exception.msg, msg)
+
+    def test_expected_some_without_name(self):
+        # type: () -> None
+        def lowercase(t):
+            # type: (str) -> bool
+            return t.islower()
+
+        expr = some(lowercase)
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("A")
+        if six.PY2:
+            msg = "got unexpected token: u'A', expected: some(...)"
+        else:
+            msg = "got unexpected token: 'A', expected: some(...)"
         self.assertEqual(ctx.exception.msg, msg)

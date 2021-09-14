@@ -28,8 +28,6 @@ The parser is based on [the JSON grammar][1].
 
 from __future__ import print_function, unicode_literals
 
-import logging
-import os
 import re
 import sys
 from pprint import pformat
@@ -82,24 +80,24 @@ JsonMember = Tuple[str, JsonValue]
 def tokenize(s):
     # type: (Text) -> List[Token]
     specs = [
-        ("Space", (r"[ \t\r\n]+",)),
-        ("String", (r'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
+        ("space", (r"[ \t\r\n]+",)),
+        ("string", (r'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
         (
-            "Number",
+            "number",
             (
                 r"""
                 -?                  # Minus
                 (0|([1-9][0-9]*))   # Int
                 (\.[0-9]+)?         # Frac
-                ([Ee][+-][0-9]+)?   # Exp
+                ([Ee][+-]?[0-9]+)?   # Exp
             """,
                 VERBOSE,
             ),
         ),
-        ("Op", (r"[{}\[\]\-,:]",)),
-        ("Name", (r"[A-Za-z_][A-Za-z_0-9]*",)),
+        ("op", (r"[{}\[\]\-,:]",)),
+        ("name", (r"[A-Za-z_][A-Za-z_0-9]*",)),
     ]
-    useless = ["Space"]
+    useless = ["space"]
     t = make_tokenizer(specs)
     return [x for x in t(s) if x.type not in useless]
 
@@ -113,11 +111,11 @@ def parse(tokens):
 
     def op(s):
         # type: (Text) -> Parser[Token, Text]
-        return tok("Op", s)
+        return tok("op", s)
 
     def n(s):
         # type: (Text) -> Parser[Token, Text]
-        return tok("Name", s)
+        return tok("name", s)
 
     def make_array(values):
         # type: (Optional[Tuple[JsonValue, List[JsonValue]]]) -> List[Any]
@@ -159,10 +157,10 @@ def parse(tokens):
 
         def sub(m):
             # type: (Match[Text]) -> Text
-            if m.group("standard") is not None:  # noqa
-                return std[m.group("standard")]  # noqa
+            if m.group("standard") is not None:
+                return std[m.group("standard")]
             else:
-                return six.unichr(int(m.group("unicode"), 16))  # noqa
+                return six.unichr(int(m.group("unicode"), 16))
 
         return re_esc.sub(sub, s)
 
@@ -178,21 +176,20 @@ def parse(tokens):
     null = n("null") >> const(None)
     true = n("true") >> const(True)
     false = n("false") >> const(False)
-    number = tok("Number") >> make_number
-    string = tok("String") >> make_string
-    value = forward_decl()  # type: Parser[Token, JsonValue]
+    number = tok("number") >> make_number
+    string = tok("string") >> make_string
+    value = forward_decl().named("json_value")  # type: Parser[Token, JsonValue]
     member = string + -op(":") + value >> make_member
     json_object = (
-        -op("{") + maybe(member + many(-op(",") + member)) + -op("}")
-    ) >> make_object
+        (-op("{") + maybe(member + many(-op(",") + member)) + -op("}")) >> make_object
+    ).named("json_object")
     json_array = (
-        -op("[") + maybe(value + many(-op(",") + value)) + -op("]")
-    ) >> make_array
+        (-op("[") + maybe(value + many(-op(",") + value)) + -op("]")) >> make_array
+    ).named("json_array")
     value.define(null | true | false | json_object | json_array | number | string)
-    json_text = json_object | json_array
-    json_file = json_text + -finished
+    json_text = value + -finished
 
-    return json_file.parse(tokens)
+    return json_text.parse(tokens)
 
 
 def loads(s):
@@ -202,15 +199,12 @@ def loads(s):
 
 def main():
     # type: () -> None
-    logging.basicConfig(level=logging.DEBUG)
     try:
-        stdin = os.fdopen(sys.stdin.fileno(), "rb")
-        text = stdin.read().decode(ENCODING)
+        text = sys.stdin.read()
         tree = loads(text)
         print(pformat(tree))
     except (NoParseError, LexerError) as e:
-        msg = ("syntax error: %s" % e).encode(ENCODING)
-        print(msg, file=sys.stderr)
+        print("syntax error: %s" % e, file=sys.stderr)
         sys.exit(1)
 
 

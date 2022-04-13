@@ -76,8 +76,7 @@ from funcparserlib.lexer import Token
 log = logging.getLogger("funcparserlib")
 
 debug = False
-PY2 = sys.version_info < (3,)
-if PY2:
+if sys.version_info < (3,):
     string_types = (str, unicode)  # noqa
 else:
     string_types = str
@@ -487,7 +486,7 @@ class State(object):
 
 
 class NoParseError(Exception):
-    def __init__(self, msg="", state=None):
+    def __init__(self, msg, state):
         self.msg = msg
         self.state = state
 

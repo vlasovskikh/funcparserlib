@@ -145,7 +145,7 @@ Used By
 Some open-source projects that use `funcparserlib` as an explicit dependency:
 
 * https://github.com/hylang/hy
-    * 3.8K stars, version `>= 0.3.6`, Python 3.6+
+    * 3.8K stars, version `>= 0.3.6`, Python 3.7+
 * https://github.com/scrapinghub/splash
     * 3.3K stars, version `*`. Python 3 in Docker
 * https://github.com/klen/graphite-beacon

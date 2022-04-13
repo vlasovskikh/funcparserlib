@@ -13,26 +13,25 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 2.7",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
 ]
 
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+python = "~2.7 || ^3.7"
 
 [tool.poetry.dev-dependencies]
 six = "^1.15.0"
 typing = {version = "^3.7.4", python = "~2.7"}
-mypy = {version = "^0.910", python = "^3.6"}
-pre-commit = {version = "^2.11.1", python = "^3.6.1"}
-black = {extras = ["d"], version = "^21.8b0", python = "^3.6.2"}
-flake8 = {version = "^3.9.0", python = "^3.6"}
-tox = {version = "^3.23.0", python = "^3.6"}
-mkdocs = {version = "^1.1.2", python = "^3.6"}
-mkdocs-material = {version = "^7.1.0", python = "^3.6"}
-mkdocstrings = {version = "^0.15.0", python = "^3.6.1"}
+mypy = {version = "~0.942", python = "^3.7"}
+pre-commit = {version = "^2.11.1", python = "^3.7"}
+black = {extras = ["d"], version = ">=22.3.0", python = "^3.7"}
+flake8 = {version = "^3.9.2", python = "^3.7"}
+tox = {version = "^3.23.0", python = "^3.7"}
+mkdocs = {version = "^1.3.0", python = "^3.7"}
+mkdocs-material = {version = "^8.2.9", python = "^3.7"}
+mkdocstrings = {version = "^0.18.1", python = "^3.7"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

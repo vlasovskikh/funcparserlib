@@ -21,7 +21,7 @@
 
 from __future__ import unicode_literals
 
-__all__ = ["make_tokenizer", "Token", "LexerError"]
+__all__ = ["make_tokenizer", "TokenSpec", "Token", "LexerError"]
 
 import re
 
@@ -35,6 +35,26 @@ class LexerError(Exception):
         s = "cannot tokenize data"
         line, pos = self.place
         return '%s: %d,%d: "%s"' % (s, line, pos, self.msg)
+
+
+class TokenSpec(object):
+    """A token specification for generating a lexer via `make_tokenizer()`."""
+
+    def __init__(self, type, pattern, flags=0):
+        """Initialize a `TokenSpec` object.
+
+        Parameters:
+            type (str): User-defined type of the token (e.g. `"name"`, `"number"`,
+                `"operator"`)
+            pattern (str): Regexp for matching this token type
+            flags (int, optional): Regexp flags, the second argument of `re.compile()`
+        """
+        self.type = type
+        self.pattern = pattern
+        self.flags = flags
+
+    def __repr__(self):
+        return "TokenSpec(%r, %r, %r)" % (self.type, self.pattern, self.flags)
 
 
 class Token(object):
@@ -96,11 +116,16 @@ def make_tokenizer(specs):
     # noinspection GrazieInspection
     """Make a function that tokenizes text based on the regexp specs.
 
-    Type: `(Sequence[Tuple[str, Tuple[Any, ...]]]) -> Callable[[str], Iterable[Token]]`
+    Type: `(Sequence[TokenSpec | Tuple]) -> Callable[[str], Iterable[Token]]`
 
-    A token spec is a tuple of (_type_, _args_), where _type_ sets the value of
-    `Token.type` for a found token, and _args_ are the positional arguments for
-    `re.compile()`: either just (_pattern_,) or (_pattern_, _flags_).
+    A token spec is `TokenSpec` instance.
+
+    !!! Note
+
+        For legacy reasons, a token spec may also be a tuple of (_type_, _args_), where
+        _type_ sets the value of `Token.type` for the token, and _args_ are the
+        positional arguments for `re.compile()`: either just (_pattern_,) or
+        (_pattern_, _flags_).
 
     It returns a tokenizer function that takes a string and returns an iterable of
     `Token` objects, or raises `LexerError` if it cannot tokenize the string according
@@ -110,9 +135,9 @@ def make_tokenizer(specs):
 
     ```pycon
     >>> tokenize = make_tokenizer([
-    ...     ("space", (r"\\s+",)),
-    ...     ("id", (r"\\w+",)),
-    ...     ("op", (r"[,!]",)),
+    ...     TokenSpec("space", r"\\s+"),
+    ...     TokenSpec("id", r"\\w+"),
+    ...     TokenSpec("op", r"[,!]"),
     ... ])
     >>> text = "Hello, World!"
     >>> [t for t in tokenize(text) if t.type != "space"]  # noqa
@@ -125,7 +150,14 @@ def make_tokenizer(specs):
 
     ```
     """
-    compiled = [(name, re.compile(*args)) for name, args in specs]
+    compiled = []
+    for spec in specs:
+        if isinstance(spec, TokenSpec):
+            c = spec.type, re.compile(spec.pattern, spec.flags)
+        else:
+            name, args = spec
+            c = name, re.compile(*args)
+        compiled.append(c)
 
     def match_specs(s, i, position):
         line, pos = position
@@ -157,23 +189,23 @@ def make_tokenizer(specs):
     return f
 
 
-# This is an example of a token spec. See also [this article][1] for a
+# This is an example of token specs. See also [this article][1] for a
 # discussion of searching for multiline comments using regexps (including `*?`).
 #
 #   [1]: http://ostermiller.org/findcomment.html
 _example_token_specs = [
-    ("COMMENT", (r"\(\*(.|[\r\n])*?\*\)", re.MULTILINE)),
-    ("COMMENT", (r"\{(.|[\r\n])*?\}", re.MULTILINE)),
-    ("COMMENT", (r"//.*",)),
-    ("NL", (r"[\r\n]+",)),
-    ("SPACE", (r"[ \t\r\n]+",)),
-    ("NAME", (r"[A-Za-z_][A-Za-z_0-9]*",)),
-    ("REAL", (r"[0-9]+\.[0-9]*([Ee][+\-]?[0-9]+)*",)),
-    ("INT", (r"[0-9]+",)),
-    ("INT", (r"\$[0-9A-Fa-f]+",)),
-    ("OP", (r"(\.\.)|(<>)|(<=)|(>=)|(:=)|[;,=\(\):\[\]\.+\-<>\*/@\^]",)),
-    ("STRING", (r"'([^']|(''))*'",)),
-    ("CHAR", (r"#[0-9]+",)),
-    ("CHAR", (r"#\$[0-9A-Fa-f]+",)),
+    TokenSpec("COMMENT", r"\(\*(.|[\r\n])*?\*\)", re.MULTILINE),
+    TokenSpec("COMMENT", r"\{(.|[\r\n])*?\}", re.MULTILINE),
+    TokenSpec("COMMENT", r"//.*"),
+    TokenSpec("NL", r"[\r\n]+"),
+    TokenSpec("SPACE", r"[ \t\r\n]+"),
+    TokenSpec("NAME", r"[A-Za-z_][A-Za-z_0-9]*"),
+    TokenSpec("REAL", r"[0-9]+\.[0-9]*([Ee][+\-]?[0-9]+)*"),
+    TokenSpec("INT", r"[0-9]+"),
+    TokenSpec("INT", r"\$[0-9A-Fa-f]+"),
+    TokenSpec("OP", r"(\.\.)|(<>)|(<=)|(>=)|(:=)|[;,=\(\):\[\]\.+\-<>\*/@\^]"),
+    TokenSpec("STRING", r"'([^']|(''))*'"),
+    TokenSpec("CHAR", r"#[0-9]+"),
+    TokenSpec("CHAR", r"#\$[0-9A-Fa-f]+"),
 ]
 # tokenize = make_tokenizer(_example_token_specs)

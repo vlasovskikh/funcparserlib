@@ -48,7 +48,7 @@ from typing import (
 
 import six
 
-from funcparserlib.lexer import make_tokenizer, Token, LexerError
+from funcparserlib.lexer import TokenSpec, make_tokenizer, Token, LexerError
 from funcparserlib.parser import (
     maybe,
     many,
@@ -80,22 +80,20 @@ JsonMember = Tuple[str, JsonValue]
 def tokenize(s):
     # type: (Text) -> List[Token]
     specs = [
-        ("space", (r"[ \t\r\n]+",)),
-        ("string", (r'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE)),
-        (
+        TokenSpec("space", r"[ \t\r\n]+"),
+        TokenSpec("string", r'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE),
+        TokenSpec(
             "number",
-            (
-                r"""
-                -?                  # Minus
-                (0|([1-9][0-9]*))   # Int
-                (\.[0-9]+)?         # Frac
-                ([Ee][+-]?[0-9]+)?   # Exp
+            r"""
+            -?                  # Minus
+            (0|([1-9][0-9]*))   # Int
+            (\.[0-9]+)?         # Frac
+            ([Ee][+-]?[0-9]+)?   # Exp
             """,
-                VERBOSE,
-            ),
+            VERBOSE,
         ),
-        ("op", (r"[{}\[\]\-,:]",)),
-        ("name", (r"[A-Za-z_][A-Za-z_0-9]*",)),
+        TokenSpec("op", r"[{}\[\]\-,:]"),
+        TokenSpec("name", r"[A-Za-z_][A-Za-z_0-9]*"),
     ]
     useless = ["space"]
     t = make_tokenizer(specs)

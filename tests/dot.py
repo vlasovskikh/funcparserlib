@@ -42,7 +42,7 @@ from collections import namedtuple
 from re import MULTILINE
 from typing import Sequence, List, TypeVar, Any, Callable, Text
 
-from funcparserlib.lexer import make_tokenizer, Token, LexerError
+from funcparserlib.lexer import TokenSpec, make_tokenizer, Token, LexerError
 from funcparserlib.parser import (
     maybe,
     many,
@@ -70,14 +70,14 @@ T = TypeVar("T")  # noqa
 def tokenize(s):
     # type: (Text) -> Sequence[Token]
     specs = [
-        ("Comment", (r"/\*(.|[\r\n])*?\*/", MULTILINE)),
-        ("Comment", (r"//.*",)),
-        ("NL", (r"[\r\n]+",)),
-        ("Space", (r"[ \t\r\n]+",)),
-        ("Name", (r"[A-Za-z\200-\377_][A-Za-z\200-\377_0-9]*",)),
-        ("Op", (r"[{};,=\[\]]|(->)|(--)",)),
-        ("Number", (r"-?(\.[0-9]+)|([0-9]+(\.[0-9]*)?)",)),
-        ("String", (r'"[^"]*"',)),  # '\"' escapes are ignored
+        TokenSpec("Comment", r"/\*(.|[\r\n])*?\*/", MULTILINE),
+        TokenSpec("Comment", r"//.*"),
+        TokenSpec("NL", r"[\r\n]+"),
+        TokenSpec("Space", r"[ \t\r\n]+"),
+        TokenSpec("Name", r"[A-Za-z\200-\377_][A-Za-z\200-\377_0-9]*"),
+        TokenSpec("Op", r"[{};,=\[\]]|(->)|(--)"),
+        TokenSpec("Number", r"-?(\.[0-9]+)|([0-9]+(\.[0-9]*)?)"),
+        TokenSpec("String", r'"[^"]*"'),  # '\"' escapes are ignored
     ]
     useless = ["Comment", "NL", "Space"]
     t = make_tokenizer(specs)

@@ -11,8 +11,8 @@ nav:
 #      - JSON Language: examples/json.md
   - API Reference:
       - API Overview: api/index.md
-      - Parser: api/parser.md
       - Lexer: api/lexer.md
+      - Parser: api/parser.md
       - Utilities: api/util.md
   - Changelog: changes.md
 theme:

@@ -7,7 +7,7 @@ from typing import Text, Optional, Tuple
 
 import six
 
-from funcparserlib.lexer import make_tokenizer, LexerError, Token
+from funcparserlib.lexer import TokenSpec, make_tokenizer, LexerError, Token
 from funcparserlib.parser import (
     a,
     many,
@@ -46,10 +46,10 @@ class ParsingTest(unittest.TestCase):
         # type: () -> None
         tokenize = make_tokenizer(
             [
-                ("keyword", (r"\b(is|end)\b",)),
-                ("id", (r"[a-z_]+",)),
-                ("space", (r"[ \t]+",)),
-                ("nl", (r"[\n\r]+",)),
+                TokenSpec("keyword", r"\b(is|end)\b"),
+                TokenSpec("id", r"[a-z_]+"),
+                ("space", (r"[ \t]+",)),  # Legacy token spec
+                TokenSpec("nl", r"[\n\r]+"),
             ]
         )
         with self.assertRaises(LexerError) as ctx:

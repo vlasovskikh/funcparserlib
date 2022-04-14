@@ -1,7 +1,7 @@
-from typing import Tuple, Optional, Callable, Iterable, Any, Text, Sequence
+from typing import Tuple, Optional, Callable, Iterable, Text, Sequence
 
 _Place = Tuple[int, int]
-_Spec = Tuple[Text, Tuple[Any, ...]]
+_Spec = Tuple[Text, Tuple]
 
 class Token:
     type: Text
@@ -18,7 +18,15 @@ class Token:
     ) -> None: ...
     def pformat(self) -> Text: ...
 
-def make_tokenizer(specs: Sequence[_Spec]) -> Callable[[Text], Iterable[Token]]: ...
+class TokenSpec:
+    name: Text
+    pattern: Text
+    flags: int
+    def __init__(self, name: Text, pattern: Text, flags: int = ...) -> None: ...
+
+def make_tokenizer(
+    specs: Sequence[TokenSpec | _Spec],
+) -> Callable[[Text], Iterable[Token]]: ...
 
 class LexerError(Exception):
     place: Tuple[int, int]

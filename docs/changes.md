@@ -30,6 +30,9 @@ The stable 1.0.0 release freezes the API of funcparserlib 0.3.6 which was releas
   (Thanks to [@jdufresne](https://github.com/jdufresne))
 * Removed documentation and unit tests from the distribution
 * Switched from setuptools to Poetry
+* Switched to poetry-core for lighter PEP 517 builds
+  ([#73](https://github.com/vlasovskikh/funcparserlib/pull/73))
+  (Thanks to [@fabaff](https://github.com/fabaff))
 * Run unit tests on GitHub Actions for all supported Pythons
 
 ### Fixed

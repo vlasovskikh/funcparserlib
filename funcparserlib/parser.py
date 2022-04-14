@@ -43,7 +43,8 @@ The structure of the language:
 Every time you apply one of the combinators, you get a new `Parser` object. In other
 words, the set of `Parser` objects is closed under the means of combination.
 
-Note:
+!!! Note
+
     We took the parsing combinators language from the book [Introduction to Functional
     Programming][1] and translated it from ML into Python.
 
@@ -100,7 +101,8 @@ class Parser(object):
     3. You can assign complex parsers to variables to define names that correspond to
        the rules of your grammar
 
-    Note:
+    !!! Note
+
         The constructor `Parser.__init__()` is considered **internal** and may be
         changed in future versions. Use primitive parsers and parsing combinators to
         construct new parsers.
@@ -136,7 +138,8 @@ class Parser(object):
 
         ```
 
-        Note:
+        !!! Note
+
             You can enable the parsing log this way:
 
             ```python
@@ -179,7 +182,8 @@ class Parser(object):
 
         If the parser fails to parse the tokens, it raises `NoParseError`.
 
-        Warning:
+        !!! Warning
+
             This is method is **internal** and may be changed in future versions. Use
             `Parser.parse(tokens)` instead and let the parser object take care of
             updating the parsing state.
@@ -201,7 +205,8 @@ class Parser(object):
 
         If the parser fails to parse the tokens, it raises `NoParseError`.
 
-        Note:
+        !!! Note
+
             Although `Parser.parse()` can parse sequences of any objects (including
             `str` which is a sequence of `str` chars), **the recommended way** is
             parsing sequences of `Token` objects.
@@ -387,7 +392,8 @@ class Parser(object):
 
         Also known as `>>=` in Haskell.
 
-        Note:
+        !!! Note
+
             You can parse any context-free grammar without resorting to `bind`. Due
             to its poor performance please use it only when you really need it.
         """
@@ -457,7 +463,8 @@ class Parser(object):
 
         ```
 
-        Note:
+        !!! Note
+
             You **should not** pass the resulting parser to any combinators other than
             `+`. You **should** have at least one non-skipped value in your
             `p1 + p2 + ... + pN`. The parsed value of `-p` is an **internal** `_Ignored`
@@ -585,7 +592,8 @@ def some(pred):
 
     ```
 
-    Warning:
+    !!! Warning
+
         The `some()` combinator is quite slow and may be changed or removed in future
         versions. If you need a parser for a token by its type (e.g. any identifier)
         and maybe its value, use `tok(type[, value])` instead. You should use
@@ -633,7 +641,8 @@ def a(value):
 
     ```
 
-    Note:
+    !!! Note
+
         Although `Parser.parse()` can parse sequences of any objects (including
         `str` which is a sequence of `str` chars), **the recommended way** is
         parsing sequences of `Token` objects.
@@ -682,7 +691,8 @@ def tok(type, value=None):
 
     ```
 
-    Note:
+    !!! Note
+
         In order to convert your text to parse into a sequence of `Token` objects,
         use a regexp-based tokenizer `make_tokenizer()` defined in
         `funcparserlib.lexer`. You will get more readable parsing error messages (as
@@ -838,7 +848,8 @@ def forward_decl():
 
     ```
 
-    Note:
+    !!! Note
+
         If you care about static types, you should add a type hint for your forward
         declaration, so that your type checker can check types in `p.define(...)` later:
 

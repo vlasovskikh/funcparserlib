@@ -17,8 +17,8 @@ nav:
   - Changelog: changes.md
 theme:
   name: material
-  icon:
-    logo: fontawesome/solid/angle-double-right
+#  icon:
+#    logo: fontawesome/solid/angle-double-right
   features:
     - navigation.expand
     - navigation.tabs

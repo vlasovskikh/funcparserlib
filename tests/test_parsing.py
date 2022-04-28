@@ -244,9 +244,9 @@ end"""
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("xy")
         if six.PY2:
-            msg = "got unexpected token: u'y', expected: end of file"
+            msg = "got unexpected token: u'y', expected: end of input"
         else:
-            msg = "got unexpected token: 'y', expected: end of file"
+            msg = "got unexpected token: 'y', expected: end of input"
         self.assertEqual(ctx.exception.msg, msg)
 
     def test_expected_second_in_sequence_error(self):
@@ -267,9 +267,9 @@ end"""
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("xxy")
         if six.PY2:
-            msg = "got unexpected end of file, expected: u'y'"
+            msg = "got unexpected end of input, expected: u'y'"
         else:
-            msg = "got unexpected end of file, expected: 'y'"
+            msg = "got unexpected end of input, expected: 'y'"
         self.assertEqual(ctx.exception.msg, msg)
 
     def test_expected_token_type_error(self):
@@ -300,9 +300,9 @@ end"""
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("x")
         if six.PY2:
-            msg = "got unexpected end of file, expected: u'y'"
+            msg = "got unexpected end of input, expected: u'y'"
         else:
-            msg = "got unexpected end of file, expected: 'y'"
+            msg = "got unexpected end of input, expected: 'y'"
         self.assertEqual(ctx.exception.msg, msg)
 
     def test_expected_transform_parsing_results_error(self):

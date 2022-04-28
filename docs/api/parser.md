@@ -59,7 +59,7 @@ Type: `Parser[Any, None]`
 >>> expr.parse("xy")
 Traceback (most recent call last):
     ...
-funcparserlib.parser.NoParseError: got unexpected token: 'y', expected: end of file
+funcparserlib.parser.NoParseError: got unexpected token: 'y', expected: end of input
 
 ```
 

@@ -237,7 +237,7 @@ class Parser(object):
                 else:
                     msg = "%s: %s" % (e.msg, t)
             else:
-                msg = "got unexpected end of file"
+                msg = "got unexpected end of input"
             if e.state.parser is not None:
                 msg = "%s, expected: %s" % (msg, e.state.parser.name)
             e.msg = msg
@@ -534,7 +534,7 @@ def finished(tokens, s):
         raise NoParseError("got unexpected token", s2)
 
 
-finished.name = "end of file"
+finished.name = "end of input"
 
 
 def many(p):
@@ -607,7 +607,7 @@ def some(pred):
     def _some(tokens, s):
         if s.pos >= len(tokens):
             s2 = State(s.pos, s.max, _some if s.pos == s.max else s.parser)
-            raise NoParseError("got unexpected end of file", s2)
+            raise NoParseError("got unexpected end of input", s2)
         else:
             t = tokens[s.pos]
             if pred(t):
@@ -847,7 +847,7 @@ def forward_decl():
     >>> expr.parse("xxy")
     Traceback (most recent call last):
         ...
-    parser.NoParseError: got unexpected end of file, expected: 'y'
+    parser.NoParseError: got unexpected end of input, expected: 'y'
 
     ```
 

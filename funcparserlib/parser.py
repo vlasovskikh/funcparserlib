@@ -472,6 +472,9 @@ class Parser(object):
         """
         return _IgnoredParser(self)
 
+    def __class_getitem__(cls, key):
+        return cls
+
 
 class State(object):
     """Parsing state that is maintained basically for error reporting.

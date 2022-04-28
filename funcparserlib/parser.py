@@ -569,7 +569,13 @@ def many(p):
                 (v, s) = p.run(tokens, s)
                 res.append(v)
         except NoParseError as e:
-            return res, State(s.pos, e.state.max, e.state.parser)
+            s2 = State(s.pos, e.state.max, e.state.parser)
+            if debug:
+                log.debug(
+                    "*matched* %d instances of %s, new state = %s"
+                    % (len(res), _many.name, s2)
+                )
+            return res, s2
 
     _many.name = "{ %s }" % p.name
     return _many
@@ -614,12 +620,14 @@ def some(pred):
                 pos = s.pos + 1
                 s2 = State(pos, max(pos, s.max), s.parser)
                 if debug:
-                    log.debug('*matched* "%s", new state = %s' % (t, s2))
+                    log.debug("*matched* %r, new state = %s" % (t, s2))
                 return t, s2
             else:
-                if debug:
-                    log.debug('failed "%s", state = %s' % (t, s))
                 s2 = State(s.pos, s.max, _some if s.pos == s.max else s.parser)
+                if debug:
+                    log.debug(
+                        "failed %r, state = %s, expected = %s" % (t, s2, s2.parser.name)
+                    )
                 raise NoParseError("got unexpected token", s2)
 
     _some.name = "some(...)"
@@ -756,7 +764,7 @@ def skip(p):
 class _IgnoredParser(Parser):
     def __init__(self, p):
         super(_IgnoredParser, self).__init__(p)
-        run = self.run
+        run = self._run if debug else self.run
 
         def ignored(tokens, s):
             v, s2 = run(tokens, s)

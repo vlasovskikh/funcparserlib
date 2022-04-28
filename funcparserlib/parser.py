@@ -530,7 +530,7 @@ def finished(tokens, s):
     if s.pos >= len(tokens):
         return None, s
     else:
-        s2 = State(s.pos, s.max, finished)
+        s2 = State(s.pos, s.max, finished if s.pos == s.max else s.parser)
         raise NoParseError("got unexpected token", s2)
 
 

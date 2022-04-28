@@ -379,3 +379,15 @@ end"""
                 "'z') or 'x'"
             )
         self.assertEqual(ctx.exception.msg, msg)
+
+    def test_end_of_input_after_many_alternatives(self):
+        # type: () -> None
+        brackets = a("[") + a("]")
+        expr = many(a("x") | brackets) + finished
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("[")
+        if six.PY2:
+            msg = "got unexpected end of input, expected: u']'"
+        else:
+            msg = "got unexpected end of input, expected: ']'"
+        self.assertEqual(ctx.exception.msg, msg)

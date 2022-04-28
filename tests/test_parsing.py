@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals
+import re
 
 import unittest
 from typing import Text, Optional, Tuple
@@ -21,6 +22,14 @@ from funcparserlib.parser import (
     forward_decl,
     some,
 )
+
+
+def errmsg(s):
+    # type: (Text) -> Text
+    if six.PY2:
+        return re.sub(r"'(.*?)'", r"u'\1'", s)
+    else:
+        return s
 
 
 class ParsingTest(unittest.TestCase):
@@ -81,12 +90,10 @@ end"""
         t = tokens[ctx2.exception.state.max]
         self.assertEqual(t, Token("id", "is_not"))
         self.assertEqual((t.start, t.end), ((2, 5), (2, 10)))
-        if six.PY2:
-            # noinspection SpellCheckingInspection
-            msg = "2,5-2,10: got unexpected token: u'is_not', expected: u'is'"
-        else:
-            msg = "2,5-2,10: got unexpected token: 'is_not', expected: 'is'"
-        self.assertEqual(ctx2.exception.msg, msg)
+        self.assertEqual(
+            ctx2.exception.msg,
+            errmsg("2,5-2,10: got unexpected token: 'is_not', expected: 'is'"),
+        )
 
     def test_ok_ignored(self):
         # type: () -> None
@@ -199,66 +206,56 @@ end"""
         expr = a("x") + a("y")
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("xz")
-        if six.PY2:
-            msg = "got unexpected token: u'z', expected: u'y'"
-        else:
-            msg = "got unexpected token: 'z', expected: 'y'"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected token: 'z', expected: 'y'")
+        )
 
     def test_alt_2_parse_error(self):
         # type: () -> None
         expr = a("x") + (a("x") | a("y"))
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("xz")
-        if six.PY2:
-            msg = "got unexpected token: u'z', expected: u'x' or u'y'"
-        else:
-            msg = "got unexpected token: 'z', expected: 'x' or 'y'"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected token: 'z', expected: 'x' or 'y'")
+        )
 
     def test_alt_3_parse_error(self):
         # type: () -> None
         expr = a("x") + (a("x") | a("y") | a("z"))
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("xa")
-        if six.PY2:
-            msg = "got unexpected token: u'a', expected: u'x' or u'y' or u'z'"
-        else:
-            msg = "got unexpected token: 'a', expected: 'x' or 'y' or 'z'"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg,
+            errmsg("got unexpected token: 'a', expected: 'x' or 'y' or 'z'"),
+        )
 
     def test_alt_3_two_steps_parse_error(self):
         # type: () -> None
         expr = a("x") + (a("x") | (a("y") + a("a")))
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("xyz")
-        if six.PY2:
-            msg = "got unexpected token: u'z', expected: u'a'"
-        else:
-            msg = "got unexpected token: 'z', expected: 'a'"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected token: 'z', expected: 'a'")
+        )
 
     def test_expected_eof_error(self):
         # type: () -> None
         expr = a("x") + finished
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("xy")
-        if six.PY2:
-            msg = "got unexpected token: u'y', expected: end of input"
-        else:
-            msg = "got unexpected token: 'y', expected: end of input"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg,
+            errmsg("got unexpected token: 'y', expected: end of input"),
+        )
 
     def test_expected_second_in_sequence_error(self):
         # type: () -> None
         expr = a("x") + a("y")
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("xz")
-        if six.PY2:
-            msg = "got unexpected token: u'z', expected: u'y'"
-        else:
-            msg = "got unexpected token: 'z', expected: 'y'"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected token: 'z', expected: 'y'")
+        )
 
     def test_forward_decl_nested_matching_error(self):
         # type: () -> None
@@ -266,66 +263,55 @@ end"""
         expr.define(a("x") + maybe(expr) + a("y"))
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("xxy")
-        if six.PY2:
-            msg = "got unexpected end of input, expected: u'y'"
-        else:
-            msg = "got unexpected end of input, expected: 'y'"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected end of input, expected: 'y'")
+        )
 
     def test_expected_token_type_error(self):
         # type: () -> None
         expr = tok("number")
         with self.assertRaises(NoParseError) as ctx:
             expr.parse([Token("id", "x")])
-        if six.PY2:
-            msg = "got unexpected token: u'x', expected: number"
-        else:
-            msg = "got unexpected token: 'x', expected: number"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected token: 'x', expected: number")
+        )
 
     def test_expected_exact_token_error(self):
         # type: () -> None
         expr = tok("operator", "=")
         with self.assertRaises(NoParseError) as ctx:
             expr.parse([Token("operator", "+")])
-        if six.PY2:
-            msg = "got unexpected token: u'+', expected: u'='"
-        else:
-            msg = "got unexpected token: '+', expected: '='"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected token: '+', expected: '='")
+        )
 
     def test_unexpected_eof(self):
         # type: () -> None
         expr = (a("x") + a("y")) | a("z")
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("x")
-        if six.PY2:
-            msg = "got unexpected end of input, expected: u'y'"
-        else:
-            msg = "got unexpected end of input, expected: 'y'"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected end of input, expected: 'y'")
+        )
 
     def test_expected_transform_parsing_results_error(self):
         # type: () -> None
         expr = (a("1") >> int) | a("2")
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("x")
-        if six.PY2:
-            msg = "got unexpected token: u'x', expected: u'1' or u'2'"
-        else:
-            msg = "got unexpected token: 'x', expected: '1' or '2'"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected token: 'x', expected: '1' or '2'")
+        )
 
     def test_expected_sequence_with_skipped_parts(self):
         # type: () -> None
         expr = (-a("x") + a("y")) | a("z")
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("b")
-        if six.PY2:
-            msg = "got unexpected token: u'b', expected: (u'x', u'y') or u'z'"
-        else:
-            msg = "got unexpected token: 'b', expected: ('x', 'y') or 'z'"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg,
+            errmsg("got unexpected token: 'b', expected: ('x', 'y') or 'z'"),
+        )
 
     def test_expected_some_without_name(self):
         # type: () -> None
@@ -336,11 +322,9 @@ end"""
         expr = some(lowercase)
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("A")
-        if six.PY2:
-            msg = "got unexpected token: u'A', expected: some(...)"
-        else:
-            msg = "got unexpected token: 'A', expected: some(...)"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected token: 'A', expected: some(...)")
+        )
 
     def test_expected_forward_decl_without_name(self):
         # type: () -> None
@@ -349,17 +333,13 @@ end"""
         expr = nested | a("x")
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("y")
-        if six.PY2:
-            msg = (
-                "got unexpected token: u'y', expected: ((u'a', [ forward_decl() ]), "
-                "u'z') or u'x'"
-            )
-        else:
-            msg = (
-                "got unexpected token: 'y', expected: (('a', [ forward_decl() ]), "
-                "'z') or 'x'"
-            )
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg,
+            errmsg(
+                "got unexpected token: 'y', "
+                "expected: (('a', [ forward_decl() ]), 'z') or 'x'"
+            ),
+        )
 
     def test_expected_forward_decl_with_name(self):
         # type: () -> None
@@ -368,17 +348,12 @@ end"""
         expr = nested | a("x")
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("y")
-        if six.PY2:
-            msg = (
-                "got unexpected token: u'y', expected: ((u'a', [ nested ]), "
-                "u'z') or u'x'"
-            )
-        else:
-            msg = (
-                "got unexpected token: 'y', expected: (('a', [ nested ]), "
-                "'z') or 'x'"
-            )
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg,
+            errmsg(
+                "got unexpected token: 'y', expected: (('a', [ nested ]), 'z') or 'x'"
+            ),
+        )
 
     def test_end_of_input_after_many_alternatives(self):
         # type: () -> None
@@ -386,8 +361,28 @@ end"""
         expr = many(a("x") | brackets) + finished
         with self.assertRaises(NoParseError) as ctx:
             expr.parse("[")
-        if six.PY2:
-            msg = "got unexpected end of input, expected: u']'"
-        else:
-            msg = "got unexpected end of input, expected: ']'"
-        self.assertEqual(ctx.exception.msg, msg)
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected end of input, expected: ']'")
+        )
+
+    def test_parse_one_more_then_rollback_to_single(self):
+        # type: () -> None
+        mul = a("x") + many(a("*") + a("y"))
+        add = mul + many(a("+") + mul)
+        expr = add + finished
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("x*")
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected end of input, expected: 'y'")
+        )
+
+    def test_parse_one_more_then_rollback_to_alternative(self):
+        # type: () -> None
+        mul = a("x") + many(a("*") + a("y"))
+        addsub = mul + many((a("+") | a("-")) + mul)
+        expr = addsub + finished
+        with self.assertRaises(NoParseError) as ctx:
+            expr.parse("x*")
+        self.assertEqual(
+            ctx.exception.msg, errmsg("got unexpected end of input, expected: 'y'")
+        )

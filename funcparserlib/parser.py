@@ -349,7 +349,7 @@ class Parser(object):
             try:
                 return other.run(tokens, State(s.pos, state.max, state.parser))
             except NoParseError as e:
-                if s.max == e.state.max:
+                if s.pos == e.state.max:
                     e.state = State(e.state.pos, e.state.max, _or)
                 raise
 

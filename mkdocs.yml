@@ -3,7 +3,12 @@ repo_url: https://github.com/vlasovskikh/funcparserlib
 repo_name: vlasovskikh/funcparserlib
 nav:
   - Home: index.md
-#  - Getting Started: getting-started.md
+  - Getting Started:
+    - Getting Started - Intro: getting-started/index.md
+    - Tokenizing Input: getting-started/tokenizing.md
+    - Parsing Tokens: getting-started/parsing.md
+    - Preparing the Parse Tree: getting-started/parse-tree.md
+    - Tips and Tricks: getting-started/tips-and-tricks.md
 #  - Examples:
 #      - Nested Brackets Language: examples/brackets.md
 #      - S-expressions Language: examples/s-exp.md

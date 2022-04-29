@@ -10,9 +10,9 @@ Recursive descent parsing library for Python based on functional combinators.
 Description
 -----------
 
-The primary domain of `funcparserlib` is **parsing little languages** or **external DSLs** (domain specific languages).
+The primary focus of `funcparserlib` is **parsing little languages** or **external DSLs** (domain specific languages).
 
-Parsers made with `funcparserlib` are pure-Python LL(\*) parsers. It means that it's **very easy to write parsers** without thinking about lookaheads and other hardcore parsing stuff. However, recursive descent parsing is a rather slow method compared to LL(k) or LR(k) algorithms. Still, parsing with `funcparserlib` is **at least twice as fast** as a very popular PyParsing library.
+Parsers made with `funcparserlib` are pure-Python LL(\*) parsers. It means that it's **very easy to write parsers** without thinking about lookaheads and other hardcore parsing stuff. However, recursive descent parsing is a rather slow method compared to LL(k) or LR(k) algorithms. Still, parsing with `funcparserlib` is **at least twice faster than PyParsing**, a very popular library for Python.
 
 The source code of `funcparserlib` is only 1.2K lines of code, with lots of comments. Its API is fully type hinted. It features the longest parsed prefix error reporting, as well as a tiny lexer generator for token position tracking.
 
@@ -121,42 +121,36 @@ def to_expr(args: Tuple[Expr, List[Tuple[str, Expr]]]) -> Expr:
     return result
 ```
 
-Let's tokenize an expression using the tokenizer we've created with `funcparserlib.lexer`:
+Now, consider this numeric expression: `3.1415926 * (2 + 7.18281828e-1) * 42`.
 
-```pycon
->>> pprint(tokenize("3.1415926 * (2 + 7.18281828e-1) * 42"))
-[Token('float', '3.1415926'),
- Token('op', '*'),
- Token('op', '('),
- Token('int', '2'),
- Token('op', '+'),
- Token('float', '7.18281828e-1'),
- Token('op', ')'),
- Token('op', '*'),
- Token('int', '42')]
+Let's `tokenize()` it using the tokenizer we've created with `funcparserlib.lexer`:
 
 ```
-
-Let's parse these tokens into an expression tree using our parser created with `funcparserlib.parser`:
-
-```pycon
->>> parse(tokenize("3.1415926 * (2 + 7.18281828e-1) * 42"))
-BinaryExpr(op='*', left=BinaryExpr(op='*', left=3.1415926, right=BinaryExpr(op='+', left=2, right=0.718281828)), right=42)
-
+[
+    Token('float', '3.1415926'),
+    Token('op', '*'),
+    Token('op', '('),
+    Token('int', '2'),
+    Token('op', '+'),
+    Token('float', '7.18281828e-1'),
+    Token('op', ')'),
+    Token('op', '*'),
+    Token('int', '42'),
+]
 ```
 
-Here is this tree in a pretty-printed form:
+Let's `parse()` these tokens into an expression tree using our parser created with `funcparserlib.parser`:
 
-```pycon
->>> print(pretty_expr(document.parse(tokenize("3.1415926 * (2 + 7.18281828e-1) * 42"))))
-BinaryExpr('*')
-|-- BinaryExpr('*')
-|   |-- 3.1415926
-|   `-- BinaryExpr('+')
-|       |-- 2
-|       `-- 0.718281828
-`-- 42
-
+```
+BinaryExpr(
+    op='*',
+    left=BinaryExpr(
+        op='*',
+        left=3.1415926,
+        right=BinaryExpr(op='+', left=2, right=0.718281828),
+    ),
+    right=42,
+)
 ```
 
 Learn how to write this parser using `funcparserlib` in the [Getting Started](https://funcparserlib.pirx.ru/getting-started/) guide!
@@ -167,22 +161,19 @@ Used By
 
 Some open-source projects that use `funcparserlib` as an explicit dependency:
 
-* https://github.com/hylang/hy
+* [Hy](https://github.com/hylang/hy), a Lisp dialect that's embedded in Python
     * 4.2K stars, version `>= 1.0.0a0`, Python 3.7+
-* https://github.com/scrapinghub/splash
+* [Spash](https://github.com/scrapinghub/splash), a JavaScript rendering service with HTTP API, by Scrapinghub
     * 3.6K stars, version `*`. Python 3 in Docker
-* https://github.com/klen/graphite-beacon
+* [graphite-beacon](https://github.com/klen/graphite-beacon), a simple alerting system for Graphite metrics
     * 459 stars, version `==0.3.6`, Python 2 and 3
-* https://github.com/blockdiag/blockdiag
+* [blockdiag](https://github.com/blockdiag/blockdiag), generates block-diagram image file from spec-text file
     * 148 stars, version `>= 1.0.0a0`, Python 3.7+
-* https://github.com/kiibohd/kll
+* [kll](https://github.com/kiibohd/kll), Keyboard Layout Language (KLL) compiler
     * 109 stars, copied source code, Python 3.5+
-* https://gitlab.com/quantify-os/quantify-core
-    * 19 stars, version `==1.0.0a0`, Python 3.8+
 
 
-Similar Projects
-----------------
+Next
+----
 
-* [LEPL](https://code.google.com/p/lepl/). A recursive descent parsing library that uses two-way generators for backtracking. Its source code is rather large: 17 KLOC.
-* [pyparsing](https://github.com/pyparsing/pyparsing/). A recursive descent parsing library. Probably the most popular Python parsing library. Nevertheless, its source code is quite dirty (though 4 KLOC only).
+Read the [Getting Started](https://funcparserlib.pirx.ru/getting-started/) guide to start learning `funcparserlib`.

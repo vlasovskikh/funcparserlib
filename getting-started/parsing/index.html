@@ -1,0 +1,1024 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.9">
+    
+    
+      
+        <title>Parsing Tokens - funcparserlib</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.120efc48.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.9647289d.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../media/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#parsing-tokens" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="funcparserlib" class="md-header__button md-logo" aria-label="funcparserlib" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            funcparserlib
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Parsing Tokens
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5c-.84 0-1.65.15-2.39.42L12 2M3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29L3.34 7m.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14L3.36 17M20.65 7l-1.77 3.79a7.023 7.023 0 0 0-2.38-4.15l4.15.36m-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29L20.64 17M12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44L12 22Z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31Z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/vlasovskikh/funcparserlib" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    vlasovskikh/funcparserlib
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../" class="md-tabs__link md-tabs__link--active">
+        Getting Started
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        API Reference
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../changes/" class="md-tabs__link">
+      Changelog
+    </a>
+  </li>
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="funcparserlib" class="md-nav__button md-logo" aria-label="funcparserlib" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    funcparserlib
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/vlasovskikh/funcparserlib" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    vlasovskikh/funcparserlib
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Getting Started
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Getting Started" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Getting Started
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        Getting Started - Intro
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tokenizing/" class="md-nav__link">
+        Tokenizing Input
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Parsing Tokens
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Parsing Tokens
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#parser-combinators" class="md-nav__link">
+    Parser Combinators
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tok-parsing-a-single-token" class="md-nav__link">
+    tok(): Parsing a Single Token
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p1-p2-parsing-alternatives" class="md-nav__link">
+    p1 | p2: Parsing Alternatives
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p1-p2-parsing-a-sequence" class="md-nav__link">
+    p1 + p2: Parsing a Sequence
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#many-parsing-repeated-parts" class="md-nav__link">
+    many(): Parsing Repeated Parts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forward_decl-parsing-recursive-parts" class="md-nav__link">
+    forward_decl(): Parsing Recursive Parts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finished-expecting-no-more-input" class="md-nav__link">
+    finished: Expecting No More Input
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    Next
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parse-tree/" class="md-nav__link">
+        Preparing the Parse Tree
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tips-and-tricks/" class="md-nav__link">
+        Tips and Tricks
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" data-md-state="indeterminate" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          API Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          API Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        API Overview
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/lexer/" class="md-nav__link">
+        Lexer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/parser/" class="md-nav__link">
+        Parser
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/util/" class="md-nav__link">
+        Utilities
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changes/" class="md-nav__link">
+        Changelog
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#parser-combinators" class="md-nav__link">
+    Parser Combinators
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tok-parsing-a-single-token" class="md-nav__link">
+    tok(): Parsing a Single Token
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p1-p2-parsing-alternatives" class="md-nav__link">
+    p1 | p2: Parsing Alternatives
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#p1-p2-parsing-a-sequence" class="md-nav__link">
+    p1 + p2: Parsing a Sequence
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#many-parsing-repeated-parts" class="md-nav__link">
+    many(): Parsing Repeated Parts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forward_decl-parsing-recursive-parts" class="md-nav__link">
+    forward_decl(): Parsing Recursive Parts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finished-expecting-no-more-input" class="md-nav__link">
+    finished: Expecting No More Input
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    Next
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/vlasovskikh/funcparserlib/edit/master/docs/getting-started/parsing.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="parsing-tokens">Parsing Tokens</h1>
+<p>So far we have defined the tokenizer for our calculator expressions language:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">funcparserlib.lexer</span> <span class="kn">import</span> <span class="n">make_tokenizer</span><span class="p">,</span> <span class="n">TokenSpec</span><span class="p">,</span> <span class="n">Token</span>
+
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">tokenize</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Token</span><span class="p">]:</span>
+<span class="gp">... </span>    <span class="n">specs</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>        <span class="n">TokenSpec</span><span class="p">(</span><span class="s2">&quot;whitespace&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\s+&quot;</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">TokenSpec</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;[+\-]?\d+\.\d*([Ee][+\-]?\d+)*&quot;</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">TokenSpec</span><span class="p">(</span><span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;[+\-]?\d+&quot;</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">TokenSpec</span><span class="p">(</span><span class="s2">&quot;op&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;(\*\*)|[+\-*/()]&quot;</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="p">]</span>
+<span class="gp">... </span>    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">make_tokenizer</span><span class="p">(</span><span class="n">specs</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="s2">&quot;whitespace&quot;</span><span class="p">]</span>
+</code></pre></div>
+<p>It results a list of tokens which we want to parse according to our expressions grammar:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
+
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;3.1415926 * (2 + 7.18281828e-1) * 42&quot;</span><span class="p">))</span>
+<span class="go">[Token(&#39;float&#39;, &#39;3.1415926&#39;),</span>
+<span class="go"> Token(&#39;op&#39;, &#39;*&#39;),</span>
+<span class="go"> Token(&#39;op&#39;, &#39;(&#39;),</span>
+<span class="go"> Token(&#39;int&#39;, &#39;2&#39;),</span>
+<span class="go"> Token(&#39;op&#39;, &#39;+&#39;),</span>
+<span class="go"> Token(&#39;float&#39;, &#39;7.18281828e-1&#39;),</span>
+<span class="go"> Token(&#39;op&#39;, &#39;)&#39;),</span>
+<span class="go"> Token(&#39;op&#39;, &#39;*&#39;),</span>
+<span class="go"> Token(&#39;int&#39;, &#39;42&#39;)]</span>
+</code></pre></div>
+<h2 id="parser-combinators">Parser Combinators</h2>
+<p>A <strong>parser</strong> is an object that takes input tokens and transforms them into a parse result. For example, a <strong>primitive parser</strong> <a href="../../api/parser/#funcparserlib.parser.tok"><code>tok(type, value)</code></a> parses a single token of a certain type and, optionally, with a certain value.</p>
+<p>Parsing a single token is not exciting at all. The interesting part comes when you start combining parsers via <strong>parser combinators</strong> to build bigger parsers of complex token sequences.</p>
+<p>Parsers from <a href="../../api/parser/"><code>funcparserlib.parser</code></a> have a nice layered structure that allows you to express the grammar rules of the langauge you want to parse:</p>
+<div class="highlight"><pre><span></span><code>┌──────────┬──────────────────────┬───────────┐
+│          │ Primitive Parsers    │           │
+│          ├──────────────────────┘           │
+│          │                                  │
+│          │ tok(type, value)  forward_decl() │
+│          │                                  │
+│          │ a(token)  some(pred)  finished   │
+│          │                                  │
+│          ├──────────────────────┬───────────┤
+│          │ Parser Combinators   │           │
+│          ├──────────────────────┘           │
+│          │                                  │
+│  Parser  │ p1 + p2   p1 | p2   p &gt;&gt; f   -p  │
+│  objects │                                  │
+│          │ many(p)  oneplus(p)  maybe(p)    │
+│          │                                  │
+│          ├──────────────────────┬───────────┤
+│          │ Means of Abstraction │           │
+│          ├──────────────────────┘           │
+│          │                                  │
+│          │ Python assignments: =            │
+│          │                                  │
+│          │ Python functions: def            │
+└──────────┴──────────────────────────────────┘
+</code></pre></div>
+<p>You get a new <a href="../../api/parser/#funcparserlib.parser.Parser"><code>Parser</code></a> object each time you apply a parser combinator to your parsers. Therefore, the set of all parsers it closed under the operations defined by parser combinators.</p>
+<p>Parsers are regular Python objects of type <a href="../../api/parser/#funcparserlib.parser.Parser"><code>Parser</code></a>. It means that you can write arbitrary Python code that builds parser objects: assign parsers to variables, pass parsers as call arguments, get them as the return values of calls, etc.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The type <a href="../../api/parser/#funcparserlib.parser.Parser"><code>Parser</code></a> is actually parameterized as <code>Parser[T, V]</code> where:</p>
+<ul>
+<li><code>T</code> is the type of input tokens</li>
+<li><code>V</code> is the type of the parse result</li>
+</ul>
+<p>Your text editor or type checker will provide better code completion and error checking for your parsing code based on the types defined in <code>funcparserlib</code> and their type inference capabilities.</p>
+</div>
+<h2 id="tok-parsing-a-single-token"><code>tok()</code>: Parsing a Single Token</h2>
+<p>Let's recall the expressions we would like to be able to parse:</p>
+<div class="highlight"><pre><span></span><code>0
+1 + 2 + 3
+-1 + 2 ** 32
+3.1415926 * (2 + 7.18281828e-1) * 42
+</code></pre></div>
+<p>It looks like our grammar should have expressions that consist of numbers or nested expressions. Let's start with just numbers.</p>
+<p>We'll use <a href="../../api/parser/#funcparserlib.parser.tok"><code>tok(type, value)</code></a> to create a primitive parser of a single integer token. Let's import it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">funcparserlib.parser</span> <span class="kn">import</span> <span class="n">tok</span>
+</code></pre></div>
+<p>Here is our parser of a single integer token. The string <code>"int"</code> is the type of the integer token spec for our tokenizer:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">int_str</span> <span class="o">=</span> <span class="n">tok</span><span class="p">(</span><span class="s2">&quot;int&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Let's try it in action. In order to invoke a parser, we should pass a sequence of tokens to its <a href="../../api/parser/#funcparserlib.parser.Parser.parse"><code>Parser.parse(tokens)</code></a> method:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">int_str</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;42&quot;</span><span class="p">))</span>
+<span class="go">&#39;42&#39;</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Our parser returns integer numbers as strings at the moment. We'll cover transforming parse results and creating a proper parse tree in the next chapter.</p>
+</div>
+<p>If the first token in the input is <em>not</em> of type <code>"int"</code>, our parser raises an exception:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">int_str</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;+&quot;</span><span class="p">))</span>  <span class="c1"># doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">NoParseError</span>: <span class="n">1,1-1,1: got unexpected token: &#39;+&#39;, expected: int</span>
+</code></pre></div>
+<h2 id="p1-p2-parsing-alternatives"><code>p1 | p2</code>: Parsing Alternatives</h2>
+<p>We want to support floating point numbers as well. We already know how to do it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">float_str</span> <span class="o">=</span> <span class="n">tok</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Let's define our number expression as either an integer or a float number. We can parse alternatives using the <a href="../../api/parser/#funcparserlib.parser.Parser.__or__"><code>Parser.__or__</code></a> combinator:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">number</span> <span class="o">=</span> <span class="n">int_str</span> <span class="o">|</span> <span class="n">float_str</span>
+</code></pre></div>
+<p>Test it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">number</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;42&quot;</span><span class="p">))</span>
+<span class="go">&#39;42&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">number</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;3.14&quot;</span><span class="p">))</span>
+<span class="go">&#39;3.14&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">number</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">))</span>  <span class="c1"># doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">NoParseError</span>: <span class="n">1,1-1,1: got unexpected token: &#39;*&#39;, expected: int or float</span>
+</code></pre></div>
+<h2 id="p1-p2-parsing-a-sequence"><code>p1 + p2</code>: Parsing a Sequence</h2>
+<p>Since we can parse numbers now, let's proceeed with expressions. The first expression we will parse is the power operator:</p>
+<div class="highlight"><pre><span></span><code>2 ** 32
+</code></pre></div>
+<p>We need a new parser combinator to parse sequences of tokens. We can combine parsers sequentially using the <a href="../../api/parser/#funcparserlib.parser.Parser.__add__"><code>Parser.__add__</code></a> combinator.</p>
+<p>Let's try it on sequences of numbers first:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">number</span> <span class="o">+</span> <span class="n">number</span>
+</code></pre></div>
+<p>Test it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;1 2&quot;</span><span class="p">))</span>
+<span class="go">(&#39;1&#39;, &#39;2&#39;)</span>
+</code></pre></div>
+<p>The sequence combinator returns its results as a tuple of the parse results of its arguments. The size of the resulting tuple depends on the number of the parsers in the sequence. Let's try it for three numbers:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">number</span> <span class="o">+</span> <span class="n">number</span> <span class="o">+</span> <span class="n">number</span>
+</code></pre></div>
+<p>Test it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;1 2 3&quot;</span><span class="p">))</span>
+<span class="go">(&#39;1&#39;, &#39;2&#39;, &#39;3&#39;)</span>
+</code></pre></div>
+<p>Back to parsing the power operator of our calculator expressions language. We will need to parse several different operator tokens besides <code>"**"</code> in our grammar, so let's define a helper function:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">funcparserlib.parser</span> <span class="kn">import</span> <span class="n">Parser</span>
+
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">op</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parser</span><span class="p">[</span><span class="n">Token</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">tok</span><span class="p">(</span><span class="s2">&quot;op&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+</code></pre></div>
+<p>Let's define the parser of the power operator expressions using our new <code>op(name)</code> helper:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">power</span> <span class="o">=</span> <span class="n">number</span> <span class="o">+</span> <span class="n">op</span><span class="p">(</span><span class="s2">&quot;**&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">number</span>
+</code></pre></div>
+<p>Test it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">power</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;2 ** 32&quot;</span><span class="p">))</span>
+<span class="go">(&#39;2&#39;, &#39;**&#39;, &#39;32&#39;)</span>
+</code></pre></div>
+<h2 id="many-parsing-repeated-parts"><code>many()</code>: Parsing Repeated Parts</h2>
+<p>We want to allow sequences of power operators. Let's parse the first number, followed by zero or more pairs of the power operator and a number. We'll use the <a href="../../api/parser/#funcparserlib.parser.many"><code>many(p)</code></a> combinator for that. Let's import it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">funcparserlib.parser</span> <span class="kn">import</span> <span class="n">many</span>
+</code></pre></div>
+<p>Here is our parser of sequences of power operators:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">power</span> <span class="o">=</span> <span class="n">number</span> <span class="o">+</span> <span class="n">many</span><span class="p">(</span><span class="n">op</span><span class="p">(</span><span class="s2">&quot;**&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">number</span><span class="p">)</span>
+</code></pre></div>
+<p>Test it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">power</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;2 ** 3 ** 4&quot;</span><span class="p">))</span>
+<span class="go">(&#39;2&#39;, [(&#39;**&#39;, &#39;3&#39;), (&#39;**&#39;, &#39;4&#39;)])</span>
+</code></pre></div>
+<p>The <code>many(p)</code> combinator applies its argument parser <code>p</code> to the input sequence of tokens many times until it fails, returning a list of the results. If <code>p</code> fails to parse any tokens, <code>many(p)</code> still succeeds and returns an empty list:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">power</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;1 + 2&quot;</span><span class="p">))</span>
+<span class="go">(&#39;1&#39;, [])</span>
+</code></pre></div>
+<h2 id="forward_decl-parsing-recursive-parts"><code>forward_decl()</code>: Parsing Recursive Parts</h2>
+<p>We want to allow using parentheses to specify the order of calculations.</p>
+<p>Ideally, we would like to write a recursive assignment like this one, but the Python syntax doesn't allow it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">power</span> <span class="o">|</span> <span class="n">number</span> <span class="o">|</span> <span class="p">(</span><span class="n">op</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">expr</span> <span class="o">+</span> <span class="n">op</span><span class="p">(</span><span class="s2">&quot;)&quot;</span><span class="p">))</span>   <span class="c1"># doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">NameError</span>: <span class="n">name &#39;expr&#39; is not defined</span>
+</code></pre></div>
+<p>We will use the <a href="../../api/parser/#funcparserlib.parser.forward_decl"><code>forward_decl()</code></a> parser to solve the recursive assignment problem:</p>
+<ol>
+<li>We create a forward declaration</li>
+<li>We use the declaration in other parsers</li>
+<li>We define the value of the declaration</li>
+</ol>
+<p>Let's start with a simple example first. We'll create a parser numbers in properly nested parentheses:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">funcparserlib.parser</span> <span class="kn">import</span> <span class="n">forward_decl</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">forward_decl</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">number</span> <span class="o">|</span> <span class="p">(</span><span class="n">op</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">p</span> <span class="o">+</span> <span class="n">op</span><span class="p">(</span><span class="s2">&quot;)&quot;</span><span class="p">)))</span>
+</code></pre></div>
+<p>Test it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">))</span>
+<span class="go">&#39;1&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;(1)&quot;</span><span class="p">))</span>
+<span class="go">(&#39;(&#39;, &#39;1&#39;, &#39;)&#39;)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;((1))&quot;</span><span class="p">))</span>
+<span class="go">(&#39;(&#39;, (&#39;(&#39;, &#39;1&#39;, &#39;)&#39;), &#39;)&#39;)</span>
+</code></pre></div>
+<p>Back to our recursive <code>expr</code> problem. Let's re-write our grammar using <code>forward_decl()</code> for expressions:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span> <span class="o">=</span> <span class="n">forward_decl</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">parenthesized</span> <span class="o">=</span> <span class="n">op</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">expr</span> <span class="o">+</span> <span class="n">op</span><span class="p">(</span><span class="s2">&quot;)&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">primary</span> <span class="o">=</span> <span class="n">number</span> <span class="o">|</span> <span class="n">parenthesized</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">power</span> <span class="o">=</span> <span class="n">primary</span> <span class="o">+</span> <span class="n">many</span><span class="p">(</span><span class="n">op</span><span class="p">(</span><span class="s2">&quot;**&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">primary</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="n">power</span><span class="p">)</span>
+</code></pre></div>
+<p>Test it:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;2 ** 3 ** 4&quot;</span><span class="p">))</span>
+<span class="go">(&#39;2&#39;, [(&#39;**&#39;, &#39;3&#39;), (&#39;**&#39;, &#39;4&#39;)])</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;2 ** (3 ** 4)&quot;</span><span class="p">))</span>
+<span class="go">(&#39;2&#39;, [(&#39;**&#39;, (&#39;(&#39;, (&#39;3&#39;, [(&#39;**&#39;, &#39;4&#39;)]), &#39;)&#39;))])</span>
+</code></pre></div>
+<h2 id="finished-expecting-no-more-input"><code>finished</code>: Expecting No More Input</h2>
+<p>Surprisingly, our <code>expr</code> parser tolerates incomplete expressions by ignoring the incomplete parts:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">expr</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;2 ** (3 ** 4&quot;</span><span class="p">))</span>
+<span class="go">(&#39;2&#39;, [])</span>
+</code></pre></div>
+<p>The problem is that its <code>many(p)</code> part parses the input while <code>p</code> succeeds, and it doesn't look any further than that. We can make a parser expect the end of the input via the <a href="../../api/parser/#finished"><code>finished</code></a> parser. Let's define a parser for the whole input document:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">funcparserlib.parser</span> <span class="kn">import</span> <span class="n">finished</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">document</span> <span class="o">=</span> <span class="n">expr</span> <span class="o">+</span> <span class="n">finished</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Usually you finish the topmost parser of your grammar with <code>... + finished</code> to indicate that you expect no further input.</p>
+</div>
+<p>Let's try it for our grammar:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">document</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;2 ** (3 ** 4&quot;</span><span class="p">))</span>   <span class="c1"># doctest: +IGNORE_EXCEPTION_DETAIL</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">NoParseError</span>: <span class="n">got unexpected end of input, expected: &#39;)&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">document</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;2 ** (3 ** 4)&quot;</span><span class="p">))</span>
+<span class="go">(&#39;2&#39;, [(&#39;**&#39;, (&#39;(&#39;, (&#39;3&#39;, [(&#39;**&#39;, &#39;4&#39;)]), &#39;)&#39;))], None)</span>
+</code></pre></div>
+<h2 id="next">Next</h2>
+<p>We have created a parser for power operator expressions. Its parse results are correct, but they look hard to undersand and work with:</p>
+<ul>
+<li>Our integer and floating point numbers are strings, not <code>int</code> or <code>float</code> objects</li>
+<li>The results contain <code>'('</code> and <code>')'</code> strings even though we need parentheses only temporarily to set the operator priorities</li>
+<li>The results contain <code>None</code>, which is the parse result of <a href="../../api/parser/#finished"><code>finished</code></a>, even though we don't need it</li>
+<li>The results are lists of tuples of strings, not user-defined classes that reflect the grammar of our calculator expressions language</li>
+</ul>
+<p>In <a href="../parse-tree/">the next chapter</a> you will learn how to transform parse results and prepare a proper, cleaned up parse tree.</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../tokenizing/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tokenizing Input" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Tokenizing Input
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../parse-tree/" class="md-footer__link md-footer__link--next" aria-label="Next: Preparing the Parse Tree" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Preparing the Parse Tree
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.expand", "navigation.tabs"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.6e54b5cd.min.js"></script>
+      
+    
+  </body>
+</html>

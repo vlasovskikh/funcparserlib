@@ -8,19 +8,19 @@
       
       
       
-      <link rel="icon" href="/assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.9">
     
     
       
-        <title>funcparserlib</title>
+        <title>Tokenizing Input - funcparserlib</title>
       
     
     
-      <link rel="stylesheet" href="/assets/stylesheets/main.120efc48.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.120efc48.min.css">
       
         
-        <link rel="stylesheet" href="/assets/stylesheets/palette.9647289d.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.9647289d.min.css">
         
       
     
@@ -35,11 +35,11 @@
       
     
     
-      <link rel="stylesheet" href="/assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="/media/extra.css">
+      <link rel="stylesheet" href="../../media/extra.css">
     
-    <script>__md_scope=new URL("/",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -66,6 +66,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#tokenizing-input" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -76,7 +81,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/." title="funcparserlib" class="md-header__button md-logo" aria-label="funcparserlib" data-md-component="logo">
+    <a href="../.." title="funcparserlib" class="md-header__button md-logo" aria-label="funcparserlib" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -95,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Tokenizing Input
             
           </span>
         </div>
@@ -192,7 +197,7 @@
 
 
   <li class="md-tabs__item">
-    <a href="/." class="md-tabs__link">
+    <a href="../.." class="md-tabs__link">
       Home
     </a>
   </li>
@@ -201,13 +206,15 @@
         
   
   
+    
+  
 
 
   
   
   
     <li class="md-tabs__item">
-      <a href="/getting-started/" class="md-tabs__link">
+      <a href="../" class="md-tabs__link md-tabs__link--active">
         Getting Started
       </a>
     </li>
@@ -223,7 +230,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="/api/" class="md-tabs__link">
+      <a href="../../api/" class="md-tabs__link">
         API Reference
       </a>
     </li>
@@ -236,7 +243,7 @@
 
 
   <li class="md-tabs__item">
-    <a href="/changes/" class="md-tabs__link">
+    <a href="../../changes/" class="md-tabs__link">
       Changelog
     </a>
   </li>
@@ -263,7 +270,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/." title="funcparserlib" class="md-nav__button md-logo" aria-label="funcparserlib" data-md-component="logo">
+    <a href="../.." title="funcparserlib" class="md-nav__button md-logo" aria-label="funcparserlib" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -294,7 +301,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         Home
       </a>
     </li>
@@ -307,12 +314,14 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" data-md-state="indeterminate" type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
       
       
       
@@ -335,7 +344,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/getting-started/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         Getting Started - Intro
       </a>
     </li>
@@ -347,11 +356,59 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="/getting-started/tokenizing/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Tokenizing Input
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Tokenizing Input
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tokenizing-with-make_tokenizer" class="md-nav__link">
+    Tokenizing with make_tokenizer()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    Next
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -363,7 +420,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/getting-started/parsing/" class="md-nav__link">
+      <a href="../parsing/" class="md-nav__link">
         Parsing Tokens
       </a>
     </li>
@@ -377,7 +434,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/getting-started/parse-tree/" class="md-nav__link">
+      <a href="../parse-tree/" class="md-nav__link">
         Preparing the Parse Tree
       </a>
     </li>
@@ -391,7 +448,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/getting-started/tips-and-tricks/" class="md-nav__link">
+      <a href="../tips-and-tricks/" class="md-nav__link">
         Tips and Tricks
       </a>
     </li>
@@ -439,7 +496,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/api/" class="md-nav__link">
+      <a href="../../api/" class="md-nav__link">
         API Overview
       </a>
     </li>
@@ -453,7 +510,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/api/lexer/" class="md-nav__link">
+      <a href="../../api/lexer/" class="md-nav__link">
         Lexer
       </a>
     </li>
@@ -467,7 +524,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/api/parser/" class="md-nav__link">
+      <a href="../../api/parser/" class="md-nav__link">
         Parser
       </a>
     </li>
@@ -481,7 +538,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/api/util/" class="md-nav__link">
+      <a href="../../api/util/" class="md-nav__link">
         Utilities
       </a>
     </li>
@@ -503,7 +560,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/changes/" class="md-nav__link">
+      <a href="../../changes/" class="md-nav__link">
         Changelog
       </a>
     </li>
@@ -527,6 +584,30 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tokenizing-with-make_tokenizer" class="md-nav__link">
+    Tokenizing with make_tokenizer()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    Next
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -537,8 +618,89 @@
           <div class="md-content" data-md-component="content">
             <article class="md-content__inner md-typeset">
               
-  <h1>404 - Not found</h1>
+                
+  <a href="https://github.com/vlasovskikh/funcparserlib/edit/master/docs/getting-started/tokenizing.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
 
+
+
+<h1 id="tokenizing-input">Tokenizing Input</h1>
+<p>Parsing is usually split into two steps:</p>
+<ol>
+<li>Tokenizing the input string into a sequence of tokens</li>
+<li>Parsing the tokens into a parse tree</li>
+</ol>
+<div class="highlight"><pre><span></span><code>         ┌────────────┐               ┌─────────┐
+   str   │            │  List[Token]  │         │   Expr
+─────────► tokenize() ├───────────────► parse() ├─────────►
+         │            │               │         │
+         └────────────┘               └─────────┘
+</code></pre></div>
+<p><strong>Tokens</strong> are larger pieces of the input text such as words, punctuation marks, spaces, etc. It's easier to parse a list of tokens than a string, since you can skip auxiliary tokens (spaces, newlines, commments) during tokenizing and focus on the main ones. Tokens usually track their position in the text, which is helpful in parsing error messages.</p>
+<h2 id="tokenizing-with-make_tokenizer">Tokenizing with <code>make_tokenizer()</code></h2>
+<p>One of the most common ways to define tokens and tokenizing rules is via regular expressions. <code>funcparserlib</code> comes with the module <a href="../../api/lexer/"><code>funcparserlib.lexer</code></a> for creating regexp-based tokenizers.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Parsers defined with <code>funcparserlib</code> can work with <em>any</em> tokens. You can plug your custom tokenizers and token types or even parse raw strings as lists of character tokens.</p>
+<p>In this guide we will use the <em>recommended</em> way of writing tokenizers: <code>make_tokenizer()</code> from the <code>funcparserlib.lexer</code> module.</p>
+</div>
+<p>Let's identify token types in our numeric expressions language:</p>
+<ul>
+<li>Whitespace<ul>
+<li>Spaces, tabs, newlines</li>
+</ul>
+</li>
+<li>Integer numbers<ul>
+<li><code>0</code>, <code>256</code>, <code>-42</code>, ...</li>
+</ul>
+</li>
+<li>Floating point numbers<ul>
+<li><code>3.1415</code>, <code>27.1828e-01</code>, ...</li>
+</ul>
+</li>
+<li>Operators<ul>
+<li><code>(</code>, <code>)</code>, <code>*</code>, <code>+</code>, <code>/</code>, <code>-</code>, <code>**</code></li>
+</ul>
+</li>
+</ul>
+<p>We will define our token specs and pass them to <code>make_tokenizer()</code> to generate our tokenizer. We will also drop whitespace tokens from the result, since we don't need them.</p>
+<p>Some imports first:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">funcparserlib.lexer</span> <span class="kn">import</span> <span class="n">make_tokenizer</span><span class="p">,</span> <span class="n">TokenSpec</span><span class="p">,</span> <span class="n">Token</span>
+</code></pre></div>
+<p>The tokenizer itself:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">tokenize</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Token</span><span class="p">]:</span>
+<span class="gp">... </span>    <span class="n">specs</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>        <span class="n">TokenSpec</span><span class="p">(</span><span class="s2">&quot;whitespace&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\s+&quot;</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">TokenSpec</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;[+\-]?\d+\.\d*([Ee][+\-]?\d+)*&quot;</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">TokenSpec</span><span class="p">(</span><span class="s2">&quot;int&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;[+\-]?\d+&quot;</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">TokenSpec</span><span class="p">(</span><span class="s2">&quot;op&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;(\*\*)|[+\-*/()]&quot;</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="p">]</span>
+<span class="gp">... </span>    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">make_tokenizer</span><span class="p">(</span><span class="n">specs</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="s2">&quot;whitespace&quot;</span><span class="p">]</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Be careful with ordering your token specs and your regexps so that larger tokens come first before their smaller subparts. In our token specs:</p>
+<ul>
+<li><em>Float</em> tokens should come before <em>int</em> tokens</li>
+<li><code>**</code> should come before <code>*</code></li>
+</ul>
+</div>
+<p>Let's try our tokenizer:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;42 + 1337&quot;</span><span class="p">)</span>
+<span class="go">[Token(&#39;int&#39;, &#39;42&#39;), Token(&#39;op&#39;, &#39;+&#39;), Token(&#39;int&#39;, &#39;1337&#39;)]</span>
+</code></pre></div>
+<p>The <code>str()</code> form of the token shows its position in the input text, also available via <code>t.start</code> and <code>t.end</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokenize</span><span class="p">(</span><span class="s2">&quot;42 + 1337&quot;</span><span class="p">)]</span>
+<span class="go">[&quot;1,1-1,2: int &#39;42&#39;&quot;, &quot;1,4-1,4: op &#39;+&#39;&quot;, &quot;1,6-1,9: int &#39;1337&#39;&quot;]</span>
+</code></pre></div>
+<h2 id="next">Next</h2>
+<p>We have tokenized an numeric expression string into a list of tokens.</p>
+<p>In <a href="../parsing/">the next chapter</a> you will learn how to parse these tokens by defining a grammar for our numeric expressions language.</p>
+
+              
             </article>
           </div>
         </div>
@@ -546,6 +708,41 @@
       </main>
       
         <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Getting Started - Intro" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Getting Started - Intro
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../parsing/" class="md-footer__link md-footer__link--next" aria-label="Next: Parsing Tokens" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Parsing Tokens
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -567,10 +764,10 @@
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "/", "features": ["navigation.expand", "navigation.tabs"], "search": "/assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.expand", "navigation.tabs"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
     
     
-      <script src="/assets/javascripts/bundle.6e54b5cd.min.js"></script>
+      <script src="../../assets/javascripts/bundle.6e54b5cd.min.js"></script>
       
     
   </body>

@@ -1,4 +1,4 @@
-funcparserlib
+Funcparserlib
 =============
 
 Recursive descent parsing library for Python based on functional combinators.
@@ -10,85 +10,23 @@ Recursive descent parsing library for Python based on functional combinators.
 Description
 -----------
 
-**Parser combinators** are just higher-order functions that take parsers as
-their arguments and return them as result values. Parser combinators are:
+The primary domain of `funcparserlib` is **parsing little languages** or **external DSLs** (domain specific languages).
 
-  * First-class values
-  * Extremely composable
-  * Tend to make the code quite compact
-  * Resemble the readable notation of xBNF grammars
+Parsers made with `funcparserlib` are pure-Python LL(\*) parsers. It means that it's **very easy to write parsers** without thinking about lookaheads and other hardcore parsing stuff. However, recursive descent parsing is a rather slow method compared to LL(k) or LR(k) algorithms. Still, parsing with `funcparserlib` is **at least twice as fast** as a very popular PyParsing library.
 
-Parsers made with `funcparserlib` are pure-Python LL(\*) parsers. It means that
-it's **very easy to write them** without thinking about lookaheads and all
-that hardcore parsing stuff. However, the recursive descent parsing is a rather
-slow method compared to LL(k) or LR(k) algorithms.
+The source code of `funcparserlib` is only 1.2K lines of code, with lots of comments. Its API is fully type hinted. It features the longest parsed prefix error reporting, as well as a tiny lexer generator for token position tracking.
 
-So the primary domain for `funcparserlib` is **parsing little languages** or
-**external DSLs** (domain specific languages).
-
-The library itself is very small. Its source code is only 600 lines of code,
-with lots of comments included. It features the longest parsed prefix error
-reporting, as well as a tiny lexer generator for token position tracking.
-
-
-Show Me the Code
-----------------
-
-This is an excerpt from a JSON parser
-([RFC 4627](https://tools.ietf.org/html/rfc4627)) written using
-`funcparserlib`. This full example as well as others can be found
-[here](tests/json.py).
-
-```python
-def parse(seq):
-    """Sequence(Token) -> object"""
-    ...
-    n = lambda s: tok("Name", s)
-    def make_array(values):
-        if values is None:
-            return []
-        else:
-            return [values[0]] + values[1]
-    ...
-    null = n("null") >> const(None)
-    true = n("true") >> const(True)
-    false = n("false") >> const(False)
-    number = tok("Number") >> make_number
-    string = tok("String") >> make_string
-    value = forward_decl()
-    member = string + -op(":") + value >> tuple
-    object = (
-        -op("{") +
-        maybe(member + many(-op(",") + member)) +
-        -op("}")
-        >> make_object)
-    array = (
-        -op("[") +
-        maybe(value + many(-op(",") + value)) +
-        -op("]")
-        >> make_array)
-    value.define(
-          null
-        | true
-        | false
-        | object
-        | array
-        | number
-        | string)
-    json_text = object | array
-    json_file = json_text + -finished
-
-    return json_file.parse(seq)
-```
+The idea of parser combinators used in `funcparserlib` comes from the [Introduction to Functional Programming](https://www.cl.cam.ac.uk/teaching/Lectures/funprog-jrh-1996/) course. We have converted it from ML into Python.
 
 
 Installation
 ------------
 
-You can install the `funcparserlib` library from
-[PyPI](https://pypi.python.org/pypi/funcparserlib) via `pip`:
+You can install `funcparserlib` from [PyPI](https://pypi.org/project/funcparserlib/):
 
-    $ pip install funcparserlib
+```shell
+$ pip install funcparserlib
+```
 
 There are no dependencies on other libraries.
 
@@ -96,47 +34,132 @@ There are no dependencies on other libraries.
 Documentation
 -------------
 
-* [Nested Brackets Mini-HOWTO](doc/Brackets.md)
-    * A short intro to `funcparserlib`
-* [Tutorial](doc/Tutorial.md)
-    * The comprehensive `funcparserlib` tutorial
+* [Getting Started](https://funcparserlib.pirx.ru/getting-started/)
+    * Your **starting point** with `funcparserlib`
+* [API Reference](https://funcparserlib.pirx.ru/api/)
+    * Learn the details of the API
 
-See also comments inside the modules `funcparserlib.parser` and
-`funcparserlib.lexer` or generate the API docs from the modules using `pydoc`.
+There are several examples available in the `tests/` directory:
 
-There a couple of examples available in the tests/ directory:
+* [GraphViz DOT parser](https://github.com/vlasovskikh/funcparserlib/blob/master/tests/dot.py)
+* [JSON parser](https://github.com/vlasovskikh/funcparserlib/blob/master/tests/json.py)
 
-* [GraphViz DOT parser](tests/dot.py)
-* [JSON parser](tests/json.py)
-
-See also [the changelog](docs/changes.md) and [FAQ](doc/FAQ.md).
+See also [the changelog](https://funcparserlib.pirx.ru/changes/).
 
 
-Performance and Code Size
--------------------------
+Example
+-------
 
-Despite being an LL(`*`) parser, `funcparserlib` has a reasonable performance.
-For example, a JSON parser written using `funcparserlib` is 3 times faster
-than a parser using the popular `pyparsing` library and only 5 times slower
-than the specialized JSON library `simplejson` that uses _ad hoc_ parsing.
-Here are some stats:
+Let's consider a little language of **numeric expressions** with a syntax similar to Python expressions. Here are some expression strings in this language:
 
-| **File Size** | **cjson** | **simplejson** | **funcparserlib** | **json-ply** | **pyparsing** |
-|:--------------|:----------|:---------------|:------------------|:-------------|:--------------|
-| 6 KB        | 0 ms    | 45 ms        | 228 ms          | n/a     | 802 ms      |
-| 11 KB       | 0 ms    | 80 ms        | 395 ms          | 367 ms  | 1355 ms     |
-| 100 KB      | 4 ms    | 148 ms       | 855 ms          | 1071 ms | 2611 ms     |
-| 134 KB      | 11 ms   | 957 ms       | 4775 ms         | n/a     | 16534 ms    |
-| 1009 KB     | 87 ms   | 6904 ms      | 36826 ms        | n/a     | 116510 ms   |
-| **User Code**    | 0.9 KLOC | 0.8 KLOC | 0.1 KLOC | 0.5 KLOC | 0.1 KLOC |
-| **Library Code** | 0 KLOC   | 0 KLOC   | 0.5 KLOC | 5.3 KLOC | 3.7 KLOC |
+```
+0
+1 + 2 + 3
+-1 + 2 ** 32
+3.1415926 * (2 + 7.18281828e-1) * 42
+```
 
-Both `funcparserlib` and `pyparsing` have the smallest user code size (that is
-a common feature of parsing libraries compared to _ad hoc_ parsers). The
-library code of `funcparserlib` is 7 times smaller (and much cleaner) than
-`pyparsing`. The `json-ply` uses a LALR parser `ply` (similar to Yacc) and
-performs like `funcparserlib`. `cjson` is a C library, hence the incredible
-performance :)
+
+Here is **the complete source code** of the tokenizer and the parser for this language written using `funcparserlib`:
+
+```python
+from typing import List, Tuple, Union
+from dataclasses import dataclass
+
+from funcparserlib.lexer import make_tokenizer, TokenSpec, Token
+from funcparserlib.parser import tok, Parser, many, forward_decl, finished
+
+
+@dataclass
+class BinaryExpr:
+    op: str
+    left: "Expr"
+    right: "Expr"
+
+
+Expr = Union[BinaryExpr, int, float]
+
+
+def tokenize(s: str) -> List[Token]:
+    specs = [
+        TokenSpec("whitespace", r"\s+"),
+        TokenSpec("float", r"[+\-]?\d+\.\d*([Ee][+\-]?\d+)*"),
+        TokenSpec("int", r"[+\-]?\d+"),
+        TokenSpec("op", r"(\*\*)|[+\-*/()]"),
+    ]
+    tokenizer = make_tokenizer(specs)
+    return [t for t in tokenizer(s) if t.type != "whitespace"]
+
+
+def parse(tokens: List[Token]) -> Expr:
+    int_num = tok("int") >> int
+    float_num = tok("float") >> float
+    number = int_num | float_num
+
+    expr: Parser[Token, Expr] = forward_decl()
+    parenthesized = -op("(") + expr + -op(")")
+    primary = number | parenthesized
+    power = primary + many(op("**") + primary) >> to_expr
+    term = power + many((op("*") | op("/")) + power) >> to_expr
+    sum = term + many((op("+") | op("-")) + term) >> to_expr
+    expr.define(sum)
+
+    document = expr + -finished
+
+    return document.parse(tokens)
+
+
+def op(name: str) -> Parser[Token, str]:
+    return tok("op", name)
+
+
+def to_expr(args: Tuple[Expr, List[Tuple[str, Expr]]]) -> Expr:
+    first, rest = args
+    result = first
+    for op, expr in rest:
+        result = BinaryExpr(op, result, expr)
+    return result
+```
+
+Let's tokenize an expression using the tokenizer we've created with `funcparserlib.lexer`:
+
+```pycon
+>>> pprint(tokenize("3.1415926 * (2 + 7.18281828e-1) * 42"))
+[Token('float', '3.1415926'),
+ Token('op', '*'),
+ Token('op', '('),
+ Token('int', '2'),
+ Token('op', '+'),
+ Token('float', '7.18281828e-1'),
+ Token('op', ')'),
+ Token('op', '*'),
+ Token('int', '42')]
+
+```
+
+Let's parse these tokens into an expression tree using our parser created with `funcparserlib.parser`:
+
+```pycon
+>>> parse(tokenize("3.1415926 * (2 + 7.18281828e-1) * 42"))
+BinaryExpr(op='*', left=BinaryExpr(op='*', left=3.1415926, right=BinaryExpr(op='+', left=2, right=0.718281828)), right=42)
+
+```
+
+Here is this tree in a pretty-printed form:
+
+```pycon
+>>> print(pretty_expr(document.parse(tokenize("3.1415926 * (2 + 7.18281828e-1) * 42"))))
+BinaryExpr('*')
+|-- BinaryExpr('*')
+|   |-- 3.1415926
+|   `-- BinaryExpr('+')
+|       |-- 2
+|       `-- 0.718281828
+`-- 42
+
+```
+
+Learn how to write this parser using `funcparserlib` in the [Getting Started](https://funcparserlib.pirx.ru/getting-started/) guide!
 
 
 Used By
@@ -145,36 +168,21 @@ Used By
 Some open-source projects that use `funcparserlib` as an explicit dependency:
 
 * https://github.com/hylang/hy
-    * 3.8K stars, version `>= 0.3.6`, Python 3.7+
+    * 4.2K stars, version `>= 1.0.0a0`, Python 3.7+
 * https://github.com/scrapinghub/splash
-    * 3.3K stars, version `*`. Python 3 in Docker
+    * 3.6K stars, version `*`. Python 3 in Docker
 * https://github.com/klen/graphite-beacon
-    * 460 stars, version `==0.3.6`, Python 2 and 3
+    * 459 stars, version `==0.3.6`, Python 2 and 3
 * https://github.com/blockdiag/blockdiag
-    * 118 stars, version `*`, Python 3.5+
-* https://github.com/pyta-uoft/pyta
-    * 48 stars, version `*`, Python 3.8+
-
-
-Usages in tests / secondary dependencies:
-
-* https://github.com/buildbot/buildbot
-    * 4.6K stars, version `== 0.3.6`
-* https://github.com/quay/quay
-    * 1.7K stars, version `==0.3.6`
-
+    * 148 stars, version `>= 1.0.0a0`, Python 3.7+
+* https://github.com/kiibohd/kll
+    * 109 stars, copied source code, Python 3.5+
+* https://gitlab.com/quantify-os/quantify-core
+    * 19 stars, version `==1.0.0a0`, Python 3.8+
 
 
 Similar Projects
 ----------------
 
-* [LEPL](https://code.google.com/p/lepl/). A recursive descent parsing
-  library that uses two-way generators for backtracking. Its source code is
-  rather large: 17 KLOC.
-* [pyparsing](https://github.com/pyparsing/pyparsing/). A recursive descent
-  parsing library. Probably the most popular Python parsing library.
-  Nevertheless, its source code is quite dirty (though 4 KLOC only).
-* [Monadic Parsing in Python](https://web.archive.org/web/20120507001413/http://sandersn.com/blog/?tag=/monads).
-  A series of blog entries on monadic parsing.
-* [Pysec (aka Parsec in Python)](http://www.valuedlessons.com/2008/02/pysec-monadic-combinatoric-parsing-in.html).
-  A blog entry on monadic parsing, with nice syntax for Python.
+* [LEPL](https://code.google.com/p/lepl/). A recursive descent parsing library that uses two-way generators for backtracking. Its source code is rather large: 17 KLOC.
+* [pyparsing](https://github.com/pyparsing/pyparsing/). A recursive descent parsing library. Probably the most popular Python parsing library. Nevertheless, its source code is quite dirty (though 4 KLOC only).

@@ -29,7 +29,7 @@ repos:
         name: doctest
         entry: poetry run python -m doctest
         language: system
-        files: (^funcparserlib/|^doc/|^docs/)
+        files: (^funcparserlib/|^docs/)
         types_or:
           - python
           - markdown

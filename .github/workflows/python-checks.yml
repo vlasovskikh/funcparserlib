@@ -56,4 +56,4 @@ jobs:
           poetry run python -m unittest discover
       - name: Test with doctest
         run: |
-          poetry run python -m doctest funcparserlib/*.py doc/*.md docs/*.md
+          poetry run python -m doctest funcparserlib/*.py docs/*.md

@@ -18,6 +18,8 @@ The stable 1.0.0 release freezes the API of funcparserlib 0.3.6 which was releas
 * Added `tok(type[, value])` for more compact grammars, better error messages
 * Added `TokenSpec(type, pattern[, flags])` to simplify the use of `make_tokenizer()`
 * Added type hints for the public API
+* Added the new library homepage with the new Getting Started guide and the new API
+  reference
 
 ### Changed
 
@@ -45,6 +47,7 @@ The stable 1.0.0 release freezes the API of funcparserlib 0.3.6 which was releas
   (Thanks to [@Halolegend94](https://github.com/Halolegend94))
 * Fixed doctests in the tutorial
   ([#49](https://github.com/vlasovskikh/funcparserlib/issues/49))
+* Fixed several cases of wrong expected tokens in error messages
 
 
 0.3.6 — 2013-05-02

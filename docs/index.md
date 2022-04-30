@@ -163,7 +163,7 @@ Some open-source projects that use `funcparserlib` as an explicit dependency:
 
 * [Hy](https://github.com/hylang/hy), a Lisp dialect that's embedded in Python
     * 4.2K stars, version `>= 1.0.0a0`, Python 3.7+
-* [Spash](https://github.com/scrapinghub/splash), a JavaScript rendering service with HTTP API, by Scrapinghub
+* [Splash](https://github.com/scrapinghub/splash), a JavaScript rendering service with HTTP API, by Scrapinghub
     * 3.6K stars, version `*`. Python 3 in Docker
 * [graphite-beacon](https://github.com/klen/graphite-beacon), a simple alerting system for Graphite metrics
     * 459 stars, version `==0.3.6`, Python 2 and 3

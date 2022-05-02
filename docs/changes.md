@@ -1,11 +1,12 @@
 The Changelog
 =============
 
-1.0.0 (to be released)
-----------------------
+
+1.0.0 — 2022-05-02
+------------------
 
 The stable 1.0.0 release freezes the API of funcparserlib 0.3.6 which was released on
-2013-05-02.
+2013-05-02, with a few bug fixes and small features.
 
 ### Added
 

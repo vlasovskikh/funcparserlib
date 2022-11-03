@@ -4,16 +4,16 @@ repo_name: vlasovskikh/funcparserlib
 nav:
   - Home: index.md
   - Getting Started:
-    - Getting Started - Intro: getting-started/index.md
-    - Tokenizing Input: getting-started/tokenizing.md
-    - Parsing Tokens: getting-started/parsing.md
-    - Preparing the Parse Tree: getting-started/parse-tree.md
-    - Tips and Tricks: getting-started/tips-and-tricks.md
-#  - Examples:
-#      - Nested Brackets Language: examples/brackets.md
-#      - S-expressions Language: examples/s-exp.md
-#      - DOT Language:  examples/dot.md
-#      - JSON Language: examples/json.md
+      - Getting Started - Intro: getting-started/index.md
+      - Tokenizing Input: getting-started/tokenizing.md
+      - Parsing Tokens: getting-started/parsing.md
+      - Preparing the Parse Tree: getting-started/parse-tree.md
+      - Tips and Tricks: getting-started/tips-and-tricks.md
+  #  - Examples:
+  #      - Nested Brackets Language: examples/brackets.md
+  #      - S-expressions Language: examples/s-exp.md
+  #      - DOT Language:  examples/dot.md
+  #      - JSON Language: examples/json.md
   - API Reference:
       - API Overview: api/index.md
       - Lexer: api/lexer.md
@@ -22,12 +22,12 @@ nav:
   - Changelog: changes.md
 theme:
   name: material
-#  icon:
-#    logo: fontawesome/solid/angle-double-right
+  #  icon:
+  #    logo: fontawesome/solid/angle-double-right
   features:
     - navigation.expand
     - navigation.tabs
-#    - toc.integrate
+  #    - toc.integrate
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -52,8 +52,6 @@ markdown_extensions:
 plugins:
   - search
   - mkdocstrings:
-      watch:
-        - funcparserlib
       handlers:
         python:
           rendering:
@@ -62,3 +60,5 @@ plugins:
             show_source: false
           selection:
             members: false
+watch:
+  - funcparserlib

@@ -9,16 +9,17 @@ on:
       - master
 
 jobs:
-  py2-checks:
+  unittest-checks:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version:
           - "2.7"
+          - "3.7"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -29,12 +30,11 @@ jobs:
       - name: Test with unittest
         run: |
           poetry run python -m unittest discover
-  py3-checks:
+  pre-commit-checks:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version:
-          - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"

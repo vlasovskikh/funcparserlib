@@ -5,7 +5,7 @@ The Changelog
 1.0.1 — 2022-11-04
 ------------------
 
-# Added
+### Added
 
 * Added support for Python 3.11
 

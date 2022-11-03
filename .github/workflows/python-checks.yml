@@ -2,16 +2,19 @@ name: Python checks
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
 
 jobs:
   py2-checks:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 2.7 ]
+        python-version:
+          - "2.7"
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -30,11 +33,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.7", "3.8", "3.9", "3.10" ]
+        python-version:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -42,18 +49,5 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry install
-      - name: Lint with Black
-        run: |
-          poetry run black --check --diff .
-      - name: Lint with flake8
-        run: |
-          poetry run flake8 --max-line-length=88
-      - name: Lint with Mypy
-        run: |
-          poetry run mypy tests/
-      - name: Test with unittest
-        run: |
-          poetry run python -m unittest discover
-      - name: Test with doctest
-        run: |
-          poetry run python -m doctest funcparserlib/*.py docs/*.md
+      - name: Run pre-commit checks
+        uses: pre-commit/action@v3.0.0

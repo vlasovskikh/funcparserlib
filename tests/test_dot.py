@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 
 import unittest
-from typing import Text, Optional
+from typing import Text, Optional  # noqa
 
 from funcparserlib.parser import NoParseError
 from funcparserlib.lexer import LexerError

@@ -4,12 +4,12 @@ from __future__ import unicode_literals
 import re
 
 import unittest
-from typing import Text, Optional, Tuple
+from typing import Text, Optional, Tuple  # noqa
 
 import six
 
 from funcparserlib.lexer import TokenSpec, make_tokenizer, LexerError, Token
-from funcparserlib.parser import (
+from funcparserlib.parser import (  # noqa
     a,
     many,
     NoParseError,

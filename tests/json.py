@@ -32,7 +32,7 @@ import re
 import sys
 from pprint import pformat
 from re import VERBOSE
-from typing import (
+from typing import (  # noqa
     List,
     Sequence,
     Optional,
@@ -48,8 +48,8 @@ from typing import (
 
 import six
 
-from funcparserlib.lexer import TokenSpec, make_tokenizer, Token, LexerError
-from funcparserlib.parser import (
+from funcparserlib.lexer import TokenSpec, make_tokenizer, Token, LexerError  # noqa
+from funcparserlib.parser import (  # noqa
     maybe,
     many,
     finished,

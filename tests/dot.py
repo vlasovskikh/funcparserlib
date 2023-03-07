@@ -40,10 +40,10 @@ import os
 import sys
 from collections import namedtuple
 from re import MULTILINE
-from typing import Sequence, List, TypeVar, Any, Callable, Text
+from typing import Sequence, List, TypeVar, Any, Callable, Text  # noqa
 
-from funcparserlib.lexer import TokenSpec, make_tokenizer, Token, LexerError
-from funcparserlib.parser import (
+from funcparserlib.lexer import TokenSpec, make_tokenizer, Token, LexerError  # noqa
+from funcparserlib.parser import (  # noqa
     maybe,
     many,
     finished,

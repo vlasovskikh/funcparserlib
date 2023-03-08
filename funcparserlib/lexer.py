@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-
-# Copyright © 2009/2021 Andrey Vlasovskikh
+# Copyright © 2009/2023 Andrey Vlasovskikh
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software
@@ -19,28 +17,31 @@
 # CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from __future__ import unicode_literals
-
 __all__ = ["make_tokenizer", "TokenSpec", "Token", "LexerError"]
 
 import re
+from typing import Callable, Iterable, List, Tuple, Optional, Sequence, Pattern
+
+
+_Place = Tuple[int, int]
+_Spec = Tuple[str, Tuple]
 
 
 class LexerError(Exception):
-    def __init__(self, place, msg):
+    def __init__(self, place: _Place, msg: str) -> None:
         self.place = place
         self.msg = msg
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = "cannot tokenize data"
         line, pos = self.place
         return '%s: %d,%d: "%s"' % (s, line, pos, self.msg)
 
 
-class TokenSpec(object):
+class TokenSpec:
     """A token specification for generating a lexer via `make_tokenizer()`."""
 
-    def __init__(self, type, pattern, flags=0):
+    def __init__(self, type: str, pattern: str, flags: int = 0) -> None:
         """Initialize a `TokenSpec` object.
 
         Parameters:
@@ -53,11 +54,11 @@ class TokenSpec(object):
         self.pattern = pattern
         self.flags = flags
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "TokenSpec(%r, %r, %r)" % (self.type, self.pattern, self.flags)
 
 
-class Token(object):
+class Token:
     """A token object that represents a substring of certain type in your text.
 
     You can compare tokens for equality using the `==` operator. Tokens also define
@@ -71,24 +72,30 @@ class Token(object):
         end (Optional[Tuple[int, int]]): End position (_line_, _column_)
     """
 
-    def __init__(self, type, value, start=None, end=None):
+    def __init__(
+        self,
+        type: str,
+        value: str,
+        start: Optional[_Place] = None,
+        end: Optional[_Place] = None,
+    ) -> None:
         """Initialize a `Token` object."""
         self.type = type
         self.value = value
         self.start = start
         self.end = end
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Token(%r, %r)" % (self.type, self.value)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         # FIXME: Case sensitivity is assumed here
-        if other is None:
+        if not isinstance(other, Token):
             return False
         else:
             return self.type == other.type and self.value == other.value
 
-    def _pos_str(self):
+    def _pos_str(self) -> str:
         if self.start is None or self.end is None:
             return ""
         else:
@@ -96,15 +103,15 @@ class Token(object):
             el, ep = self.end
             return "%d,%d-%d,%d:" % (sl, sp, el, ep)
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = "%s %s '%s'" % (self._pos_str(), self.type, self.value)
         return s.strip()
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.value
 
-    def pformat(self):
+    def pformat(self) -> str:
         return "%s %s '%s'" % (
             self._pos_str().ljust(20),  # noqa
             self.type.ljust(14),
@@ -112,7 +119,9 @@ class Token(object):
         )
 
 
-def make_tokenizer(specs):
+def make_tokenizer(
+    specs: Sequence[TokenSpec | _Spec],
+) -> Callable[[str], Iterable[Token]]:
     # noinspection GrazieInspection
     """Make a function that tokenizes text based on the regexp specs.
 
@@ -150,7 +159,7 @@ def make_tokenizer(specs):
 
     ```
     """
-    compiled = []
+    compiled: List[Tuple[str, Pattern[str]]] = []
     for spec in specs:
         if isinstance(spec, TokenSpec):
             c = spec.type, re.compile(spec.pattern, spec.flags)
@@ -159,7 +168,7 @@ def make_tokenizer(specs):
             c = name, re.compile(*args)
         compiled.append(c)
 
-    def match_specs(s, i, position):
+    def match_specs(s: str, i: int, position: Tuple[int, int]) -> Token:
         line, pos = position
         for type, regexp in compiled:
             m = regexp.match(s, i)
@@ -176,13 +185,15 @@ def make_tokenizer(specs):
             err_line = s.splitlines()[line - 1]
             raise LexerError((line, pos + 1), err_line)
 
-    def f(s):
+    def f(s: str) -> Iterable[Token]:
         length = len(s)
         line, pos = 1, 0
         i = 0
         while i < length:
             t = match_specs(s, i, (line, pos))
             yield t
+            if t.end is None:
+                raise ValueError("Token %r has no end specified", (t,))
             line, pos = t.end
             i += len(t.value)
 

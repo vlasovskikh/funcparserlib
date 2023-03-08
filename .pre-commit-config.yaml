@@ -12,8 +12,6 @@ repos:
     rev: "v1.1.1"
     hooks:
       - id: mypy
-        args: []
-        files: "^tests/"
   - repo: local
     hooks:
       - id: unittest

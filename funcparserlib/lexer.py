@@ -20,7 +20,7 @@
 __all__ = ["make_tokenizer", "TokenSpec", "Token", "LexerError"]
 
 import re
-from typing import Callable, Iterable, List, Tuple, Optional, Sequence, Pattern
+from typing import Callable, Iterable, List, Tuple, Optional, Sequence, Pattern, Union
 
 
 _Place = Tuple[int, int]
@@ -120,7 +120,7 @@ class Token:
 
 
 def make_tokenizer(
-    specs: Sequence[TokenSpec | _Spec],
+    specs: Sequence[Union[TokenSpec, _Spec]],
 ) -> Callable[[str], Iterable[Token]]:
     # noinspection GrazieInspection
     """Make a function that tokenizes text based on the regexp specs.

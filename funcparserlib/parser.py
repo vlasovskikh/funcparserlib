@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-
-# Copyright © 2009/2021 Andrey Vlasovskikh
+# Copyright © 2009/2023 Andrey Vlasovskikh
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software
@@ -51,8 +49,6 @@ words, the set of `Parser` objects is closed under the means of combination.
   [1]: https://www.cl.cam.ac.uk/teaching/Lectures/funprog-jrh-1996/
 """
 
-from __future__ import unicode_literals
-
 __all__ = [
     "some",
     "a",
@@ -68,22 +64,34 @@ __all__ = [
     "Parser",
 ]
 
-import sys
 import logging
 import warnings
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
 
 from funcparserlib.lexer import Token
 
 log = logging.getLogger("funcparserlib")
 
 debug = False
-if sys.version_info < (3,):
-    string_types = (str, unicode)  # noqa
-else:
-    string_types = str
+
+_A = TypeVar("_A")
+_B = TypeVar("_B")
+_C = TypeVar("_C")
 
 
-class Parser(object):
+class Parser(Generic[_A, _B]):
     """A parser object that can parse a sequence of tokens or can be combined with
     other parsers using `+`, `|`, `>>`, `many()`, and other parsing combinators.
 
@@ -108,12 +116,18 @@ class Parser(object):
         construct new parsers.
     """
 
-    def __init__(self, p):
+    def __init__(
+        self,
+        p: Union[
+            "Parser[_A, _B]",
+            Callable[[Sequence[_A], "State"], Tuple[_B, "State"]],
+        ],
+    ) -> None:
         """Wrap the parser function `p` into a `Parser` object."""
         self.name = ""
         self.define(p)
 
-    def named(self, name):
+    def named(self, name: str) -> "Parser[_A, _B]":
         # noinspection GrazieInspection
         """Specify the name of the parser for easier debugging.
 
@@ -154,7 +168,13 @@ class Parser(object):
         self.name = name
         return self
 
-    def define(self, p):
+    def define(
+        self,
+        p: Union[
+            "Parser[_A, _B]",
+            Callable[[Sequence[_A], "State"], Tuple[_B, "State"]],
+        ],
+    ) -> None:
         """Define the parser created earlier as a forward declaration.
 
         Type: `(Parser[A, B]) -> None`
@@ -169,9 +189,11 @@ class Parser(object):
             setattr(self, "_run", f)
         else:
             setattr(self, "run", f)
-        self.named(getattr(p, "name", p.__doc__))
+        name = getattr(p, "name", p.__doc__)
+        if name is not None:
+            self.named(name)
 
-    def run(self, tokens, s):
+    def run(self, tokens: Sequence[_A], s: "State") -> Tuple[_B, "State"]:
         """Run the parser against the tokens with the specified parsing state.
 
         Type: `(Sequence[A], State) -> Tuple[B, State]`
@@ -190,12 +212,12 @@ class Parser(object):
         """
         if debug:
             log.debug("trying %s" % self.name)
-        return self._run(tokens, s)  # noqa
+        return self._run(tokens, s)
 
-    def _run(self, tokens, s):
+    def _run(self, tokens: Sequence[_A], s: "State") -> Tuple[_B, "State"]:
         raise NotImplementedError("you must define() a parser")
 
-    def parse(self, tokens):
+    def parse(self, tokens: Sequence[_A]) -> _B:
         """Parse the sequence of tokens and return the parsed value.
 
         Type: `(Sequence[A]) -> B`
@@ -232,18 +254,32 @@ class Parser(object):
                         e_line, e_pos = t.end
                         loc = "%d,%d-%d,%d: " % (s_line, s_pos, e_line, e_pos)
                     msg = "%s%s: %r" % (loc, e.msg, t.value)
-                elif isinstance(t, string_types):
+                elif isinstance(t, str):
                     msg = "%s: %r" % (e.msg, t)
                 else:
                     msg = "%s: %s" % (e.msg, t)
             else:
                 msg = "got unexpected end of input"
-            if e.state.parser is not None:
-                msg = "%s, expected: %s" % (msg, e.state.parser.name)
+            e_parser = e.state.parser
+            if isinstance(e_parser, Parser):
+                msg = "%s, expected: %s" % (msg, e_parser.name)
             e.msg = msg
             raise
 
-    def __add__(self, other):
+    @overload
+    def __add__(  # type: ignore[misc]
+        self, other: "_IgnoredParser[_A]"
+    ) -> "Parser[_A, _B]":
+        pass
+
+    @overload
+    def __add__(self, other: "Parser[_A, _C]") -> "_TupleParser[_A, Tuple[_B, _C]]":
+        pass
+
+    def __add__(
+        self,
+        other: Union["_IgnoredParser[_A]", "Parser[_A, _C]"],
+    ) -> Union["Parser[_A, _B]", "_TupleParser[_A, Tuple[_B, _C]]"]:
         """Sequential combination of parsers. It runs this parser, then the other
         parser.
 
@@ -294,20 +330,20 @@ class Parser(object):
         ```
         """
 
-        def magic(v1, v2):
+        def magic(v1: Any, v2: Any) -> _Tuple:
             if isinstance(v1, _Tuple):
                 return _Tuple(v1 + (v2,))
             else:
                 return _Tuple((v1, v2))
 
         @_TupleParser
-        def _add(tokens, s):
+        def _add(tokens: Sequence[_A], s: State) -> Tuple[Tuple[_B, _C], State]:
             (v1, s2) = self.run(tokens, s)
             (v2, s3) = other.run(tokens, s2)
-            return magic(v1, v2), s3
+            return cast(Tuple[_B, _C], magic(v1, v2)), s3
 
         @Parser
-        def ignored_right(tokens, s):
+        def ignored_right(tokens: Sequence[_A], s: State) -> Tuple[_B, State]:
             v, s2 = self.run(tokens, s)
             _, s3 = other.run(tokens, s2)
             return v, s3
@@ -316,9 +352,10 @@ class Parser(object):
         if isinstance(other, _IgnoredParser):
             return ignored_right.named(name)
         else:
-            return _add.named(name)
+            _add.name = name
+            return _add
 
-    def __or__(self, other):
+    def __or__(self, other: "Parser[_A, _C]") -> "Parser[_A, Union[_B, _C]]":
         """Choice combination of parsers.
 
         It runs this parser and returns its result. If the parser fails, it runs the
@@ -341,7 +378,7 @@ class Parser(object):
         """
 
         @Parser
-        def _or(tokens, s):
+        def _or(tokens: Sequence[_A], s: State) -> Tuple[Union[_B, _C], State]:
             try:
                 return self.run(tokens, s)
             except NoParseError as e:
@@ -356,7 +393,7 @@ class Parser(object):
         _or.name = "%s or %s" % (self.name, other.name)
         return _or
 
-    def __rshift__(self, f):
+    def __rshift__(self, f: Callable[[_B], _C]) -> "Parser[_A, _C]":
         """Transform the parsing result by applying the specified function.
 
         Type: `(Callable[[B], C]) -> Parser[A, C]`
@@ -379,13 +416,13 @@ class Parser(object):
         """
 
         @Parser
-        def _shift(tokens, s):
+        def _shift(tokens: Sequence[_A], s: State) -> Tuple[_C, State]:
             (v, s2) = self.run(tokens, s)
             return f(v), s2
 
         return _shift.named(self.name)
 
-    def bind(self, f):
+    def bind(self, f: Callable[[_B], "Parser[_A, _C]"]) -> "Parser[_A, _C]":
         """Bind the parser to a monadic function that returns a new parser.
 
         Type: `(Callable[[B], Parser[A, C]]) -> Parser[A, C]`
@@ -399,14 +436,14 @@ class Parser(object):
         """
 
         @Parser
-        def _bind(tokens, s):
+        def _bind(tokens: Sequence[_A], s: State) -> Tuple[_C, State]:
             (v, s2) = self.run(tokens, s)
             return f(v).run(tokens, s2)
 
         _bind.name = "(%s >>=)" % (self.name,)
         return _bind
 
-    def __neg__(self):
+    def __neg__(self) -> "_IgnoredParser[_A]":
         """Return a parser that parses the same tokens, but its parsing result is
         ignored by the sequential `+` combinator.
 
@@ -472,35 +509,41 @@ class Parser(object):
         """
         return _IgnoredParser(self)
 
-    def __class_getitem__(cls, key):
-        return cls
 
-
-class State(object):
+class State:
     """Parsing state that is maintained basically for error reporting.
 
     It consists of the current position `pos` in the sequence being parsed, and the
     position `max` of the rightmost token that has been consumed while parsing.
     """
 
-    def __init__(self, pos, max, parser=None):
+    def __init__(
+        self,
+        pos: int,
+        max: int,
+        parser: Union[
+            Parser,
+            Callable[[Any, "State"], Tuple[Any, "State"]],
+            None,
+        ] = None,
+    ) -> None:
         self.pos = pos
         self.max = max
         self.parser = parser
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str((self.pos, self.max))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "State(%r, %r)" % (self.pos, self.max)
 
 
 class NoParseError(Exception):
-    def __init__(self, msg, state):
+    def __init__(self, msg: str, state: State) -> None:
         self.msg = msg
         self.state = state
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.msg
 
 
@@ -508,23 +551,34 @@ class _Tuple(tuple):
     pass
 
 
-class _TupleParser(Parser):
-    pass
+class _TupleParser(Parser[_A, _B], Generic[_A, _B]):
+    @overload  # type: ignore[override]
+    def __add__(self, other: "_IgnoredParser[_A]") -> "_TupleParser[_A, _B]":
+        pass
+
+    @overload
+    def __add__(self, other: Parser[_A, Any]) -> Parser[_A, Any]:
+        pass
+
+    def __add__(
+        self, other: Union["_IgnoredParser[_A]", Parser[_A, Any]]
+    ) -> Union["_TupleParser[_A, _B]", Parser[_A, Any]]:
+        return super().__add__(other)
 
 
-class _Ignored(object):
-    def __init__(self, value):
+class _Ignored:
+    def __init__(self, value: Any) -> None:
         self.value = value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "_Ignored(%s)" % repr(self.value)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, _Ignored) and self.value == other.value
 
 
 @Parser
-def finished(tokens, s):
+def finished(tokens: Sequence[Any], s: State) -> Tuple[None, State]:
     """A parser that throws an exception if there are any unparsed tokens left in the
     sequence."""
     if s.pos >= len(tokens):
@@ -537,7 +591,7 @@ def finished(tokens, s):
 finished.name = "end of input"
 
 
-def many(p):
+def many(p: Parser[_A, _B]) -> Parser[_A, List[_B]]:
     """Return a parser that applies the parser `p` as many times as it succeeds at
     parsing the tokens.
 
@@ -562,7 +616,7 @@ def many(p):
     """
 
     @Parser
-    def _many(tokens, s):
+    def _many(tokens: Sequence[_A], s: State) -> Tuple[List[_B], State]:
         res = []
         try:
             while True:
@@ -581,7 +635,7 @@ def many(p):
     return _many
 
 
-def some(pred):
+def some(pred: Callable[[_A], bool]) -> Parser[_A, _A]:
     """Return a parser that parses a token if it satisfies the predicate `pred`.
 
     Type: `(Callable[[A], bool]) -> Parser[A, A]`
@@ -610,7 +664,7 @@ def some(pred):
     """
 
     @Parser
-    def _some(tokens, s):
+    def _some(tokens: Sequence[_A], s: State) -> Tuple[_A, State]:
         if s.pos >= len(tokens):
             s2 = State(s.pos, s.max, _some if s.pos == s.max else s.parser)
             raise NoParseError("got unexpected end of input", s2)
@@ -624,7 +678,7 @@ def some(pred):
                 return t, s2
             else:
                 s2 = State(s.pos, s.max, _some if s.pos == s.max else s.parser)
-                if debug:
+                if debug and isinstance(s2.parser, Parser):
                     log.debug(
                         "failed %r, state = %s, expected = %s" % (t, s2, s2.parser.name)
                     )
@@ -634,7 +688,7 @@ def some(pred):
     return _some
 
 
-def a(value):
+def a(value: _A) -> Parser[_A, _A]:
     """Return a parser that parses a token if it's equal to `value`.
 
     Type: `(A) -> Parser[A, A]`
@@ -665,10 +719,14 @@ def a(value):
         lexical and syntactic levels of the grammar.
     """
     name = getattr(value, "name", value)
-    return some(lambda t: t == value).named(repr(name))
+
+    def eq_value(t: _A) -> bool:
+        return t == value
+
+    return some(eq_value).named(repr(name))
 
 
-def tok(type, value=None):
+def tok(type: str, value: Optional[str] = None) -> Parser[Token, str]:
     """Return a parser that parses a `Token` and returns the string value of the token.
 
     Type: `(str, Optional[str]) -> Parser[Token, str]`
@@ -710,14 +768,18 @@ def tok(type, value=None):
         `Token` objects contain their position in the source file) and good separation
         of the lexical and syntactic levels of the grammar.
     """
+
+    def eq_type(t: Token) -> bool:
+        return t.type == type
+
     if value is not None:
         p = a(Token(type, value))
     else:
-        p = some(lambda t: t.type == type).named(type)
+        p = some(eq_type).named(type)
     return (p >> (lambda t: t.value)).named(p.name)
 
 
-def pure(x):
+def pure(x: _A) -> Parser[Any, _A]:
     """Wrap any object into a parser.
 
     Type: `(A) -> Parser[A, A]`
@@ -729,14 +791,14 @@ def pure(x):
     """
 
     @Parser
-    def _pure(_, s):
+    def _pure(_: Sequence[Any], s: State) -> Tuple[_A, State]:
         return x, s
 
     _pure.name = "(pure %r)" % (x,)
     return _pure
 
 
-def maybe(p):
+def maybe(p: Parser[_A, _B]) -> Parser[_A, Optional[_B]]:
     """Return a parser that returns `None` if the parser `p` fails.
 
     Examples:
@@ -753,7 +815,7 @@ def maybe(p):
     return (p | pure(None)).named("[ %s ]" % (p.name,))
 
 
-def skip(p):
+def skip(p: Parser[_A, Any]) -> "_IgnoredParser[_A]":
     """An alias for `-p`.
 
     See also the docs for `Parser.__neg__()`.
@@ -761,33 +823,60 @@ def skip(p):
     return -p
 
 
-class _IgnoredParser(Parser):
-    def __init__(self, p):
+class _IgnoredParser(Parser[_A, Any]):
+    def __init__(
+        self,
+        p: Union[
+            Parser[_A, Any],
+            Callable[[Sequence[_A], "State"], Tuple[Any, "State"]],
+        ],
+    ) -> None:
         super(_IgnoredParser, self).__init__(p)
         run = self._run if debug else self.run
 
-        def ignored(tokens, s):
+        def ignored(tokens: Sequence[_A], s: State) -> Tuple[Any, State]:
             v, s2 = run(tokens, s)
             return v if isinstance(v, _Ignored) else _Ignored(v), s2
 
         self.define(ignored)
-        self.name = getattr(p, "name", p.__doc__)
+        name = getattr(p, "name", p.__doc__)
+        if name is not None:
+            self.name = name
 
-    def __add__(self, other):
-        def ignored_left(tokens, s):
-            _, s2 = self.run(tokens, s)
-            v, s3 = other.run(tokens, s2)
-            return v, s3
+    @overload  # type: ignore[override]
+    def __add__(self, other: "_IgnoredParser[_A]") -> "_IgnoredParser[_A]":
+        pass
 
+    @overload
+    def __add__(self, other: Parser[_A, _C]) -> Parser[_A, _C]:
+        pass
+
+    def __add__(
+        self, other: Union["_IgnoredParser[_A]", Parser[_A, _C]]
+    ) -> Union["_IgnoredParser[_A]", Parser[_A, _C]]:
         if isinstance(other, _IgnoredParser):
-            return _IgnoredParser(ignored_left).named(
-                "(%s, %s)" % (self.name, other.name)
-            )
+
+            @_IgnoredParser
+            def ip(tokens: Sequence[_A], s: State) -> Tuple[Any, State]:
+                _, s2 = self.run(tokens, s)
+                v, s3 = other.run(tokens, s2)
+                return v, s3
+
+            ip.name = "(%s, %s)" % (self.name, other.name)
+            return ip
         else:
-            return Parser(ignored_left).named("(%s, %s)" % (self.name, other.name))
+
+            @Parser
+            def p(tokens: Sequence[_A], s: State) -> Tuple[_C, State]:
+                _, s2 = self.run(tokens, s)
+                v, s3 = other.run(tokens, s2)
+                return v, s3
+
+            p.name = "(%s, %s)" % (self.name, other.name)
+            return p
 
 
-def oneplus(p):
+def oneplus(p: Parser[_A, _B]) -> Parser[_A, List[_B]]:
     """Return a parser that applies the parser `p` one or more times.
 
     A similar parser combinator `many(p)` means apply `p` zero or more times, whereas
@@ -810,7 +899,7 @@ def oneplus(p):
     """
 
     @Parser
-    def _oneplus(tokens, s):
+    def _oneplus(tokens: Sequence[_A], s: State) -> Tuple[List[_B], State]:
         (v1, s2) = p.run(tokens, s)
         (v2, s3) = many(p).run(tokens, s2)
         return [v1] + v2, s3
@@ -819,7 +908,7 @@ def oneplus(p):
     return _oneplus
 
 
-def with_forward_decls(suspension):
+def with_forward_decls(suspension: Callable[[], Parser[_A, _B]]) -> Parser[_A, _B]:
     warnings.warn(
         "Use forward_decl() instead:\n"
         "\n"
@@ -830,13 +919,13 @@ def with_forward_decls(suspension):
     )
 
     @Parser
-    def f(tokens, s):
+    def f(tokens: Sequence[_A], s: State) -> Tuple[_B, State]:
         return suspension().run(tokens, s)
 
     return f
 
 
-def forward_decl():
+def forward_decl() -> Parser[Any, Any]:
     """Return an undefined parser that can be used as a forward declaration.
 
     Type: `Parser[Any, Any]`
@@ -872,7 +961,7 @@ def forward_decl():
     """
 
     @Parser
-    def f(_tokens, _s):
+    def f(_tokens: Any, _s: Any) -> Any:
         raise NotImplementedError("you must define() a forward_decl somewhere")
 
     f.name = "forward_decl()"

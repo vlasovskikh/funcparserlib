@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 import unittest
-from typing import Text, Optional  # noqa
+from typing import Optional
 
 from funcparserlib.parser import NoParseError
 from funcparserlib.lexer import LexerError
@@ -11,12 +9,10 @@ from .dot import parse, tokenize, Graph, Edge, SubGraph, DefAttrs, Attr, Node
 
 
 class DotTest(unittest.TestCase):
-    def t(self, data, expected=None):
-        # type: (Text, Optional[Graph]) -> None
+    def t(self, data: str, expected: Optional[Graph] = None) -> None:
         self.assertEqual(parse(tokenize(data)), expected)
 
-    def test_comments(self):
-        # type: () -> None
+    def test_comments(self) -> None:
         self.t(
             """
             /* комм 1 */
@@ -28,8 +24,7 @@ class DotTest(unittest.TestCase):
             Graph(strict=None, type="graph", id="g1", stmts=[]),
         )
 
-    def test_connected_subgraph(self):
-        # type: () -> None
+    def test_connected_subgraph(self) -> None:
         self.t(
             """
             digraph g1 {
@@ -65,8 +60,7 @@ class DotTest(unittest.TestCase):
             ),
         )
 
-    def test_default_attrs(self):
-        # type: () -> None
+    def test_default_attrs(self) -> None:
         self.t(
             """
             digraph g1 {
@@ -99,8 +93,7 @@ class DotTest(unittest.TestCase):
             ),
         )
 
-    def test_empty_graph(self):
-        # type: () -> None
+    def test_empty_graph(self) -> None:
         self.t(
             """
             graph g1 {}
@@ -108,8 +101,7 @@ class DotTest(unittest.TestCase):
             Graph(strict=None, type="graph", id="g1", stmts=[]),
         )
 
-    def test_few_attrs(self):
-        # type: () -> None
+    def test_few_attrs(self) -> None:
         self.t(
             """
             digraph g1 {
@@ -132,8 +124,7 @@ class DotTest(unittest.TestCase):
             ),
         )
 
-    def test_few_nodes(self):
-        # type: () -> None
+    def test_few_nodes(self) -> None:
         self.t(
             """
             graph g1 {
@@ -154,8 +145,7 @@ class DotTest(unittest.TestCase):
             ),
         )
 
-    def test_illegal_comma(self):
-        # type: () -> None
+    def test_illegal_comma(self) -> None:
         try:
             self.t(
                 """
@@ -171,8 +161,7 @@ class DotTest(unittest.TestCase):
         else:
             self.fail("must raise NoParseError")
 
-    def test_null(self):
-        # type: () -> None
+    def test_null(self) -> None:
         try:
             self.t("")
         except NoParseError:
@@ -180,8 +169,7 @@ class DotTest(unittest.TestCase):
         else:
             self.fail("must raise NoParseError")
 
-    def test_simple_cycle(self):
-        # type: () -> None
+    def test_simple_cycle(self) -> None:
         self.t(
             """
             digraph g1 {
@@ -202,8 +190,7 @@ class DotTest(unittest.TestCase):
             ),
         )
 
-    def test_single_unicode_char(self):
-        # type: () -> None
+    def test_single_unicode_char(self) -> None:
         try:
             self.t("ф")
         except LexerError:
@@ -211,8 +198,7 @@ class DotTest(unittest.TestCase):
         else:
             self.fail("must raise LexerError")
 
-    def test_unicode_names(self):
-        # type: () -> None
+    def test_unicode_names(self) -> None:
         self.t(
             """
             digraph g1 {

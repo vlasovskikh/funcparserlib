@@ -12,7 +12,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -20,10 +19,10 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 
 [tool.poetry.dev-dependencies]
-pre-commit = {version = "^2.11.1"}
+pre-commit = {version = "^3.5.0"}
 tox = {version = "^4.4.6"}
 mkdocs = {version = "^1.4.2"}
 mkdocs-material = {version = "^9.1.1"}

@@ -4,14 +4,15 @@ The Changelog
 2.0.0 — to be released
 ----------------------
 
-Dropped support for Python 2.7 (end of life).
+Dropped support for Python 2.7 and 3.7 (end of life).
 
-For compatibility with Python 2.7 please use version `>=1.0.0,<2.0.0`.
+For compatibility with Python 2.7 and 3.7 please use version `>=1.0.0,<2.0.0`.
 
 
 ### Changed
 
 * Dropped support for Python 2.7
+* Dropped support for Python 3.7
 
 
 1.0.1 — 2022-11-04

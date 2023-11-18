@@ -4,8 +4,8 @@ The Changelog
 2.0.0 — to be released
 ----------------------
 
-Dropped support for Python 2.7 and 3.7 (end of life). For compatibility with Python
-2.7 and 3.7 please use version `>=1.0.0,<2.0.0`.
+Dropped support for Python 2.7 (end of life). For compatibility with Python 2.7 please
+use version `>=1.0,==1.*` (`~=1.*`).
 
 ### Added
 

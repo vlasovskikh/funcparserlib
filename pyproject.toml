@@ -26,7 +26,7 @@ pre-commit = {version = "^3.5.0"}
 tox = {version = "^4.4.6"}
 mkdocs = {version = "^1.4.2"}
 mkdocs-material = {version = "^9.1.1"}
-mkdocstrings = {extras = ["python-legacy"], version = "^0.20.0"}
+mkdocstrings = {extras = ["python"], version = "^0.24.0"}
 
 [build-system]
 requires = ["poetry-core>=1.5.1"]

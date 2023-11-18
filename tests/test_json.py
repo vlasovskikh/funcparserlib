@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
-
 import unittest
-from typing import Text, Optional  # noqa
+from typing import Optional
 
 from funcparserlib.parser import NoParseError
 from funcparserlib.lexer import LexerError
@@ -11,36 +9,28 @@ from . import json
 
 
 class JsonTest(unittest.TestCase):
-    def t(self, data, expected=None):
-        # type: (Text, Optional[object]) -> None
+    def t(self, data: str, expected: Optional[object] = None) -> None:
         self.assertEqual(json.loads(data), expected)
 
-    def test_1_array(self):
-        # type: () -> None
+    def test_1_array(self) -> None:
         self.t("[1]", [1])
 
-    def test_1_object(self):
-        # type: () -> None
+    def test_1_object(self) -> None:
         self.t('{"foo": "bar"}', {"foo": "bar"})
 
-    def test_bool_and_null(self):
-        # type: () -> None
+    def test_bool_and_null(self) -> None:
         self.t("[null, true, false]", [None, True, False])
 
-    def test_empty_array(self):
-        # type: () -> None
+    def test_empty_array(self) -> None:
         self.t("[]", [])
 
-    def test_empty_object(self):
-        # type: () -> None
+    def test_empty_object(self) -> None:
         self.t("{}", {})
 
-    def test_many_array(self):
-        # type: () -> None
+    def test_many_array(self) -> None:
         self.t("[1, 2, [3, 4, 5], 6]", [1, 2, [3, 4, 5], 6])
 
-    def test_many_object(self):
-        # type: () -> None
+    def test_many_object(self) -> None:
         # noinspection SpellCheckingInspection
         self.t(
             """
@@ -66,8 +56,7 @@ class JsonTest(unittest.TestCase):
             },
         )
 
-    def test_null(self):
-        # type: () -> None
+    def test_null(self) -> None:
         try:
             self.t("")
         except NoParseError:
@@ -75,8 +64,7 @@ class JsonTest(unittest.TestCase):
         else:
             self.fail("must raise NoParseError")
 
-    def test_numbers(self):
-        # type: () -> None
+    def test_numbers(self) -> None:
         self.t(
             """\
             [
@@ -102,8 +90,7 @@ class JsonTest(unittest.TestCase):
             ],
         )
 
-    def test_strings(self):
-        # type: () -> None
+    def test_strings(self) -> None:
         # noinspection SpellCheckingInspection
         self.t(
             r"""
@@ -124,8 +111,7 @@ class JsonTest(unittest.TestCase):
             ],
         )
 
-    def test_toplevel_string(self):
-        # type: () -> None
+    def test_toplevel_string(self) -> None:
         try:
             self.t("неправильно")
         except LexerError:

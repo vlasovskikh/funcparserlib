@@ -162,15 +162,15 @@ Used By
 Some open-source projects that use `funcparserlib` as an explicit dependency:
 
 * [Hy](https://github.com/hylang/hy), a Lisp dialect that's embedded in Python
-    * 4.2K stars, version `~= 1.0`, Python 3.8+
+  * 4.7K stars, version `~=1.0`, Python 3.8+
 * [Splash](https://github.com/scrapinghub/splash), a JavaScript rendering service with HTTP API, by Scrapinghub
-    * 3.6K stars, version `*`. Python 3 in Docker
+  * 3.9K stars, version `*`. Python 3 in Docker
 * [graphite-beacon](https://github.com/klen/graphite-beacon), a simple alerting system for Graphite metrics
-    * 459 stars, version `==0.3.6`, Python 2 and 3
+  * 453 stars, version `==0.3.6`, Python 2 and 3
 * [blockdiag](https://github.com/blockdiag/blockdiag), generates block-diagram image file from spec-text file
-    * 148 stars, version `>= 1.0.0a0`, Python 3.7+
+  * 194 stars, version `>= 1.0.0a0`, Python 3.7+
 * [kll](https://github.com/kiibohd/kll), Keyboard Layout Language (KLL) compiler
-    * 109 stars, copied source code, Python 3.5+
+  * 113 stars, copied source code, Python 3.5+
 
 
 Next

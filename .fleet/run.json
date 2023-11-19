@@ -1,0 +1,15 @@
+{
+    "configurations": [
+        {
+            "type": "python-tests",
+            "name": "Unit tests",
+            "testFramework": "unittest"
+        },
+        {
+            "type": "command",
+            "name": "pre-commit",
+            "program": "pre-commit",
+            "args": ["run", "-a"]
+        }
+    ]
+}

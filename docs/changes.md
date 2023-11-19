@@ -5,7 +5,7 @@ The Changelog
 ----------------------
 
 Dropped support for Python 2.7 (end of life). For compatibility with Python 2.7 please
-use version `>=1.0,==1.*` (`~=1.*`).
+use version `>=1.0,==1.*` (`~=1.0`).
 
 ### Added
 

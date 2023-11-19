@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "funcparserlib"
-version = "1.0.1"
+version = "2.0.0a0"
 description = "Recursive descent parsing library based on functional combinators"
 authors = ["Andrey Vlasovskikh <andrey.vlasovskikh@gmail.com>"]
 license = "MIT"
@@ -12,27 +12,23 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 2.7",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.7"
+python = "^3.8"
 
 [tool.poetry.dev-dependencies]
-six = "^1.15.0"
-typing = {version = "^3.7.4", python = "~2.7"}
-pre-commit = {version = "^2.11.1", python = "^3.7"}
-tox = {version = "^4.4.6", python = "^3.7"}
-mkdocs = {version = "^1.4.2", python = "^3.7"}
-mkdocs-material = {version = "^9.1.1", python = "^3.7"}
-mkdocstrings = {extras = ["python-legacy"], version = "^0.20.0", python = "^3.7"}
+pre-commit = {version = "^3.5.0"}
+tox = {version = "^4.4.6"}
+mkdocs = {version = "^1.4.2"}
+mkdocs-material = {version = "^9.1.1"}
+mkdocstrings = {extras = ["python"], version = "^0.24.0"}
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.5.1"]
 build-backend = "poetry.core.masonry.api"

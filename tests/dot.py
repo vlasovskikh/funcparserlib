@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-
-# Copyright © 2009/2021 Andrey Vlasovskikh
+# Copyright © 2009/2023 Andrey Vlasovskikh
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software
@@ -34,13 +32,10 @@ At the moment, the parser builds only a parse tree, not an abstract syntax tree
   [1]: https://www.graphviz.org/doc/info/lang.html
 """
 
-from __future__ import print_function, unicode_literals
-
 import os
 import sys
-from collections import namedtuple
 from re import MULTILINE
-from typing import Sequence, List, TypeVar, Any, Callable, Text
+from typing import Sequence, List, TypeVar, Callable, NamedTuple, Union, Optional
 
 from funcparserlib.lexer import TokenSpec, make_tokenizer, Token, LexerError
 from funcparserlib.parser import (
@@ -57,18 +52,46 @@ from funcparserlib.util import pretty_tree
 
 ENCODING = "UTF-8"
 
-Graph = namedtuple("Graph", "strict type id stmts")
-SubGraph = namedtuple("SubGraph", "id stmts")
-Node = namedtuple("Node", "id attrs")
-Attr = namedtuple("Attr", "name value")
-Edge = namedtuple("Edge", "nodes attrs")
-DefAttrs = namedtuple("DefAttrs", "object attrs")
 
-T = TypeVar("T")  # noqa
+class Graph(NamedTuple):
+    strict: Optional[str]
+    type: Optional[str]
+    id: Optional[str]
+    stmts: List["Statement"]
 
 
-def tokenize(s):
-    # type: (Text) -> Sequence[Token]
+class SubGraph(NamedTuple):
+    id: Optional[str]
+    stmts: List["Statement"]
+
+
+class Attr(NamedTuple):
+    name: str
+    value: Optional[str]
+
+
+class Node(NamedTuple):
+    id: str
+    attrs: List[Attr]
+
+
+class Edge(NamedTuple):
+    nodes: List[Union[str, SubGraph]]
+    attrs: List[Attr]
+
+
+class DefAttrs(NamedTuple):
+    object: str
+    attrs: List[Attr]
+
+
+Statement = Union[DefAttrs, Edge, SubGraph, Node]
+
+
+T = TypeVar("T")
+
+
+def tokenize(s: str) -> Sequence[Token]:
     specs = [
         TokenSpec("Comment", r"/\*(.|[\r\n])*?\*/", MULTILINE),
         TokenSpec("Comment", r"//.*"),
@@ -84,33 +107,27 @@ def tokenize(s):
     return [x for x in t(s) if x.type not in useless]
 
 
-def parse(tokens):
-    # type: (Sequence[Token]) -> Graph
-
-    def un_arg(f):
-        # type: (Callable[..., T]) -> Callable[[tuple], T]
+def parse(tokens: Sequence[Token]) -> Graph:
+    def un_arg(f: Callable[..., T]) -> Callable[[tuple], T]:
         return lambda args: f(*args)
 
-    def flatten(xs):
-        # type: (List[List[Attr]]) -> List[Attr]
+    def flatten(xs: List[List[Attr]]) -> List[Attr]:
         return sum(xs, [])
 
-    def n(s):
-        # type: (Text) -> Parser[Token, Text]
+    def n(s: str) -> Parser[Token, str]:
         return tok("Name", s)
 
-    def op(s):
-        # type: (Text) -> Parser[Token, Text]
+    def op(s: str) -> Parser[Token, str]:
         return tok("Op", s)
 
     dot_id = (tok("Name") | tok("Number") | tok("String")).named("id")
 
-    def make_graph_attr(args):
-        # type: (tuple) -> DefAttrs
+    def make_graph_attr(args: tuple) -> DefAttrs:
         return DefAttrs("graph", [Attr(*args)])
 
-    def make_edge(node, xs, attrs):
-        # type: (Node, List[Node], List[Attr]) -> Edge
+    def make_edge(
+        node: Union[str, SubGraph], xs: List[Union[str, SubGraph]], attrs: List[Attr]
+    ) -> Edge:
         return Edge([node] + xs, attrs)
 
     node_id = dot_id  # + maybe(port)
@@ -121,7 +138,7 @@ def parse(tokens):
     node_stmt = node_id + attr_list >> un_arg(Node)
     # We use a forward_decl because of circular definitions like
     # (stmt_list -> stmt -> subgraph -> stmt_list)
-    subgraph = forward_decl()  # type: Parser[Token, SubGraph]
+    subgraph: Parser[Token, SubGraph] = forward_decl()
     edge_rhs = -(op("->") | op("--")) + (subgraph | node_id)
     edge_stmt = (subgraph | node_id) + oneplus(edge_rhs) + attr_list >> un_arg(
         make_edge
@@ -137,27 +154,26 @@ def parse(tokens):
     return dotfile.parse(tokens)
 
 
-def pretty_parse_tree(obj):
-    # type: (object) -> Text
-    Pair = namedtuple("Pair", "first second")
+def pretty_parse_tree(obj: object) -> str:
+    class NamedValues(NamedTuple):
+        name: str
+        values: Sequence[object]
 
-    def kids(x):
-        # type: (Any) -> List[object]
+    def kids(x: object) -> Sequence[object]:
         if isinstance(x, (Graph, SubGraph)):
-            return [Pair("stmts", x.stmts)]
+            return [NamedValues("stmts", x.stmts)]
         elif isinstance(x, (Node, DefAttrs)):
-            return [Pair("attrs", x.attrs)]
+            return [NamedValues("attrs", x.attrs)]
         elif isinstance(x, Edge):
-            return [Pair("nodes", x.nodes), Pair("attrs", x.attrs)]
-        elif isinstance(x, Pair):
-            return x.second
+            return [NamedValues("nodes", x.nodes), NamedValues("attrs", x.attrs)]
+        elif isinstance(x, NamedValues):
+            return x.values
         else:
             return []
 
-    def show(x):
-        # type: (Any) -> Text
-        if isinstance(x, Pair):
-            return x.first
+    def show(x: object) -> str:
+        if isinstance(x, NamedValues):
+            return x.name
         elif isinstance(x, Graph):
             return "Graph [id=%s, strict=%r, type=%s]" % (
                 x.id,
@@ -180,8 +196,7 @@ def pretty_parse_tree(obj):
     return pretty_tree(obj, kids, show)
 
 
-def main():
-    # type: () -> None
+def main() -> None:
     # import logging
     # logging.basicConfig(level=logging.DEBUG)
     # import funcparserlib

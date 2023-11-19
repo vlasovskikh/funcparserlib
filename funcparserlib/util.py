@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-
-# Copyright © 2009/2021 Andrey Vlasovskikh
+# Copyright © 2009/2023 Andrey Vlasovskikh
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software
@@ -19,10 +17,16 @@
 # CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 # OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from __future__ import unicode_literals
+from typing import TypeVar, Callable, Sequence
+
+_A = TypeVar("_A")
 
 
-def pretty_tree(x, kids, show):
+def pretty_tree(
+    x: _A,
+    kids: Callable[[_A], Sequence[_A]],
+    show: Callable[[_A], str],
+) -> str:
     """Return a pseudo-graphic tree representation of the object `x` similar to the
     `tree` command in Unix.
 
@@ -53,7 +57,7 @@ def pretty_tree(x, kids, show):
     """
     (MID, END, CONT, LAST, ROOT) = ("|-- ", "`-- ", "|   ", "    ", "")
 
-    def rec(obj, indent, sym):
+    def rec(obj: _A, indent: str, sym: str) -> str:
         line = indent + sym + show(obj)
         obj_kids = kids(obj)
         if len(obj_kids) == 0:

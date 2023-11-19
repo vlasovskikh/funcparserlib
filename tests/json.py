@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2009/2021 Andrey Vlasovskikh
+# Copyright © 2009/2023 Andrey Vlasovskikh
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this
 # software and associated documentation files (the "Software"), to deal in the Software
@@ -26,8 +26,6 @@ The parser is based on [the JSON grammar][1].
   [1]: https://tools.ietf.org/html/rfc4627
 """
 
-from __future__ import print_function, unicode_literals
-
 import re
 import sys
 from pprint import pformat
@@ -45,8 +43,6 @@ from typing import (
     Text,
     Union,
 )
-
-import six
 
 from funcparserlib.lexer import TokenSpec, make_tokenizer, Token, LexerError
 from funcparserlib.parser import (
@@ -72,13 +68,12 @@ regexps = {
         """,
 }
 re_esc = re.compile(regexps["escaped"], VERBOSE)
-T = TypeVar("T")  # noqa
+T = TypeVar("T")
 JsonValue = Union[None, bool, dict, list, int, float, str]
 JsonMember = Tuple[str, JsonValue]
 
 
-def tokenize(s):
-    # type: (Text) -> List[Token]
+def tokenize(s: str) -> List[Token]:
     specs = [
         TokenSpec("space", r"[ \t\r\n]+"),
         TokenSpec("string", r'"(%(unescaped)s | %(escaped)s)*"' % regexps, VERBOSE),
@@ -100,30 +95,27 @@ def tokenize(s):
     return [x for x in t(s) if x.type not in useless]
 
 
-def parse(tokens):
-    # type: (Sequence[Token]) -> object
-
-    def const(x):
-        # type: (T) -> Callable[[Any], T]
+def parse(tokens: Sequence[Token]) -> JsonValue:
+    def const(x: T) -> Callable[[Any], T]:
         return lambda _: x
 
-    def op(s):
-        # type: (Text) -> Parser[Token, Text]
+    def op(s: str) -> Parser[Token, str]:
         return tok("op", s)
 
-    def n(s):
-        # type: (Text) -> Parser[Token, Text]
+    def n(s: str) -> Parser[Token, Text]:
         return tok("name", s)
 
-    def make_array(values):
-        # type: (Optional[Tuple[JsonValue, List[JsonValue]]]) -> List[Any]
+    def make_array(
+        values: Optional[Tuple[JsonValue, List[JsonValue]]]
+    ) -> List[JsonValue]:
         if values is None:
             return []
         else:
             return [values[0]] + values[1]
 
-    def make_object(values):
-        # type: (Optional[Tuple[JsonMember, List[JsonMember]]]) -> Dict[str, Any]
+    def make_object(
+        values: Optional[Tuple[JsonMember, List[JsonMember]]]
+    ) -> Dict[str, Any]:
         if values is None:
             return {}
         else:
@@ -133,15 +125,13 @@ def parse(tokens):
             d.update(rest)
             return d
 
-    def make_number(s):
-        # type: (Text) -> float
+    def make_number(s: str) -> Union[int, float]:
         try:
             return int(s)
         except ValueError:
             return float(s)
 
-    def unescape(s):
-        # type: (Text) -> Text
+    def unescape(s: str) -> str:
         std = {
             '"': '"',
             "\\": "\\",
@@ -153,21 +143,18 @@ def parse(tokens):
             "t": "\t",
         }
 
-        def sub(m):
-            # type: (Match[Text]) -> Text
+        def sub(m: Match[str]) -> str:
             if m.group("standard") is not None:
                 return std[m.group("standard")]
             else:
-                return six.unichr(int(m.group("unicode"), 16))
+                return chr(int(m.group("unicode"), 16))
 
         return re_esc.sub(sub, s)
 
-    def make_string(s):
-        # type: (Text) -> Text
+    def make_string(s: str) -> str:
         return unescape(s[1:-1])
 
-    def make_member(values):
-        # type: (JsonMember) -> JsonMember
+    def make_member(values: JsonMember) -> JsonMember:
         k, v = values
         return k, v
 
@@ -176,7 +163,7 @@ def parse(tokens):
     false = n("false") >> const(False)
     number = tok("number") >> make_number
     string = tok("string") >> make_string
-    value = forward_decl().named("json_value")  # type: Parser[Token, JsonValue]
+    value: Parser[Token, JsonValue] = forward_decl().named("json_value")
     member = string + -op(":") + value >> make_member
     json_object = (
         (-op("{") + maybe(member + many(-op(",") + member)) + -op("}")) >> make_object
@@ -190,13 +177,11 @@ def parse(tokens):
     return json_text.parse(tokens)
 
 
-def loads(s):
-    # type: (Text) -> Any
+def loads(s: str) -> JsonValue:
     return parse(tokenize(s))
 
 
-def main():
-    # type: () -> None
+def main() -> None:
     try:
         text = sys.stdin.read()
         tree = loads(text)

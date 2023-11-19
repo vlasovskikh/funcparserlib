@@ -54,11 +54,11 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          rendering:
+          options:
             show_root_toc_entry: false
             show_root_heading: true
+            heading_level: 3
             show_source: false
-          selection:
             members: false
 watch:
   - funcparserlib

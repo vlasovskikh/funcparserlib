@@ -66,6 +66,7 @@ __all__ = [
 
 import logging
 import warnings
+import sys
 from typing import (
     Any,
     Callable,
@@ -82,6 +83,12 @@ from typing import (
 
 from funcparserlib.lexer import Token
 
+if sys.version_info >= (3, 11):
+    from typing import TypeVarTuple, Unpack
+else:
+    from typing_extensions import TypeVarTuple, Unpack
+
+
 log = logging.getLogger("funcparserlib")
 
 debug = False
@@ -89,6 +96,7 @@ debug = False
 _A = TypeVar("_A")
 _B = TypeVar("_B")
 _C = TypeVar("_C")
+_Ts = TypeVarTuple("_Ts")
 
 
 class Parser(Generic[_A, _B]):
@@ -273,13 +281,13 @@ class Parser(Generic[_A, _B]):
         pass
 
     @overload
-    def __add__(self, other: "Parser[_A, _C]") -> "_TupleParser[_A, Tuple[_B, _C]]":
+    def __add__(self, other: "Parser[_A, _C]") -> "_TupleParser[_A, _B, _C]":
         pass
 
     def __add__(
         self,
         other: Union["_IgnoredParser[_A]", "Parser[_A, _C]"],
-    ) -> Union["Parser[_A, _B]", "_TupleParser[_A, Tuple[_B, _C]]"]:
+    ) -> Union["Parser[_A, _B]", "_TupleParser[_A, _B, _C]"]:
         """Sequential combination of parsers. It runs this parser, then the other
         parser.
 
@@ -551,18 +559,22 @@ class _Tuple(tuple):
     pass
 
 
-class _TupleParser(Parser[_A, _B], Generic[_A, _B]):
-    @overload  # type: ignore[override]
-    def __add__(self, other: "_IgnoredParser[_A]") -> "_TupleParser[_A, _B]":
+class _TupleParser(Parser[_A, Tuple[Unpack[_Ts]]], Generic[_A, Unpack[_Ts]]):
+    @overload  # type: ignore[override, overload-overlap]
+    def __add__(self, other: "_IgnoredParser[_A]") -> "_TupleParser[_A, Unpack[_Ts]]":
         pass
 
     @overload
-    def __add__(self, other: Parser[_A, Any]) -> Parser[_A, Any]:
+    def __add__(self, other: Parser[_A, _B]) -> "_TupleParser[_A, Unpack[_Ts], _B]":
         pass
 
     def __add__(
-        self, other: Union["_IgnoredParser[_A]", Parser[_A, Any]]
-    ) -> Union["_TupleParser[_A, _B]", Parser[_A, Any]]:
+        self,
+        other: Union[
+            "_IgnoredParser[_A]",
+            Parser[_A, _B],
+        ],
+    ) -> Union["_TupleParser[_A, Unpack[_Ts]]", "_TupleParser[_A, Unpack[_Ts], _B]"]:
         return super().__add__(other)
 
 

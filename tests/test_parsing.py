@@ -12,6 +12,7 @@ from funcparserlib.parser import (
     Parser,
     maybe,
     _Ignored,  # noqa
+    _TupleParser,  # noqa
     tok,
     finished,
     forward_decl,
@@ -103,7 +104,7 @@ end"""
     def test_ok_ok_ok(self) -> None:
         x = a("x")
         y = a("y")
-        expr: Parser[str, Tuple[str, str]] = x + y + x
+        expr: _TupleParser[str, str, str, str] = x + y + x
         self.assertEqual(expr.parse("xyx"), ("x", "y", "x"))
 
     def test_ok_ok_ignored(self) -> None:

@@ -59,6 +59,10 @@ Let's consider a little language of **numeric expressions** with a syntax simila
 3.1415926 * (2 + 7.18281828e-1) * 42
 ```
 
+This introductory grammar groups chains of operators at the same precedence level from left to right, including `**`.
+For example, `2 ** 3 ** 2` produces the tree for `(2 ** 3) ** 2`, unlike Python's right-associative exponentiation.
+Use `2 ** (3 ** 2)` when you want the other grouping.
+
 
 Here is **the complete source code** of the tokenizer and the parser for this language written using `funcparserlib`:
 
